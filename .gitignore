@@ -1,0 +1,20 @@
+# Dependencias y build
+node_modules/
+dist/
+
+# Marcador de modo dev (activa el server de Vite en enqueue.php)
+.vite-dev
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.idea/
+.vscode/
+
+# Logs y entorno
+*.log
+.env
+.env.local

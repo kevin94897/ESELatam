@@ -1,0 +1,981 @@
+@import "tailwindcss";
+
+/**
+ * ESE Latam — Design System Tokens (consolidado oficial)
+ * Fuente: Figma "Design System — Componentes" (node 4066-5878)
+ *
+ * Convención:
+ *  - Los tokens "de uso" (primary, secondary, accent, text-*, bg-*) son la paleta
+ *    diaria que usa el diseñador.
+ *  - Las escalas 50..900 se conservan para hover states, elevaciones y variantes,
+ *    pero para el 90% de casos usa los tokens simples.
+ */
+@theme {
+  /* =========================================================
+     TIPOGRAFÍA — Plus Jakarta Sans
+     ========================================================= */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* =========================================================
+     PALETA DE USO (consolidada)
+     ========================================================= */
+  --color-primary:       #001e61;  /* Azul Marino — base de marca */
+  --color-primary-dark:  #001545;  /* Azul Oscuro — hover del primary */
+  --color-secondary:     #0091d1;  /* Azul Cielo — acento cromático */
+  --color-accent:        #8eb952;  /* Verde Lima — destaques y CTAs */
+
+  --color-text-dark:  #242424;  /* Carbon — titulares y body enfatizado */
+  --color-text-mid:   #666666;  /* Body normal */
+  --color-text-soft:  #8a98b6;  /* Captions, metadatos, kickers */
+
+  --color-bg-soft:    #ebeff8;  /* Fondo suave azulado */
+  --color-bg:         #f9f9f9;  /* Fondo por defecto de secciones */
+  --color-white:      #ffffff;
+
+  /* =========================================================
+     ESCALA PRIMARY — Azul Marino (variantes)
+     ========================================================= */
+  --color-primary-50:  #ebeff8;
+  --color-primary-100: #c9d0e2;
+  --color-primary-200: #8a98b6;
+  --color-primary-300: #546895;
+  --color-primary-400: #334b81;
+  --color-primary-500: #001e61;
+  --color-primary-600: #001b58;
+  --color-primary-700: #001545;
+  --color-primary-800: #001135;
+  --color-primary-900: #000d29;
+
+  /* =========================================================
+     ESCALA SECONDARY — Azul Cielo (variantes)
+     ========================================================= */
+  --color-secondary-50:  #e6f4fa;
+  --color-secondary-100: #b0ddf1;
+  --color-secondary-200: #8accea;
+  --color-secondary-300: #54b5e0;
+  --color-secondary-400: #33a7da;
+  --color-secondary-500: #0091d1;
+  --color-secondary-600: #0084be;
+  --color-secondary-700: #006794;
+  --color-secondary-800: #005073;
+  --color-secondary-900: #003d58;
+
+  /* =========================================================
+     NEUTRALS
+     ========================================================= */
+  --color-neutral-0:   #ffffff;
+  --color-neutral-100: #ededed;
+  --color-neutral-200: #cccccc;
+  --color-neutral-300: #b3b3b3;
+  --color-neutral-400: #999999;
+  --color-neutral-500: #808080;
+  --color-neutral-600: #666666;
+  --color-neutral-700: #4d4d4d;
+  --color-neutral-800: #333333;
+  --color-neutral-900: #222222;
+
+  /* =========================================================
+     SISTEMA — Alert / Warning / Success
+     ========================================================= */
+  --color-alert-surface: #fdecec;
+  --color-alert-outline: #f82d2d;
+  --color-alert-text:    #b42318;
+
+  --color-warning-surface: #fff7e6;
+  --color-warning-outline: #ffd27d;
+  --color-warning-text:    #b54708;
+
+  --color-success-surface: #ecfdf3;
+  --color-success-outline: #2ccf78;
+  --color-success-text:    #067647;
+
+  /* =========================================================
+     SUB-MARCA CIRCULOGIC
+     ========================================================= */
+  --color-circulogic-green-surface: #f4f9ec;
+  --color-circulogic-green:         #8eb952;
+  --color-circulogic-green-dark:    #5e7a36;
+
+  --color-circulogic-blue-surface: #eceff8;
+  --color-circulogic-blue:         #4c65a9;
+  --color-circulogic-blue-dark:    #2a385e;
+
+  --color-circulogic-orange-surface: #fdf2ed;
+  --color-circulogic-orange:         #e85d28;
+  --color-circulogic-orange-dark:    #9e3f1b;
+
+  /* =========================================================
+     ESCALA TIPOGRÁFICA — tamaños del design system
+     ========================================================= */
+  --text-tag:      0.625rem;   /* 10px */
+  --text-kicker:   0.75rem;    /* 12px */
+  --text-button:   0.8125rem;  /* 13px */
+  --text-nav:      0.875rem;   /* 14px */
+  --text-caption:  0.875rem;   /* 14px */
+  --text-body:     1rem;       /* 16px */
+  --text-h3:       2.5rem;     /* 40px */
+  --text-h2:       4rem;       /* 64px */
+  --text-display:  5rem;       /* 80px */
+}
+
+/* =========================================================
+   UTILIDADES DE TIPOGRAFÍA
+   ========================================================= */
+
+/**
+ * DISPLAY — 80px / 88px / Light. Se usa para hero.
+ * Aplicar clase `.hl` a los tramos de texto que deben ir en Bold + color primary.
+ * Ej: <h1 class="type-display">EL CAMBIO <span class="hl">COMIENZA AQUÍ</span></h1>
+ */
+@utility type-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-display);
+  line-height: 1.1;
+  font-weight: 300;
+  color: var(--color-text-dark);
+  letter-spacing: -0.01em;
+}
+
+@utility type-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h2);
+  line-height: 1.125;
+  font-weight: 300;
+  color: var(--color-text-dark);
+}
+
+@utility type-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h3);
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+@utility type-kicker {
+  font-family: var(--font-sans);
+  font-size: var(--text-kicker);
+  font-weight: 800;
+  color: var(--color-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+@utility type-nav {
+  font-family: var(--font-sans);
+  font-size: var(--text-nav);
+  font-weight: 600;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@utility type-body-lg {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--color-text-dark);
+}
+
+@utility type-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-text-mid);
+}
+
+@utility type-caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  color: var(--color-neutral-400);
+}
+
+@utility type-tag {
+  font-family: var(--font-sans);
+  font-size: var(--text-tag);
+  font-weight: 800;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+/**
+ * Highlight interno para display/H2:
+ * marca el tramo del titular que va en bold + color primary.
+ */
+@utility hl {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* =========================================================
+   BOTONES — 48px alto, 13px semibold uppercase, tracking 0.05em
+   ========================================================= */
+
+@utility btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;                  /* 48px */
+  padding: 0 1.75rem;
+  border-radius: 4px;
+  font-size: var(--text-button);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@utility btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+@utility btn-primary--hover {
+  background-color: var(--color-secondary);
+}
+
+@utility btn-secondary {
+  background-color: var(--color-white);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+}
+@utility btn-secondary--hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+@utility btn-accent {
+  background-color: var(--color-secondary);
+  color: var(--color-white);
+}
+@utility btn-accent--hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* =========================================================
+   UTILIDAD — Gradiente brand
+   ========================================================= */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(
+    to right,
+    var(--color-secondary),
+    var(--color-primary)
+  );
+}
+
+/* =========================================================
+   COMPONENTES — Header / Navbar (Figma: Hero – Estado A, navbar)
+   ========================================================= */
+@layer components {
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    transition: background-color .3s ease, backdrop-filter .3s ease, padding .3s ease;
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.875rem clamp(1.5rem, 6.25vw, 7.5rem); /* 30px / 120px del diseño */
+    transition: padding .3s ease;
+  }
+
+  .site-header.is-scrolled {
+    /* background-color: color-mix(in srgb, var(--color-primary-900) 72%, transparent); */
+    backdrop-filter: blur(16px);
+  }
+  .site-header.is-scrolled .site-header__inner {
+    padding-block: 0.875rem;
+  }
+
+  /* Logo — PNG a color convertido a blanco (en el diseño va en blanco sobre el hero) */
+  .site-logo img {
+    width: 142px;
+    height: auto;
+    display: block;
+    filter: brightness(0) invert(1);
+  }
+
+  /* Pill blanco del menú */
+  .nav-pill {
+    display: none;
+    align-items: center;
+    gap: 2.4375rem; /* 39px */
+    background-color: var(--color-white);
+    border-radius: 12px;
+    padding: 4px 4px 4px 0;
+    box-shadow: 0 4px 24px rgb(0 0 0 / 0.08);
+  }
+  @media (width >= 64rem) {
+    .nav-pill { display: flex; }
+  }
+
+  .nav-pill__list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-pill__list a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+    color: var(--color-neutral-700);
+    white-space: nowrap;
+    border-radius: 8px;
+    transition: color .2s ease;
+  }
+  .nav-pill__list a:hover {
+    color: var(--color-primary);
+  }
+
+  /* Chevron para items con submenú */
+  .nav-pill__list .menu-item-has-children > a::after {
+    content: '';
+    width: 17px;
+    height: 17px;
+    background-color: currentColor;
+    mask: url('../../assets/icons/icon-chevron.svg') center / contain no-repeat;
+  }
+
+  .nav-pill__actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .nav-pill__search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: var(--color-neutral-800);
+    cursor: pointer;
+    transition: color .2s ease;
+  }
+  .nav-pill__search:hover { color: var(--color-primary); }
+
+  .nav-pill__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+    color: var(--color-white);
+    background-image: linear-gradient(to right, var(--color-primary) 24.5%, var(--color-primary-dark));
+    transition: filter .2s ease;
+  }
+  .nav-pill__cta:hover { filter: brightness(1.35); }
+
+  /* Toggle hamburguesa (móvil) */
+  .nav-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    cursor: pointer;
+  }
+  @media (width >= 64rem) {
+    .nav-toggle { display: none; }
+  }
+  .nav-toggle span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background-color: var(--color-white);
+    border-radius: 2px;
+    transition: transform .3s ease, opacity .3s ease;
+  }
+  .is-open .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .is-open .nav-toggle span:nth-child(2) { opacity: 0; }
+  .is-open .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* Panel móvil */
+  .mobile-nav {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    background-color: color-mix(in srgb, var(--color-primary-900) 92%, transparent);
+    backdrop-filter: blur(16px);
+    transition: grid-template-rows .35s ease;
+  }
+  .site-header.is-open .mobile-nav { grid-template-rows: 1fr; }
+  .mobile-nav > * { min-height: 0; }
+  .mobile-nav .mobile-nav__list {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem clamp(1.5rem, 6.25vw, 7.5rem);
+  }
+  .mobile-nav .mobile-nav__list a {
+    display: block;
+    padding: 0.875rem 0;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-white);
+    border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  }
+  .mobile-nav__cta {
+    margin: 1rem clamp(1.5rem, 6.25vw, 7.5rem) 1.5rem;
+  }
+  @media (width >= 64rem) {
+    .mobile-nav { display: none; }
+  }
+}
+
+/* =========================================================
+   COMPONENTES — Hero (Figma: Hero – Estado A, node 4271-1457)
+   ========================================================= */
+@layer components {
+  .hero {
+    position: relative;
+    height: 100svh;
+    min-height: 640px;
+    overflow: hidden;
+    background-color: var(--color-primary-900);
+  }
+
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  /* Gradiente de legibilidad sobre el video */
+  .hero__shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: linear-gradient(to right, rgb(0 0 0 / 0.56) 25.2%, rgb(102 102 102 / 0) 100%);
+  }
+
+  /* Isla flotante — aparece con el scroll (GSAP) */
+  .hero__island {
+    position: absolute;
+    z-index: 2;
+    right: -10%;
+    bottom: 7%;
+    width: min(80vw, 1500px);
+    visibility: hidden; /* GSAP la revela; evita flash inicial */
+    pointer-events: none;
+  }
+  .hero__island img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .hero__content {
+    position: relative;
+    z-index: 3;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(7rem, 17vh, 11.875rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2.5rem, 6vh, 4.5rem);
+  }
+
+  .hero__title {
+    font-size: clamp(2.5rem, 4.4vw, 5rem); /* 80px en desktop */
+    font-weight: 300;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--color-white);
+    max-width: 16em;
+  }
+  .hero__title strong {
+    font-weight: 700;
+  }
+
+  /* Máscara por línea para el reveal del titular (el texto sube por detrás) */
+  .hero__title-line {
+    display: block;
+    overflow: hidden;
+  }
+  .hero__title-inner {
+    display: block;
+    will-change: transform;
+  }
+
+  /* Estado inicial de la coreografía: GSAP revela y posiciona.
+     (evita el flash del layout final antes de que cargue el JS) */
+  .hero__title,
+  .hero [data-hero-reveal] {
+    visibility: hidden;
+  }
+
+  .hero__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .hero__lede {
+    max-width: 508px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-white);
+  }
+
+  /* CTA primario — shape con borde inclinado + chip de flecha (SVGs del diseño) */
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 2rem;
+    filter: drop-shadow(0 1px 20px rgb(255 255 255 / 0.25));
+  }
+  .hero-cta__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 58px;
+    min-width: 251px;
+    margin-right: -10px;
+    padding: 0 3.5rem 0 2rem;
+    background: url('../../assets/icons/btn-primary-bg.svg') no-repeat center / 100% 100%;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-white);
+    white-space: nowrap;
+  }
+  .hero-cta__arrow {
+    width: 73px;
+    height: 58px;
+    background: url('../../assets/icons/btn-primary-arrow.svg') no-repeat center / 100% 100%;
+    transition: transform .25s ease;
+  }
+  .hero-cta:hover .hero-cta__label {
+    background-image: url('../../assets/icons/btn-primary-bg-hover.svg');
+  }
+  .hero-cta:hover .hero-cta__arrow {
+    background-image: url('../../assets/icons/btn-primary-arrow-hover.svg');
+    transform: translateX(4px);
+  }
+
+  /* Card glass de estadística */
+  .hero-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: min(402px, 100%);
+    min-height: 240px;
+    padding: 2rem;
+    border: 1px solid var(--color-neutral-400);
+    border-radius: 16px;
+    background-color: rgb(0 0 0 / 0.32);
+    backdrop-filter: blur(16px);
+  }
+  .hero-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .hero-card__stat {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--color-white);
+  }
+  .hero-card__tag {
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: #86c437; /* complementarios/green/original del DS */
+  }
+  .hero-card__desc {
+    position: relative;
+    max-width: 322px;
+    padding-left: 1.25rem;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.8);
+  }
+  .hero-card__desc::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.4em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #86c437;
+  }
+  .hero-card__dots {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  .hero-card__dots span {
+    height: 3px;
+    width: 20px;
+    border-radius: 99px;
+    background-color: var(--color-neutral-600);
+  }
+  .hero-card__dots .is-active {
+    width: 40px;
+    background-color: var(--color-secondary);
+  }
+
+  /* =========================================================
+     SECCIÓN SECTORES (Figma 3266-2331)
+     ========================================================= */
+  .sectores {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3rem, 8vh, 5rem);
+    padding-block: clamp(4rem, 9vh, 6.25rem);
+  }
+
+  .sectores__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-inline: clamp(1.5rem, 6.25vw, 7.5rem);
+  }
+
+  .sectores__desc {
+    max-width: 626px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+  .sectores__desc strong {
+    font-weight: 800;
+    color: var(--color-accent);
+  }
+
+  .sectores__slider {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(3rem, 10.8vw, 13rem);
+    padding-left: clamp(1.5rem, 6.25vw, 7.5rem);
+  }
+
+  .sectores__legend {
+    flex: 0 0 314px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3rem, 12vh, 8.375rem);
+  }
+
+  .sectores__legend-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+
+  .sectores__counter {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--color-text-dark);
+  }
+  .sectores__counter-total {
+    font-size: 16px;
+    color: var(--color-neutral-400);
+  }
+
+  .sectores__controls {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  /* El carril bleedea hasta el borde derecho de la pantalla */
+  .sectores .embla__viewport {
+    flex: 1;
+    min-width: 0;
+  }
+  .sectores .embla__container {
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+  .sectores .embla__slide {
+    flex: 0 0 min(500px, 84vw);
+  }
+
+  @media (width < 64rem) {
+    .sectores__slider {
+      flex-direction: column;
+      gap: 2.5rem;
+      padding-right: clamp(1.5rem, 6.25vw, 7.5rem);
+    }
+    .sectores__legend {
+      flex: none;
+      width: 100%;
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+  }
+
+  /* Card de sector: foto + gradiente inferior; la activa crece y revela
+     descripción + chip de flecha */
+  .sector-card {
+    position: relative;
+    height: 339px;
+    padding: 2.5rem;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: height .45s ease;
+  }
+  .sector-card__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+  .sector-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to bottom, rgb(0 0 0 / 0) 59.6%, rgb(0 0 0 / 0.85));
+  }
+  .sector-card__chip {
+    position: absolute;
+    top: 2.5rem;
+    right: 2.5rem;
+    z-index: 2;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    border: 1px solid var(--color-white);
+    background-color: rgb(158 158 158 / 0.16);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-white);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .sector-card__chip svg {
+    transform: rotate(-45deg);
+  }
+  .sector-card__body {
+    position: relative;
+    z-index: 2;
+    color: var(--color-white);
+  }
+  .sector-card__title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+  .sector-card__desc {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-top: 6px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height .45s ease, opacity .35s ease;
+  }
+  .sector-card.is-active {
+    height: 400px;
+  }
+  .sector-card.is-active .sector-card__chip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .sector-card.is-active .sector-card__desc {
+    max-height: 4.5em;
+    opacity: 0.86;
+  }
+
+  /* Flechas sólidas (leyenda del slider de sectores) */
+  .embla__arrow.embla__arrow--solid {
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 16px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+  .embla__arrow.embla__arrow--solid:hover:not(:disabled) {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+  }
+  .embla__arrow.embla__arrow--solid.is-mirrored svg {
+    transform: scaleX(-1);
+  }
+
+  /* =========================================================
+     SLIDER — Embla
+     ========================================================= */
+  .embla__viewport {
+    overflow: hidden;
+  }
+  .embla__container {
+    display: flex;
+    gap: 2rem;
+    align-items: stretch;
+  }
+  .embla__slide {
+    flex: 0 0 calc((100% - 4rem) / 3);
+    min-width: 0;
+  }
+  @media (width < 64rem) {
+    .embla__slide { flex-basis: calc((100% - 2rem) / 2); }
+  }
+  @media (width < 40rem) {
+    .embla__slide { flex-basis: 86%; }
+  }
+
+  /* Dots tipo guion (mismo lenguaje que la card del hero) */
+  .embla__dots {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .embla__dot {
+    height: 3px;
+    width: 20px;
+    border-radius: 99px;
+    background-color: var(--color-neutral-200);
+    cursor: pointer;
+    transition: width .3s ease, background-color .3s ease;
+  }
+  .embla__dot.is-active {
+    width: 40px;
+    background-color: var(--color-secondary);
+  }
+
+  /* Flechas circulares */
+  .embla__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-primary);
+    color: var(--color-primary);
+    cursor: pointer;
+    transition: background-color .25s ease, color .25s ease, opacity .25s ease;
+  }
+  .embla__arrow:hover:not(:disabled) {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+  .embla__arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  /* Corona de nubes de la sección que sigue al hero: sobresale por su borde
+     superior, así el frente de la transición al deslizarse sobre el hero es
+     la nube orgánica y no un corte recto. */
+  .hero-next__clouds {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% - 2px); /* -2px: evita línea entre nube y sección */
+    pointer-events: none;
+  }
+  .hero-next__clouds img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (width < 48rem) {
+    .hero__island {
+      width: min(120vw, 640px);
+      bottom: 6%;
+    }
+    .hero-card { display: none; }
+  }
+
+  /* Sección que sigue al hero (.hero-next): el módulo hero-scroll le aplica
+     un margin-top negativo igual a la ALTURA REAL del hero (medida en JS,
+     re-medida en cada refresh) para que se deslice sobre el hero nublado y
+     llegue al top exactamente cuando el pin se libera. Sin JS no hay margen
+     y el layout queda en flujo normal. */
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-dark);
+  }
+
+  /* Botones nativos: aplican estilo base + estado hover */
+  .btn-primary:hover   { background-color: var(--color-secondary); }
+  .btn-secondary:hover { background-color: var(--color-primary); color: var(--color-white); }
+  .btn-accent:hover    { background-color: var(--color-primary-dark); }
+
+  /* Focus visible accesible */
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  /* Reduce motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

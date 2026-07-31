@@ -1,0 +1,18 @@
+/*
+Theme Name: ESE Latam
+Theme URI: https://eselatam.com
+Author: ESE Latam
+Author URI: https://eselatam.com
+Description: Theme corporativo de ESE Latam. Base moderna con Vite + TypeScript + Tailwind v4, animaciones con GSAP y 3D con Three.js.
+Version: 0.1.0
+Requires at least: 6.4
+Tested up to: 6.6
+Requires PHP: 8.1
+License: GPL v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ese-latam
+Tags: custom-theme, corporate, gsap, threejs, tailwind
+*/
+
+/* Este archivo es requerido por WordPress solo por su cabecera.
+   Todos los estilos reales se compilan con Vite/Tailwind desde src/css/main.css */
