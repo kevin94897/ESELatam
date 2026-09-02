@@ -11,6 +11,12 @@ import { initSmoothScroll } from './modules/smooth-scroll';
 import { initScrollReveals } from './modules/scroll-reveals';
 import { initHeader } from './modules/header';
 import { initSliders } from './modules/slider';
+import { initMarquees } from './modules/marquee';
+import { initParallax } from './modules/parallax';
+import { initProductCarousel } from './modules/product-carousel';
+import { initHeroCta } from './modules/hero-cta';
+import { initContactoReveal } from './modules/contacto-reveal';
+import { initResiduosSelector } from './modules/residuos-selector';
 
 function bootstrap(): void {
   initGsap();
@@ -18,6 +24,12 @@ function bootstrap(): void {
   initHeader();
   initScrollReveals();
   initSliders();
+  initMarquees();
+  initParallax();
+  initProductCarousel();
+  initHeroCta();
+  initContactoReveal();
+  initResiduosSelector();
 
   // Hero con scroll-animación (solo front-page)
   const hero = document.querySelector<HTMLElement>('[data-hero]');
@@ -32,6 +44,14 @@ function bootstrap(): void {
   if (has3d) {
     void import('./modules/three-scene').then(({ initThreeScene }) => {
       initThreeScene(has3d);
+    });
+  }
+
+  // Distribuidores: globo 3D (Three.js + GSAP), solo si la sección existe
+  const globeSection = document.querySelector<HTMLElement>('[data-globe]');
+  if (globeSection) {
+    void import('./modules/distribuidores').then(({ initDistribuidores }) => {
+      initDistribuidores(globeSection);
     });
   }
 }

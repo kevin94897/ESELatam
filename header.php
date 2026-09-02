@@ -56,7 +56,7 @@ declare(strict_types=1);
         <button type="button" class="nav-toggle" data-nav-toggle
                 aria-expanded="false" aria-controls="mobile-nav"
                 aria-label="<?php esc_attr_e('Abrir menú', 'ese-latam'); ?>">
-            <span></span><span></span><span></span>
+            <span></span><span></span>
         </button>
     </div>
 
@@ -73,6 +73,7 @@ declare(strict_types=1);
         <a href="#contacto" class="nav-pill__cta mobile-nav__cta">
             <?php esc_html_e('Contacto', 'ese-latam'); ?>
         </a>
+        <a class="mobile-nav__mail" href="mailto:hola@eselatam.com">hola@eselatam.com</a>
     </div>
 </header>
 

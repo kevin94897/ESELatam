@@ -5,13 +5,15 @@
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
+import { SplitText } from 'gsap/SplitText';
 
 let registered = false;
 
 export function initGsap(): void {
   if (registered) return;
 
-  gsap.registerPlugin(ScrollTrigger);
+  gsap.registerPlugin(ScrollTrigger, MorphSVGPlugin, SplitText);
 
   gsap.defaults({
     ease: 'power2.out',
@@ -27,4 +29,4 @@ export function initGsap(): void {
   registered = true;
 }
 
-export { gsap, ScrollTrigger };
+export { gsap, ScrollTrigger, MorphSVGPlugin, SplitText };

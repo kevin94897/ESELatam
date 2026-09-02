@@ -83,18 +83,23 @@ Vite genera `dist/.vite/manifest.json` y `enqueue.php` encola los archivos con h
 
 ## 🏠 Home — coreografía del hero
 
-`front-page.php` + `src/ts/modules/hero-scroll.ts`. El hero queda pineado
-durante `PIN_VIEWPORTS` (2.5) viewports de scroll:
+`front-page.php` + `src/ts/modules/hero-scroll.ts`.
 
-1. **Carga**: solo el titular centrado (reveal con máscara por línea) sobre el
-   video; el video asienta desde un ligero zoom.
-2. **0 → 16%**: el titular viaja a su posición de layout (la distancia se mide
-   del DOM, no hay valores mágicos).
-3. **14 → 30%**: entran el menú, el lede, el CTA y la card de stats.
-4. **20 → 38%**: la isla emerge (con flotación continua en loop).
-5. **60 → 100%**: la sección siguiente — coronada por las nubes
-   (`.hero-next__clouds`) — barre el hero y llega al top exactamente al
-   liberarse el pin.
+**Intro al cargar** (timeline de entrada, no depende del scroll):
+
+1. El video asienta desde un ligero zoom; el titular aparece **centrado** con
+   reveal de máscara por línea.
+2. El titular viaja a su posición de layout (la distancia se mide del DOM, no
+   hay valores mágicos).
+3. Entran el menú, el lede, el CTA y la card de stats, escalonados.
+
+**Scroll** (hero pineado durante `PIN_VIEWPORTS` = 2.5 viewports):
+
+- El video se reproduce scrubbed durante todo el pin.
+- **6 → 58%**: la isla emerge (con flotación continua en loop).
+- **60 → 100%**: la sección siguiente — coronada por las nubes
+  (`.hero-next__clouds`) — barre el hero y llega al top exactamente al
+  liberarse el pin.
 
 El **video se reproduce scrubbed** con el scroll (lerp suavizado). Para que el
 seeking sea fluido debe estar codificado **all-intra** (cada frame keyframe):

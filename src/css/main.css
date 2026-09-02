@@ -211,6 +211,12 @@
   color: var(--color-primary);
 }
 
+/** Highlight verde — mismo uso que .hl pero sin cambiar el peso, solo el
+ * color (para tramos de párrafo destacados, no titulares). */
+@utility hl-accent {
+  color: #86c437;
+}
+
 /* =========================================================
    BOTONES — 48px alto, 13px semibold uppercase, tracking 0.05em
    ========================================================= */
@@ -284,17 +290,16 @@
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 1.875rem clamp(1.5rem, 6.25vw, 7.5rem); /* 30px / 120px del diseño */
+    padding: 1rem clamp(1.5rem, 6.25vw, 7.5rem); /* 30px / 120px del diseño */
     transition: padding .3s ease;
   }
 
   .site-header.is-scrolled {
-    /* background-color: color-mix(in srgb, var(--color-primary-900) 72%, transparent); */
-    backdrop-filter: blur(16px);
+    /* background: linear-gradient(to bottom, color-mix(in srgb, var(--color-primary) 80%, transparent) 0%, transparent 50%); */
   }
-  .site-header.is-scrolled .site-header__inner {
-    padding-block: 0.875rem;
-  }
+  /* El padding de .site-header__inner se mantiene fijo siempre — no depende
+     de is-scrolled, para que no salte al mismo tiempo que el logo entra/sale
+     desde detrás del nav-pill (dos movimientos simultáneos se veían en conflicto). */
 
   /* Logo — PNG a color convertido a blanco (en el diseño va en blanco sobre el hero) */
   .site-logo img {
@@ -303,6 +308,9 @@
     display: block;
     filter: brightness(0) invert(1);
   }
+
+  /* El logo arranca visible en su posición de layout; header.ts lo esconde
+     tras el nav-pill (scrubbed) al hacer scroll. */
 
   /* Pill blanco del menú */
   .nav-pill {
@@ -385,59 +393,116 @@
   }
   .nav-pill__cta:hover { filter: brightness(1.35); }
 
-  /* Toggle hamburguesa (móvil) */
+  /* Toggle hamburguesa (móvil): botón cuadrado redondeado navy con dos
+     barras que rotan a X al abrir el menú */
   .nav-toggle {
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
+    position: relative;
     width: 44px;
     height: 44px;
-    padding: 10px;
+    flex: none;
+    border-radius: 12px;
+    background-color: var(--color-primary);
     cursor: pointer;
   }
   @media (width >= 64rem) {
     .nav-toggle { display: none; }
   }
   .nav-toggle span {
-    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 18px;
     height: 2px;
-    width: 100%;
-    background-color: var(--color-white);
     border-radius: 2px;
-    transition: transform .3s ease, opacity .3s ease;
+    background-color: var(--color-white);
+    transition: transform .35s ease;
   }
-  .is-open .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-  .is-open .nav-toggle span:nth-child(2) { opacity: 0; }
-  .is-open .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .nav-toggle span:nth-child(1) { transform: translate(-50%, calc(-50% - 3.5px)); }
+  .nav-toggle span:nth-child(2) { transform: translate(-50%, calc(-50% + 3.5px)); }
+  .is-open .nav-toggle span:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg); }
+  .is-open .nav-toggle span:nth-child(2) { transform: translate(-50%, -50%) rotate(-45deg); }
 
-  /* Panel móvil */
-  .mobile-nav {
-    display: grid;
-    grid-template-rows: 0fr;
-    overflow: hidden;
-    background-color: color-mix(in srgb, var(--color-primary-900) 92%, transparent);
-    backdrop-filter: blur(16px);
-    transition: grid-template-rows .35s ease;
+  /* Móvil: la barra del header es un pill blanco con el logo a color */
+  @media (width < 64rem) {
+    .site-header__inner {
+      margin: 12px 16px 0;
+      padding: 10px 10px 10px 18px;
+      background-color: var(--color-white);
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgb(0 0 0 / 0.12);
+    }
+    .site-logo img {
+      width: 104px;
+      filter: none; /* logo a color sobre el pill blanco */
+    }
   }
-  .site-header.is-open .mobile-nav { grid-template-rows: 1fr; }
-  .mobile-nav > * { min-height: 0; }
+
+  /* Panel móvil: overlay a pantalla completa bajo el pill del header */
+  .site-header__inner { position: relative; z-index: 2; }
+  .mobile-nav {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 96px 24px 40px;
+    background-color: color-mix(in srgb, var(--color-primary-900) 96%, transparent);
+    backdrop-filter: blur(16px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .35s ease, visibility .35s ease;
+  }
+  .site-header.is-open .mobile-nav {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
   .mobile-nav .mobile-nav__list {
     display: flex;
     flex-direction: column;
-    padding: 0.5rem clamp(1.5rem, 6.25vw, 7.5rem);
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
   }
   .mobile-nav .mobile-nav__list a {
     display: block;
-    padding: 0.875rem 0;
-    font-size: 14px;
-    font-weight: 700;
-    text-transform: uppercase;
+    padding: 0.5rem 1rem;
+    font-size: clamp(1.75rem, 7.5vw, 2.25rem);
+    font-weight: 500;
+    line-height: 1.4;
     color: var(--color-white);
-    border-bottom: 1px solid rgb(255 255 255 / 0.1);
   }
+  /* Entrada escalonada de los links al abrir */
+  .mobile-nav .mobile-nav__list li {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .site-header.is-open .mobile-nav .mobile-nav__list li { opacity: 1; transform: translateY(0); }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(1) { transition-delay: .08s; }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(2) { transition-delay: .14s; }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(3) { transition-delay: .2s; }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(4) { transition-delay: .26s; }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(5) { transition-delay: .32s; }
+  .site-header.is-open .mobile-nav .mobile-nav__list li:nth-child(6) { transition-delay: .38s; }
+
   .mobile-nav__cta {
-    margin: 1rem clamp(1.5rem, 6.25vw, 7.5rem) 1.5rem;
+    margin-top: 0.5rem;
+  }
+  /* Email al pie del overlay */
+  .mobile-nav__mail {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 15px;
+    color: var(--color-white);
+    text-decoration: underline;
+    text-underline-offset: 4px;
   }
   @media (width >= 64rem) {
     .mobile-nav { display: none; }
@@ -477,9 +542,12 @@
   .hero__island {
     position: absolute;
     z-index: 2;
-    right: -10%;
+    right: -20%;
     bottom: 7%;
-    width: min(80vw, 1500px);
+    /* El tercer límite (svh) acota la ALTURA resultante de la isla: en
+       pantallas anchas pero no tan altas (p. ej. ultrawide o full HD grande),
+       sin él la isla crece por ancho y su copa termina rozando el header. */
+    width: min(92vw, 1720px, 142svh);
     visibility: hidden; /* GSAP la revela; evita flash inicial */
     pointer-events: none;
   }
@@ -496,11 +564,14 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: clamp(7rem, 17vh, 11.875rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2.5rem, 6vh, 4.5rem);
+    padding: clamp(9rem, 21vh, 14.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2.5rem, 6vh, 4.5rem);
   }
 
   .hero__title {
-    font-size: clamp(2.5rem, 4.4vw, 5rem); /* 80px en desktop */
+    /* Tamaño ASENTADO (post-intro), ~10% menor que el original de 80px.
+       Durante la intro centrada se ve más grande vía scale 1.2 (hero-scroll),
+       así el titular "reduce ligeramente" al ubicarse en la sección. */
+    font-size: clamp(2.25rem, 4vw, 4.5rem); /* 72px en desktop */
     font-weight: 300;
     line-height: 1.1;
     text-transform: uppercase;
@@ -509,6 +580,14 @@
   }
   .hero__title strong {
     font-weight: 700;
+  }
+
+  /* El titular queda centrado verticalmente en el espacio libre del hero
+     (los márgenes auto reparten simétricamente lo que sobra entre el padding
+     superior y el bloque inferior). La intro mide esta posición del DOM, así
+     que su viaje de entrada se adapta solo. */
+  .hero__title-wrap {
+    margin-block: auto;
   }
 
   /* Máscara por línea para el reveal del titular (el texto sube por detrás) */
@@ -522,8 +601,10 @@
   }
 
   /* Estado inicial de la coreografía: GSAP revela y posiciona.
-     (evita el flash del layout final antes de que cargue el JS) */
+     (evita el flash del layout final antes de que cargue el JS)
+     La hero-card no entra con la intro: aparece con el scroll (scrubbed). */
   .hero__title,
+  .hero-card,
   .hero [data-hero-reveal] {
     visibility: hidden;
   }
@@ -544,41 +625,146 @@
     color: var(--color-white);
   }
 
-  /* CTA primario — shape con borde inclinado + chip de flecha (SVGs del diseño) */
+  /* CTA primario — réplica del hover de integratedbio.com: CSS para color/
+     escala/flecha + GSAP MorphSVGPlugin para la FORMA de dos <svg><path>
+     reales (`.hero-cta__corner` y el blob de `.hero-cta__arrow`, ver
+     hero-cta.ts). Reduce-motion ya queda cubierto globalmente (main.css
+     fuerza transition-duration:0.01ms, y initGsap() pone el timeline en
+     timeScale(0)) — no hace falta duplicar esa lógica aquí. Sin fallback
+     CSS-only (`d: path(...)`): GSAP + MorphSVGPlugin ya es una dependencia
+     dura del proyecto (bundleada, no por CDN), así que no aporta añadir
+     una segunda vía sin usar. */
   .hero-cta {
+    --cta-label-bg: var(--color-primary);
+    --cta-label-bg-hover: var(--color-white);
+    --cta-label-color: var(--color-white);
+    --cta-label-color-hover: var(--color-primary);
+    --cta-blob-bg: var(--color-white);
+    --cta-blob-bg-hover: var(--color-primary);
+    --cta-duration: .6s;
+    --cta-ease: cubic-bezier(.25, 1, .5, 1);
+    --cta-blob-scale: .875;
     display: inline-flex;
-    align-items: center;
+    align-items: stretch;
+    height: 58px;
+    width: fit-content;
+    position: relative;
     margin-top: 2rem;
+    text-decoration: none;
     filter: drop-shadow(0 1px 20px rgb(255 255 255 / 0.25));
   }
+
   .hero-cta__label {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    height: 58px;
-    min-width: 251px;
-    margin-right: -10px;
-    padding: 0 3.5rem 0 2rem;
-    background: url('../../assets/icons/btn-primary-bg.svg') no-repeat center / 100% 100%;
+    position: relative;
+    overflow: visible;
+    background-color: var(--cta-label-bg);
+    color: var(--cta-label-color);
+    /* 8px, no 12px: es el radio real de las esquinas del chip (su <path>
+       del Figma dibuja un arco de ~8px) — con 12px el label no combinaba
+       con el chip, y se notaba más cuanto más corto era el label (p. ej.
+       "Contactar" vs "Explorar productos"). */
+    border-radius: 12px 0 0 12px;
+    padding: 8px 20px 8px 25px;
+    margin-right: 16px;
+    line-height: 1;
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    color: var(--color-white);
     white-space: nowrap;
+    transition:
+      background-color var(--cta-duration) var(--cta-ease),
+      color var(--cta-duration) var(--cta-ease),
+      margin-right var(--cta-duration) var(--cta-ease),
+      padding-right var(--cta-duration) var(--cta-ease);
   }
+
+  /* Esquina cóncava que empalma el label con el chip — un <svg><path> real
+     (no una máscara) para poder animar su silueta con MorphSVGPlugin. */
+  .hero-cta__corner {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -16px;
+    width: 18px;
+    height: 100%;
+    display: block;
+  }
+  .hero-cta__corner svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .hero-cta__corner svg path {
+    fill: var(--cta-label-bg);
+    transition: fill var(--cta-duration) var(--cta-ease);
+  }
+
+  /* El "blob" (chip de flecha): otro <svg><path> real cuya silueta también
+     hace morph en hover. El glifo de flecha en sí NO es parte del SVG que
+     morfea — es un ::before con dos flechas (blanca/navy) superpuestas que
+     se deslizan por background-position, para no acoplar su animación a la
+     del blob. */
   .hero-cta__arrow {
+    position: relative;
+    display: inline-flex;
     width: 73px;
-    height: 58px;
-    background: url('../../assets/icons/btn-primary-arrow.svg') no-repeat center / 100% 100%;
-    transition: transform .25s ease;
+    height: 100%;
+    overflow: hidden;
+    padding: 10px;
+    transform: scale(1);
+    transform-origin: center right;
+    transition: transform var(--cta-duration) var(--cta-ease);
   }
-  .hero-cta:hover .hero-cta__label {
-    background-image: url('../../assets/icons/btn-primary-bg-hover.svg');
+  .hero-cta__arrow svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
-  .hero-cta:hover .hero-cta__arrow {
-    background-image: url('../../assets/icons/btn-primary-arrow-hover.svg');
-    transform: translateX(4px);
+  .hero-cta__arrow svg path {
+    fill: var(--cta-blob-bg);
+    transition: fill var(--cta-duration) var(--cta-ease);
+  }
+  .hero-cta__arrow::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    width: calc(100% - 4px);
+    height: 100%;
+    z-index: 2;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='13' viewBox='0 0 16 13'%3E%3Cpath fill='%23ffffff' d='M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='13' viewBox='0 0 16 13'%3E%3Cpath fill='%23001e61' d='M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, no-repeat;
+    background-size: 16px 13px, 16px 13px;
+    background-position: center left -150%, center left 50%;
+    transition: background-position var(--cta-duration) var(--cta-ease);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hero-cta:hover .hero-cta__label {
+      background-color: var(--cta-label-bg-hover);
+      color: var(--cta-label-color-hover);
+      margin-right: 12px;
+      padding-right: 14px;
+    }
+    .hero-cta:hover .hero-cta__corner svg path {
+      fill: var(--cta-label-bg-hover);
+    }
+    .hero-cta:hover .hero-cta__arrow {
+      transform: scale(var(--cta-blob-scale));
+    }
+    .hero-cta:hover .hero-cta__arrow::before {
+      background-position: center left 50%, center left 150%;
+    }
+    .hero-cta:hover .hero-cta__arrow svg path {
+      fill: var(--cta-blob-bg-hover);
+    }
   }
 
   /* Card glass de estadística */
@@ -587,7 +773,7 @@
     flex-direction: column;
     justify-content: space-between;
     width: min(402px, 100%);
-    min-height: 240px;
+    /* min-height: 240px; */
     padding: 2rem;
     border: 1px solid var(--color-neutral-400);
     border-radius: 16px;
@@ -663,6 +849,7 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 2rem;
+    z-index: 99;
     padding-inline: clamp(1.5rem, 6.25vw, 7.5rem);
   }
 
@@ -718,7 +905,7 @@
 
   .sectores__controls {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   /* El carril bleedea hasta el borde derecho de la pantalla */
@@ -780,8 +967,8 @@
   }
   .sector-card__chip {
     position: absolute;
-    top: 2.5rem;
-    right: 2.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
     z-index: 2;
     width: 64px;
     height: 64px;
@@ -794,10 +981,18 @@
     color: var(--color-white);
     opacity: 0;
     transform: translateY(8px);
-    transition: opacity .35s ease, transform .35s ease;
+    transition: opacity .35s ease, transform .35s ease, background-color .3s ease, border-color .3s ease;
+  }
+  .sector-card__chip:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
   }
   .sector-card__chip svg {
     transform: rotate(-45deg);
+    transition: transform 0.3s ease;
+  }
+  .sector-card__chip:hover svg {
+    transform: rotate(-45deg) translate(2px, -2px) scale(1.1);
   }
   .sector-card__body {
     position: relative;
@@ -808,11 +1003,11 @@
     font-size: 20px;
     font-weight: 700;
     line-height: 1.5;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
   }
   .sector-card__desc {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     line-height: 1.5;
     margin-top: 6px;
     max-height: 0;
@@ -847,6 +1042,539 @@
   }
   .embla__arrow.embla__arrow--solid.is-mirrored svg {
     transform: scaleX(-1);
+  }
+
+  /* =========================================================
+     MARQUEE — texto gigante "Transformamos" (Figma 3287-283)
+     ========================================================= */
+  .marquee {
+    overflow: hidden;
+    padding-block: 0;
+  }
+  .marquee__track {
+    display: flex;
+    justify-content: center;
+    gap: clamp(3rem, 6vw, 7rem);
+    width: max-content;
+    margin-inline: auto;
+    will-change: transform;
+  }
+  .marquee__track span {
+    font-size: clamp(6rem, 13.75vw, 16.5rem); /* 264px en 1920 */
+    font-weight: 900;
+    /* font-style: italic; */
+    line-height: 1.03;
+    letter-spacing: -10px;
+    text-transform: uppercase;
+    color: var(--color-neutral-100);
+    white-space: nowrap;
+  }
+
+  /* =========================================================
+     PRODUCTOS (Figma 3287-243) — slider de foco central
+     ========================================================= */
+  .productos-wrap {
+    padding: 0 clamp(1rem, 2.5vw, 3rem) clamp(3rem, 6vw, 5rem);
+  }
+
+  .productos {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 16px;
+    background-image: linear-gradient(to bottom, var(--color-secondary) 14.9%, var(--color-secondary-100));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2.5rem, 4vw, 3.5rem);
+    padding: clamp(3.5rem, 5.5vw, 5.625rem) clamp(1rem, 5vw, 6.25rem);
+  }
+
+  /* Fondo skyline con parallax (JS: [data-parallax]) */
+  .productos__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .productos__bg img {
+    position: absolute;
+    left: -2%;
+    bottom: -18%;
+    width: 104%;
+    max-width: none;
+    opacity: 0.15;
+    will-change: transform;
+  }
+
+  .productos__leaves {
+    position: absolute;
+    top: -32px;
+    width: min(353px, 30vw);
+    height: auto;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .productos__leaves--left { left: -64px; }
+  .productos__leaves--right {
+    right: -64px;
+    transform: scaleX(-1);
+  }
+
+  .productos__header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+    color: var(--color-white);
+  }
+  .productos__header .type-kicker {
+    color: var(--color-white);
+  }
+  .productos__title {
+    font-size: clamp(2rem, 3.34vw, 4rem); /* 64px en desktop */
+    font-weight: 300;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+  .productos__title strong {
+    font-weight: 700;
+  }
+  .productos__desc {
+    max-width: 782px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  /* Barra de filtros */
+  .productos__filters {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 16px;
+    background-color: var(--color-white);
+  }
+  .productos__filter {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+    color: var(--color-secondary-700);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .25s ease, color .25s ease;
+  }
+  .productos__filter:hover {
+    background-color: var(--color-secondary-50);
+  }
+  .productos__filter.is-active {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    filter: drop-shadow(0 3px 5px rgb(0 48 80 / 0.16));
+  }
+
+  /* Carril de productos — Swiper con efecto coverflow (product-carousel.ts):
+     la profundidad la genera Swiper con transforms 3D continuos. */
+  .productos__slider {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 2vw, 2rem);
+    width: 100%;
+  }
+  /* (las reglas .swiper de esta sección viven al FINAL del archivo, fuera de
+     @layer: el CSS base de Swiper llega sin layer y pisaría cualquier regla
+     en capa — solo el CSS sin layer compite con él por especificidad) */
+
+  .product-card {
+    position: relative;
+    cursor: grab;
+  }
+
+  .product-card__media {
+    position: relative;
+    height: 220px;
+    border: 1px solid var(--color-white);
+    border-radius: 16px 16px 0 0;
+    background-image: linear-gradient(to bottom, #a8b6d3, #f0f5ff);
+  }
+  .swiper-slide-active .product-card__media {
+    background-image: linear-gradient(to bottom, #8ac2ea, #f0f5ff);
+  }
+  .product-card__shadow {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    width: 110px;
+    height: 38px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.35), transparent 65%);
+    filter: blur(4px);
+  }
+  .product-card__img {
+    position: absolute;
+    left: 50%;
+    bottom: 36px;
+    height: 316px;
+    width: auto;
+    max-width: none;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 5px 5px rgb(0 0 0 / 0.25));
+  }
+
+  .product-card__body {
+    background-color: var(--color-white);
+    border-radius: 0 0 16px 16px;
+    padding: 32px 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .product-card__cat {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.5;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--color-secondary);
+  }
+  .product-card__name {
+    margin-top: -1rem;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--color-neutral-800);
+  }
+  .product-card__specs {
+    display: flex;
+    gap: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-neutral-100);
+  }
+  .product-card__specs dt {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.5;
+    text-transform: uppercase;
+    color: var(--color-neutral-300);
+  }
+  .product-card__specs dd {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.6;
+    color: var(--color-neutral-800);
+  }
+
+  /* Chip de flecha — solo visible en la card enfocada */
+  .product-card__chip {
+    position: absolute;
+    top: 192px;
+    right: 24px;
+    z-index: 2;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .product-card__chip svg {
+    transform: rotate(-45deg);
+  }
+  .swiper-slide-active .product-card__chip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Flechas claras (sobre fondo celeste) */
+  .embla__arrow.embla__arrow--light {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 16px;
+    background-color: var(--color-white);
+    color: var(--color-primary);
+  }
+  .embla__arrow.embla__arrow--light:hover:not(:disabled) {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+  .embla__arrow.embla__arrow--light.is-mirrored svg {
+    transform: scaleX(-1);
+  }
+
+  /* Paginación (bullets de Swiper): puntos blancos, activo en pill gradiente */
+  .productos__pagination {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 8px;
+  }
+  .productos__pagination .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+    margin: 0;
+    border-radius: 99px;
+    background: rgb(255 255 255 / 0.48);
+    opacity: 1;
+    transition: width .3s ease;
+    cursor: pointer;
+  }
+  .productos__pagination .swiper-pagination-bullet-active {
+    width: 30px;
+    background: linear-gradient(to right, var(--color-secondary) 24.5%, var(--color-secondary-600));
+  }
+
+  .productos__cta {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-transform: uppercase;
+    color: var(--color-white);
+    background-image: linear-gradient(to right, var(--color-primary) 24.5%, var(--color-primary-dark));
+    transition: filter .2s ease;
+  }
+  .productos__cta:hover {
+    filter: brightness(1.35);
+  }
+
+  @media (width < 48rem) {
+    .productos__slider .embla__arrow--light { display: none; }
+    .productos .embla__container { padding-top: 130px; }
+    .product-card__img { height: 250px; }
+  }
+
+  /* =========================================================
+     FOOTER (Figma 4898-1919)
+     ========================================================= */
+  .site-footer {
+    background-color: var(--color-white);
+    padding: 2rem clamp(1.5rem, 6.25vw, 7.5rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 10; /* por encima del hero pineado, como .hero-next */
+  }
+
+  .footer-card {
+    background-color: #f7f7f7; /* neutrals/50 del diseño */
+    border-radius: 32px 32px clamp(40px, 5.5vw, 106px) clamp(40px, 5.5vw, 106px);
+    padding: clamp(2rem, 4vw, 3.75rem) clamp(1.5rem, 4.2vw, 5rem) 2.5rem;
+    overflow: hidden;
+  }
+
+  .footer-card__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 3rem;
+    padding-bottom: clamp(6rem, 1vw, 15rem);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 360px;
+  }
+  .footer-brand__logo {
+    width: 196px;
+    height: auto;
+    display: block;
+  }
+  .footer-brand__text {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-400);
+  }
+  .footer-brand__text strong {
+    display: block;
+    font-weight: 800;
+  }
+
+  /* Encabezado de columna (mismo estilo en links y newsletter) */
+  .footer-heading {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: clamp(2rem, 3.3vw, 4rem);
+  }
+  .footer-links__col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .footer-links__col ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .footer-links__col a {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+    white-space: nowrap;
+    transition: color .2s ease;
+  }
+  .footer-links__col a:hover {
+    color: var(--color-primary);
+  }
+
+  .footer-news {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    width: min(370px, 100%);
+  }
+  .footer-news__block {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .footer-news__form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 56px;
+    padding: 4px 4px 4px 20px;
+    background-color: var(--color-white);
+    border: 1px solid #ccd4e3;
+    border-radius: 12px;
+  }
+  .footer-news__form input {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-text-dark);
+    background: transparent;
+    outline: none;
+  }
+  .footer-news__form input::placeholder {
+    color: var(--color-neutral-400);
+  }
+  .footer-news__form button {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background-image: linear-gradient(to right, var(--color-primary) 24.5%, var(--color-primary-dark));
+    color: var(--color-white);
+    cursor: pointer;
+    transition: filter .2s ease;
+  }
+  .footer-news__form button:hover {
+    filter: brightness(1.35);
+  }
+
+  .footer-news__note {
+    position: relative;
+    padding-left: 1.25rem;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-400);
+  }
+  .footer-news__note::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 1rem;
+  }
+  .footer-social__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 99px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    transition: background-color .25s ease;
+  }
+  .footer-social__link:hover {
+    background-color: var(--color-secondary);
+  }
+
+  /* Marca de agua "ESE" gigante con parallax (JS: [data-parallax]) */
+  .footer-mark {
+    height: clamp(120px, 15vw, 288px);
+    margin-inline: calc(-1 * clamp(1.5rem, 4.2vw, 5rem) / 2);
+    overflow: visible;
+  }
+  .footer-mark img {
+    width: 100%;
+    height: auto;
+    display: block;
+    will-change: transform;
+  }
+
+  .footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-400);
+  }
+
+  @media (width < 64rem) {
+    .footer-links {
+      flex-wrap: wrap;
+      width: 100%;
+    }
   }
 
   /* =========================================================
@@ -918,7 +1646,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    bottom: calc(100% - 2px); /* -2px: evita línea entre nube y sección */
+    bottom: calc(100% - 120px); /* -2px: evita línea entre nube y sección */
     pointer-events: none;
   }
   .hero-next__clouds img {
@@ -940,6 +1668,810 @@
      re-medida en cada refresh) para que se deslice sobre el hero nublado y
      llegue al top exactamente cuando el pin se libera. Sin JS no hay margen
      y el layout queda en flujo normal. */
+}
+
+/* =========================================================
+   COMPONENTE — Distribuidores (Figma: 3323-55)
+   Globo 3D (Three.js + GSAP, ver globe-scene.ts / distribuidores.ts) con
+   lista de países scrolleable a la derecha. El globo es puramente decorativo
+   a nivel de puntero — toda la interacción vive en la lista.
+   ========================================================= */
+@layer components {
+  .distribuidores {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 426px);
+    align-items: start;
+    gap: clamp(2rem, 6vw, 4rem);
+    min-height: clamp(720px, 92vh, 980px);
+    padding: clamp(4rem, 9vh, 6.5rem) clamp(1.5rem, 4.25vw, 7.5rem);
+    background: radial-gradient(ellipse at center,
+      #33a7da 0%, #2685bc 25%, #1a639e 50%, #0d407f 75%, #062f70 87.5%, #001e61 100%);
+    color: var(--color-white);
+  }
+
+  /* Anillos concéntricos decorativos, centrados en la sección */
+  .distribuidores__rings {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .distribuidores__rings span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    aspect-ratio: 1;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .distribuidores__rings span:first-child { width: min(54vw, 828px); }
+  .distribuidores__rings span:last-child  { width: min(70vw, 1086px); }
+
+  /* Montaje del globo Three.js — arrastrable con el cursor (rota como una
+     esfera libre, con inercia); elegir un país en la lista también lo gira. */
+  .distribuidores__globe {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    width: min(46vw, 640px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+  }
+  .distribuidores__globe [data-globe-canvas] {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .distribuidores__globe canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Tooltip del globo: sigue al marcador bajo el cursor (posición vía
+     transform, calculada en globe-scene.ts a partir de su proyección 3D). */
+  .globe-tooltip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background-color: var(--color-white);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.25);
+    transition: opacity .15s ease;
+    will-change: transform;
+  }
+  .globe-tooltip.is-visible {
+    opacity: 1;
+  }
+  .globe-tooltip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 0;
+    height: 0;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--color-white);
+  }
+
+  /* pointer-events: none — es una columna de texto, no debe haber espacio
+     "vacío invisible" capturando el drag del globo que pasa por detrás;
+     se reactiva solo en el link real (ver .distribuidores__link). */
+  .distribuidores__intro {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    pointer-events: none;
+  }
+  .distribuidores__intro .type-kicker {
+    color: var(--color-white);
+  }
+  .distribuidores__title {
+    margin-top: 0.5rem;
+    font-size: clamp(2.25rem, 4.2vw, 4rem); /* 64px en desktop */
+    font-weight: 300;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+  .distribuidores__title strong { font-weight: 700; }
+  .distribuidores__desc {
+    max-width: 463px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .distribuidores__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 280px;
+    max-width: 100%;
+    margin-top: clamp(1.5rem, 5vh, 3rem);
+    padding: 24px 32px;
+    border: 1px solid var(--color-white);
+    border-radius: 16px;
+    background-color: rgb(0 145 209 / 0.32);
+    box-shadow: 0 30px 9px rgb(0 0 0 / 0.02), 0 13px 6.5px rgb(0 0 0 / 0.03);
+  }
+  .distribuidores__stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .distribuidores__stat-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-secondary-200);
+  }
+
+  .distribuidores__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: clamp(1rem, 3vh, 2rem);
+    pointer-events: auto;
+  }
+  .distribuidores__link-text {
+    padding-bottom: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgb(255 255 255 / 0.5);
+    transition: border-color .25s ease;
+  }
+  .distribuidores__link-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-white);
+    color: var(--color-primary);
+    transition: transform .35s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  .distribuidores__link:hover .distribuidores__link-text { border-color: var(--color-white); }
+  .distribuidores__link:hover .distribuidores__link-icon { transform: rotate(45deg); }
+
+  /* Lista de países — scrolleable, altura fija tipo panel */
+  .distribuidores__list-wrap {
+    position: relative;
+    z-index: 2;
+    height: clamp(520px, 78vh, 786px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.4) rgb(255 255 255 / 0.12);
+  }
+  .distribuidores__list-wrap::-webkit-scrollbar { width: 6px; }
+  .distribuidores__list-wrap::-webkit-scrollbar-track {
+    background-color: rgb(255 255 255 / 0.12);
+    border-radius: 99px;
+  }
+  .distribuidores__list-wrap::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.4);
+    border-radius: 99px;
+  }
+
+  .distribuidores__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Tarjeta de país: el header (nombre + resumen + toggle) siempre visible;
+     el body (lista de distribuidores) se expande/colapsa vía el truco de
+     grid-template-rows 0fr↔1fr — anima sin JS y sin tocar layout externo. */
+  .distributor-card {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-rows: auto 0fr;
+    width: 100%;
+    border: 1px solid var(--color-white);
+    border-radius: 10px;
+    background-color: rgb(255 255 255 / 0.15);
+    text-align: left;
+    cursor: pointer;
+    transition: grid-template-rows .5s cubic-bezier(.25, 1, .5, 1), background-color .3s ease;
+  }
+  .distributor-card:hover {
+    background-color: rgb(255 255 255 / 0.22);
+  }
+  .distributor-card.is-active {
+    grid-template-rows: auto 1fr;
+    background-color: rgb(255 255 255 / 0.08);
+  }
+
+  .distributor-card__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    border-radius: inherit;
+    opacity: 0;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.2)),
+      url('../../assets/imgs/sectores/municipalidades.jpg');
+    background-size: cover, cover;
+    background-position: center, center;
+    transition: opacity .5s ease;
+  }
+  .distributor-card.is-active .distributor-card__bg { opacity: 0.32; }
+
+  .distributor-card__header {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 10px;
+    padding: 20px;
+  }
+  .distributor-card__name {
+    display: block;
+    grid-column: 1;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.6;
+    color: var(--color-secondary-50, #ebeff8);
+    transition: font-size .3s ease;
+  }
+  .distributor-card.is-active .distributor-card__name {
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .distributor-card__sub {
+    display: block;
+    grid-column: 1;
+    margin-top: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--color-secondary-50, #ebeff8);
+  }
+  .distributor-card__sub--expanded { display: none; }
+  .distributor-card.is-active .distributor-card__sub--collapsed { display: none; }
+  .distributor-card.is-active .distributor-card__sub--expanded { display: block; }
+
+  .distributor-card__toggle {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgb(255 255 255 / 0.18);
+    color: var(--color-white);
+    transition: transform .35s ease;
+  }
+  .distributor-card.is-active .distributor-card__toggle {
+    transform: rotate(180deg);
+  }
+
+  .distributor-card__body {
+    grid-row: 2;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .distributor-card__body-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px 20px;
+  }
+  .distributor-card__item {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+    border: 1px solid var(--color-white);
+    border-radius: 16px;
+    background-color: rgb(0 0 0 / 0.24);
+  }
+  .distributor-card__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 9px;
+    background-color: var(--color-white);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--color-primary);
+  }
+  .distributor-card__item-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    color: var(--color-secondary-50, #ebeff8);
+  }
+  .distributor-card__item-text strong {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .distributor-card__item-text span {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  @media (width < 64rem) {
+    .distribuidores {
+      grid-template-columns: 1fr;
+    }
+    .distribuidores__intro { order: 1; }
+    .distribuidores__globe {
+      order: 2;
+      position: relative;
+      inset: auto;
+      left: auto;
+      top: auto;
+      transform: none;
+      width: min(70vw, 420px);
+      margin-inline: auto;
+    }
+    .distribuidores__list-wrap {
+      order: 3;
+      height: clamp(420px, 60vh, 620px);
+    }
+  }
+}
+
+/* =========================================================
+   COMPONENTE — Link con flecha circular (variante clara, sobre fondo
+   blanco). Mismo lenguaje de interacción que .distribuidores__link
+   (círculo que rota 45° en hover) pero en tonos oscuros para secciones
+   claras — reutilizable donde haga falta un link "Explora más →".
+   ========================================================= */
+@layer components {
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .link-arrow__text {
+    padding-bottom: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-neutral-800);
+    border-bottom: 1px solid var(--color-neutral-800);
+    transition: border-color .25s ease, color .25s ease;
+  }
+  .link-arrow__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-bg-soft);
+    color: var(--color-primary);
+    transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .25s ease, color .25s ease;
+  }
+  .link-arrow:hover .link-arrow__icon {
+    transform: rotate(45deg);
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+}
+
+/* =========================================================
+   COMPONENTE — Residuos Inteligentes (Figma: 3328-3006)
+   Selector de servicios tipo tabs: la tarjeta activa "sobresale" hacia la
+   izquierda del panel gris (translateX negativo) y muestra su ícono en
+   blanco (filter invert, ver .residuos__tab.is-active) sobre un círculo con
+   degradado celeste; las inactivas quedan planas. El panel de la derecha
+   (foto + título + descripción) cambia con un crossfade GSAP al hacer clic
+   en otra tarjeta — ver initResiduosSelector en residuos-selector.ts.
+   ========================================================= */
+@layer components {
+  .residuos {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(3rem, 8vh, 5rem);
+    padding: clamp(4rem, 10vh, 7.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(5rem, 12vh, 8rem);
+  }
+  .residuos__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 782px;
+    text-align: center;
+  }
+  .residuos__desc {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+
+  .residuos__selector {
+    display: grid;
+    grid-template-columns: minmax(320px, 466px) 1fr;
+    align-items: center;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    width: 100%;
+    max-width: 1294px;
+    padding: 3rem 3rem 3rem 0;
+    background-color: var(--color-neutral-100);
+    border-radius: 16px;
+  }
+
+  .residuos__tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-left: clamp(-2.5rem, -3vw, -1.5rem);
+  }
+
+  .residuos__tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 28px 32px;
+    border-radius: 16px;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-neutral-100);
+    box-shadow: 0 2px 2px rgb(0 0 0 / 0.05), 0 8px 4px rgb(0 0 0 / 0.04);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease;
+  }
+  .residuos__tab:hover:not(.is-active) {
+    border-color: var(--color-neutral-200);
+  }
+  .residuos__tab.is-active {
+    transform: translateX(clamp(-1.25rem, -1.5vw, -0.75rem));
+    border: 2px solid var(--color-secondary-300);
+    box-shadow: 0 3px 2px rgb(0 0 0 / 0.04), 0 1px 1px rgb(0 0 0 / 0.06);
+  }
+  .residuos__tab-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--color-neutral-100);
+    transition: background-image .3s ease, background-color .3s ease;
+  }
+  .residuos__tab-icon img {
+    width: 28px;
+    height: 28px;
+    transition: filter .3s ease;
+  }
+  .residuos__tab.is-active .residuos__tab-icon {
+    background-image: linear-gradient(to right, var(--color-secondary) 24.5%, var(--color-secondary-600));
+  }
+  .residuos__tab.is-active .residuos__tab-icon img {
+    /* Los SVG originales vienen en gris/blanco fijo (no currentColor) — se
+       fuerzan a blanco puro igual que .site-logo, sin necesitar una segunda
+       versión del ícono por estado. */
+    filter: brightness(0) invert(1);
+  }
+  .residuos__tab-text {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .residuos__tab-title {
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary);
+  }
+  .residuos__tab-sub {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+  }
+  .residuos__tab-arrow {
+    flex-shrink: 0;
+    display: inline-flex;
+    color: var(--color-secondary);
+  }
+
+  .residuos__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .residuos__media {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 16px;
+    aspect-ratio: 700 / 372;
+  }
+  .residuos__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgb(0 0 0 / 0.2);
+  }
+  .residuos__media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .residuos__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgb(0 0 0 / 0.4);
+    color: var(--color-white);
+    pointer-events: none;
+  }
+  .residuos__panel-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-neutral-800);
+  }
+  .residuos__panel-desc {
+    margin: 0;
+    max-width: 700px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--color-neutral-600);
+  }
+
+  @media (width < 64rem) {
+    .residuos__selector {
+      grid-template-columns: 1fr;
+      padding: 2rem;
+    }
+    .residuos__tabs {
+      margin-left: 0;
+    }
+    .residuos__tab.is-active {
+      transform: none;
+    }
+  }
+}
+
+/* =========================================================
+   COMPONENTE — Certificaciones (Figma: 3328-7259)
+   Grilla de logos de estándares/certificaciones, con header (heading +
+   link-arrow) alineados al final. Sección estática, sin animación propia
+   más allá de los data-reveal genéricos.
+   ========================================================= */
+@layer components {
+  .certificaciones {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3rem, 8vh, 5rem);
+    padding: clamp(4rem, 10vh, 7.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(5rem, 14vh, 10rem);
+  }
+
+  .certificaciones__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  .certificaciones__heading-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 686px;
+  }
+  .certificaciones__desc {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+
+  .certificaciones__row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(2rem, 5vw, 3.5rem);
+  }
+  .certificaciones__item {
+    display: flex;
+    flex: 1 1 160px;
+    max-width: 220px;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  .certificaciones__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(120px, 14vw, 210px);
+    height: clamp(120px, 14vw, 210px);
+  }
+  .certificaciones__logo img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  .certificaciones__divider {
+    width: 64px;
+    height: 1px;
+    background-color: var(--color-neutral-200);
+  }
+  .certificaciones__name {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+  }
+  .certificaciones__item-desc {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+}
+
+/* =========================================================
+   COMPONENTE — Contactemos (Figma: 535-782)
+   CTA de cierre, al pie de todo el contenido. Foto de fondo + tarjeta de
+   vidrio esmerilado encima (backdrop-blur real, así el blur reacciona a lo
+   que tenga detrás). El titular "se revela" con el scroll: pasa de un
+   blanco translúcido a blanco sólido vía un gradiente de texto cuyo
+   background-position anima un ScrollTrigger scrubbed (initContactoReveal
+   en contacto-reveal.ts) — reversible 1:1 con la dirección del scroll.
+   ========================================================= */
+@layer components {
+  .contacto {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(3rem, 6vh, 5rem) clamp(1.5rem, 6.25vw, 7.5rem);
+  }
+
+  .contacto__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  .contacto__bg img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .contacto__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgb(0 21 69 / 0.3);
+  }
+
+  .contacto__card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid var(--color-neutral-400);
+    border-radius: 16px;
+    padding: clamp(2.5rem, 6vw, 6.25rem) clamp(1.5rem, 7.3vw, 8.75rem);
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.32)),
+      linear-gradient(rgb(143 143 143 / 0.2), rgb(143 143 143 / 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 20px 44px rgb(0 0 0 / 0.2), 0 79px 79px rgb(0 0 0 / 0.17), 0 178px 107px rgb(0 0 0 / 0.1);
+  }
+
+  .contacto__card .type-kicker {
+    color: var(--color-secondary-300);
+  }
+
+  .contacto__heading {
+    margin: 0;
+    font-size: clamp(2rem, 4.2vw, 4rem); /* 64px en desktop */
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.7px;
+    /* text-transform: uppercase; */
+    color: var(--color-white);
+  }
+  .contacto__heading strong {
+    font-weight: 700;
+  }
+  /* SplitText envuelve cada letra en .char (contacto-reveal.ts); su opacidad
+     en reposo es 0.32 (aplicado por JS con gsap.set, no por CSS, para que
+     no “parpadee” si el módulo tarda un instante en correr — el heading ya
+     nace completo y opaco hasta que el JS lo apaga). */
+  .contacto__heading .char {
+    display: inline-block;
+  }
+
+  .contacto__divider {
+    margin: 0;
+    border: none;
+    border-top: 1px solid rgb(255 255 255 / 0.24);
+  }
+
+  .contacto__row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  .contacto__desc {
+    flex: 1 0 0;
+    min-width: 260px;
+    max-width: 700px;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  @media (width < 48rem) {
+    .contacto__row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
 }
 
 /* =========================================================
@@ -978,4 +2510,29 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* =========================================================
+   SWIPER PRODUCTOS — fuera de @layer a propósito: el CSS base de Swiper
+   se importa sin layer (desde product-carousel.ts) y las reglas en capa
+   siempre pierden contra él; aquí competimos por especificidad normal.
+   ========================================================= */
+.productos .swiper {
+  flex: 1;
+  min-width: 0;
+  /* espacio para que la foto del producto sobresalga por encima de la card */
+  padding-top: 170px;
+  padding-bottom: 8px;
+}
+.productos .swiper-wrapper {
+  align-items: center;
+}
+.productos .swiper-slide {
+  width: min(353px, 80vw);
+  height: auto;
+  transition-property: opacity, transform;
+  opacity: 0.65;
+}
+.productos .swiper-slide-active {
+  opacity: 1;
 }
