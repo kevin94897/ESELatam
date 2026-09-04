@@ -1,8 +1,8 @@
 /**
  * Hero con animación de scroll (front-page):
  *  - Intro al cargar (sin scroll): el titular aparece centrado con máscara por
- *    línea, la isla emerge, el titular viaja a su posición de layout y entran
- *    menú y lede/CTA/card.
+ *    línea, viaja a su posición de layout (a la izquierda), entran menú y
+ *    lede/CTA/card, y recién al final emerge la isla — no está desde la carga.
  *  - Con el scroll: el video se reproduce scrubbed (suavizado con lerp) y el
  *    titular y la isla derivan hacia abajo con parallax (velocidades
  *    distintas) hasta disolverse entre las nubes de la sección siguiente.
@@ -88,24 +88,46 @@ export function initHeroScroll(section: HTMLElement): void {
     // 2) Titular centrado: cada línea sube desde detrás de su máscara
     intro.from(titleLines, { yPercent: 115, duration: 1.1, stagger: 0.14 }, 0.2);
 
-    // 3) La isla emerge desde abajo, visible desde la carga.
-    // Anima `y` en px (no yPercent): el parallax de scroll usa yPercent en el
-    // mismo wrapper y ambas capas de transform componen sin pisarse.
-    intro.from(island ?? [], { y: 90, autoAlpha: 0, duration: 1.6, ease: 'power3.out' }, 0.6);
-
-    // 4) El titular viaja del centro a su posición de layout
+    // 3) El titular viaja del centro a su posición de layout, a la izquierda.
+    // Termina en 1.5 + 1.1 = 2.6, que es lo que marca cuándo entra la isla.
     intro.to(title ?? [], { x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.inOut' }, 1.5);
 
-    // 5) El menú baja y entra
+    // 4) El menú baja y entra
     intro.to(header ?? [], { yPercent: 0, autoAlpha: 1, duration: 0.8 }, 2.15);
 
-    // 6) Lede, CTA y card entran escalonados (clearProps: sin transform
+    // 5) Lede, CTA y card entran escalonados (clearProps: sin transform
     // inline residual que bloquee los hovers CSS, como el settle del CTA)
     intro.fromTo(
       revealEls,
       { y: 40, autoAlpha: 0 },
       { y: 0, autoAlpha: 1, duration: 0.9, stagger: 0.12, clearProps: 'transform' },
       2.25
+    );
+
+    // 6) Recién ahora aparece la isla: no está desde la carga, entra cuando el
+    // titular ya aterrizó a la izquierda (arranca 0.05s antes de que termine
+    // ese viaje, lo justo para que encadene en vez de sentirse un corte).
+    //
+    // Anima `y` en px (no yPercent): el parallax de scroll usa yPercent en el
+    // mismo wrapper y ambas capas de transform componen sin pisarse. `scale` y
+    // `rotation` son libres — el timeline de scroll no las toca.
+    const ISLAND_IN = 2.55;
+
+    intro.fromTo(
+      island ?? [],
+      { y: 170, scale: 0.84, autoAlpha: 0 },
+      { y: 0, scale: 1, autoAlpha: 1, duration: 1.7, ease: 'expo.out' },
+      ISLAND_IN
+    );
+
+    // La inclinación asienta más lenta que la subida: ese desfase es lo que da
+    // la sensación de que la isla "encuentra" su flotación, en vez de aterrizar
+    // rígida de una pieza.
+    intro.fromTo(
+      island ?? [],
+      { rotation: -5 },
+      { rotation: 0, duration: 2.4, ease: 'power2.out' },
+      ISLAND_IN
     );
 
     // Si el navegador restaura el scroll tarde, o el usuario sale del hero
@@ -141,11 +163,16 @@ export function initHeroScroll(section: HTMLElement): void {
   // del hero (no 100svh, que puede diferir con min-height, zoom o svh≠viewport)
   // para que llegue al top del viewport justo cuando el pin termina.
   // Solo se aplica con pin activo; sin JS o con reduce-motion, flujo normal.
+  // Solo el margen: NO hace falta forzar ningún min-height (ni acá ni en la
+  // sección siguiente) para que el hero quede tapado. Lo que sincroniza el
+  // barrido es este margen; al liberarse el pin, .hero-next y todo lo que
+  // sigue son un flujo continuo y opaco (bg-white + z-10) por encima del
+  // hero, así que no hay hueco que rellenar. Forzar altura solo reservaba
+  // scroll de más y dejaba un vacío visible en la sección a la que se le
+  // aplicara.
   const next = document.querySelector<HTMLElement>('.hero-next');
   const setOverlap = (): void => {
-    // minHeight = altura del hero: la sección debe cubrirlo por completo
-    // (si fuera más corta, el hero asomaría entre la sección y el footer).
-    if (next) gsap.set(next, { marginTop: -section.offsetHeight, minHeight: section.offsetHeight });
+    if (next) gsap.set(next, { marginTop: -section.offsetHeight });
   };
   setOverlap();
   ScrollTrigger.addEventListener('refreshInit', setOverlap);

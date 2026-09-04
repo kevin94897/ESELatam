@@ -9,11 +9,13 @@ import '../css/main.css';
 import { initGsap } from './lib/gsap';
 import { initSmoothScroll } from './modules/smooth-scroll';
 import { initScrollReveals } from './modules/scroll-reveals';
+import { initSectionHeaders } from './modules/section-headers';
 import { initHeader } from './modules/header';
 import { initSliders } from './modules/slider';
 import { initMarquees } from './modules/marquee';
 import { initParallax } from './modules/parallax';
 import { initProductCarousel } from './modules/product-carousel';
+import { initFloat } from './modules/float';
 import { initHeroCta } from './modules/hero-cta';
 import { initContactoReveal } from './modules/contacto-reveal';
 import { initResiduosSelector } from './modules/residuos-selector';
@@ -23,10 +25,14 @@ function bootstrap(): void {
   initSmoothScroll();
   initHeader();
   initScrollReveals();
+  initSectionHeaders();
   initSliders();
   initMarquees();
   initParallax();
   initProductCarousel();
+  // Después del carrusel: si Swiper duplicó slides para el loop, sus copias ya
+  // están en el DOM y también reciben la flotación.
+  initFloat();
   initHeroCta();
   initContactoReveal();
   initResiduosSelector();
