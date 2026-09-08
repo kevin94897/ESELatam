@@ -53,6 +53,21 @@ function bootstrap(): void {
     });
   }
 
+  // Panel de configuración de la ficha de producto (single-producto.php)
+  const productConfig = document.querySelector<HTMLElement>('[data-product-config]');
+  if (productConfig) {
+    void import('./modules/product-config').then(({ initProductConfig }) => {
+      initProductConfig(productConfig);
+    });
+  }
+
+  // Selector de "Pruebas de rigurosidad" (single-producto.php)
+  if (document.querySelector('[data-pruebas]')) {
+    void import('./modules/pruebas-selector').then(({ initPruebasSelector }) => {
+      initPruebasSelector();
+    });
+  }
+
   // Lazy-load Three.js solo si la página tiene un canvas 3D
   const has3d = document.querySelector<HTMLElement>('[data-three-scene]');
   if (has3d) {

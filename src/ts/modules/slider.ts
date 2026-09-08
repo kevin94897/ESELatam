@@ -9,6 +9,10 @@
  *     <span data-embla-current> / <span data-embla-total>    (opcionales)
  *   </div>
  *
+ * `data-embla-active-below="64rem"` (opcional) limita el carrusel a anchos
+ * menores a ese valor; por encima Embla se desactiva y el markup queda libre
+ * para maquetarse de otra forma (p. ej. una grilla).
+ *
  * El slide seleccionado recibe la clase `is-active` (para estados visuales).
  */
 
@@ -193,11 +197,19 @@ export function initSliders(): void {
     // position:absolute *dentro* del slide (ver .sector-card en main.css) — el
     // slide que Embla mide nunca cambia de tamaño, así que no hace falta tocar
     // watchResize ni forzar reInit: no hay resize que interrumpa el scroll.
+    // data-embla-active-below="64rem": el carril solo funciona por debajo de
+    // ese ancho. Embla desactiva el carrusel a partir del breakpoint (deja de
+    // transformar el contenedor y suelta los slides), así que arriba el mismo
+    // markup puede maquetarse como grilla desde CSS. Lo resuelve Embla y no un
+    // matchMedia propio porque ya vuelve a medir solo en cada resize.
+    const activeBelow = root.dataset.emblaActiveBelow;
+
     const embla = EmblaCarousel(viewport, {
       align: 'start',
       duration: 28,
       loop,
       ...(loop ? {} : { containScroll: root.dataset.emblaContain === 'false' ? false : 'trimSnaps' }),
+      ...(activeBelow ? { breakpoints: { [`(min-width: ${activeBelow})`]: { active: false } } } : {}),
     });
 
     setupButtons(root, embla);

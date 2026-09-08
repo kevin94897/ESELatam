@@ -2787,6 +2787,25 @@
       color: var(--color-white);
     }
   }
+
+  /* Variante para fondos oscuros (p. ej. .certificaciones--dark): mismo
+     lenguaje que .distribuidores__link, con texto/aro en blanco en vez de
+     los tonos oscuros por defecto (pensados para secciones claras). */
+  .link-arrow--light .link-arrow__text {
+    color: var(--color-white);
+    border-bottom-color: rgb(255 255 255 / 0.5);
+  }
+
+  .link-arrow--light .link-arrow__icon {
+    background-color: var(--color-white);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .link-arrow--light:hover .link-arrow__icon {
+      background-color: var(--color-secondary);
+      color: var(--color-white);
+    }
+  }
 }
 
 /* =========================================================
@@ -3118,6 +3137,11 @@
    Cada celda se enciende al pasar el mouse (logo a color + línea de acento).
    ========================================================= */
 @layer components {
+  /* El fondo vive acá (no en la clase utilitaria `bg-white` del markup, que
+     ya no se usa): en este archivo cualquier regla sin capa le gana a
+     cualquier regla CON capa sin importar la especificidad, así que si el
+     fondo siguiera en `bg-white` la variante --dark de abajo nunca podría
+     pisarlo. */
   .certificaciones {
     display: flex;
     flex-direction: column;
@@ -3125,6 +3149,7 @@
     /* Sin padding lateral en la sección: lo toma el header, así la franja de
        logos puede ir a sangre. */
     padding-block: clamp(4rem, 10vh, 7.5rem) clamp(5rem, 14vh, 10rem);
+    background-color: var(--color-white);
   }
 
   .certificaciones__header {
@@ -3141,6 +3166,23 @@
     flex-direction: column;
     gap: 1.5rem;
     max-width: 686px;
+  }
+
+  /* Réplica de .type-h2/.hl (mismos valores), pero como clase propia: así
+     .certificaciones--dark puede pisar el color más abajo sin pelear contra
+     la capa "utilities" de Tailwind (ver comentario en el markup). */
+  .certificaciones__title {
+    font-family: var(--font-sans);
+    font-size: clamp(2rem, 7.5vw, var(--text-h2));
+    font-weight: 300;
+    line-height: 1.125;
+    text-transform: uppercase;
+    color: var(--color-text-dark);
+  }
+
+  .certificaciones__title-accent {
+    color: var(--color-primary);
+    font-weight: 700;
   }
 
   .certificaciones__desc {
@@ -3265,6 +3307,82 @@
       filter: none;
       opacity: 1;
     }
+  }
+
+  /* ---------- Variante oscura (single-producto.php, arriba de .contacto) ----------
+     Mismo markup, fondo navy + texto blanco. Los logos NO se pueden tratar
+     igual que en claro (grayscale + opacity .7 sobre fondo oscuro): uno de
+     los cinco (din.png) es texto negro sobre transparente y con ese filtro
+     se vuelve casi invisible; otro (pkn.png) queda ilegible. En vez de
+     ajustar un filtro distinto por logo, cada uno va sobre una chip blanca
+     — así todos mantienen su color real y su propio contraste, sea cual sea
+     su paleta. */
+  .certificaciones--dark {
+    background-color: var(--color-primary-900);
+  }
+
+  .certificaciones--dark .certificaciones__title {
+    color: var(--color-white);
+  }
+
+  .certificaciones--dark .certificaciones__title-accent {
+    color: var(--color-secondary);
+  }
+
+  .certificaciones--dark .certificaciones__desc {
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  .certificaciones--dark .certificaciones__row {
+    border-block-color: rgb(255 255 255 / 0.14);
+  }
+
+  .certificaciones--dark .certificaciones__item + .certificaciones__item {
+    border-left-color: rgb(255 255 255 / 0.14);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .certificaciones--dark .certificaciones__item:hover {
+      background-color: rgb(255 255 255 / 0.04);
+    }
+  }
+
+  .certificaciones--dark .certificaciones__logo {
+    padding: 1rem;
+    background-color: var(--color-white);
+    border-radius: 16px;
+    transition: transform .45s cubic-bezier(.22, 1, .36, 1);
+  }
+
+  /* Los logos quedan siempre a color sobre su chip — el filtro gris de la
+     variante clara no aplica acá (ver comentario arriba). El hover mueve la
+     chip entera (fondo incluido), no la imagen sola: por eso se anula el
+     transform que la regla base le pone a la <img>. */
+  .certificaciones--dark .certificaciones__logo img {
+    filter: none;
+    opacity: 1;
+  }
+
+  .certificaciones--dark .certificaciones__item:hover .certificaciones__logo img {
+    transform: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .certificaciones--dark .certificaciones__item:hover .certificaciones__logo {
+      transform: translateY(-6px);
+    }
+  }
+
+  .certificaciones--dark .certificaciones__divider {
+    background-color: rgb(255 255 255 / 0.25);
+  }
+
+  .certificaciones--dark .certificaciones__name {
+    color: var(--color-white);
+  }
+
+  .certificaciones--dark .certificaciones__item-desc {
+    color: rgb(255 255 255 / 0.6);
   }
 }
 
@@ -4394,6 +4512,1381 @@
       padding: 0;
       font-size: 12px;
       border-radius: 8px;
+    }
+  }
+}
+
+/* =========================================================
+   PRODUCTO SINGLE (single-producto.php) — hero "panel de
+   configuración" + especificaciones + franja de material.
+
+   Reutiliza el lenguaje que ya existe en el theme: el fondo y las capas
+   del banner de catálogo (.catalogo-banner__bg/__shade/__noise/__grid),
+   el glass de .contacto__card para los paneles, y la escena isla+producto
+   con ALTOS FIJOS (no % del ancho) — que las fotos de cada producto traen
+   aspect-ratios distintos y con medidas relativas la escena cambiaba de
+   alto y el producto se despegaba de la isla.
+   ========================================================= */
+@layer components {
+
+  /* Variante clara del CTA: la clase ya se usaba (catalogo-banner.php) pero
+     se había quedado sin reglas, así que el botón salía navy sobre fondo
+     oscuro. Solo redefine los tokens que el propio componente expone. */
+  .hero-cta--light {
+    --cta-label-bg: var(--color-white);
+    --cta-label-bg-hover: var(--color-secondary);
+    --cta-label-color: var(--color-primary);
+    --cta-label-color-hover: var(--color-white);
+    /* El blob va en secondary, no en primary: estas dos páginas tienen
+       fondo navy y un blob primary quedaba invisible contra él. */
+    --cta-blob-bg: var(--color-secondary);
+    --cta-blob-bg-hover: var(--color-white);
+  }
+
+  .producto-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 100svh;
+    background-color: var(--color-primary-900);
+  }
+
+  /* Degradado radial de marca (#1A3574 → #001545), centrado detrás de la
+     escena para que el producto quede sobre la zona clara y el panel de
+     configuración sobre la oscura. */
+  .producto-hero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-color: #001545;
+    background-image: radial-gradient(120% 95% at 52% 42%, #1a3574 0%, #0b1f52 46%, #001545 100%);
+  }
+
+  /* Trama de puntos del diseño. Un solo radial-gradient repetido — mismo
+     criterio que .catalogo-banner__grid: patrón por CSS, no cientos de nodos. */
+  .producto-hero__dots {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.5;
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+
+  .producto-hero__inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    /* 31rem (496px) y no menos: las seis píldoras de litraje necesitan 446px
+       en una sola fila (con 26rem se partían en dos), y el par de botones
+       "Comprar"/"Descargar ficha técnica" necesita ~480px — con la columna
+       en exactamente 30rem/480px quedaban sin nada de margen, así que el
+       leve cambio de ancho del hover de .hero-cta (la transición de
+       margin-right en .hero-cta__label) alcanzaba para tirar el segundo
+       botón a una fila aparte y de vuelta, lo que además desplazaba todo el
+       panel porque .producto-hero__panel está centrado verticalmente
+       (align-self: center) en su celda. */
+    grid-template-columns: minmax(300px, 31rem) minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    min-height: 100svh;
+    max-width: 1920px;
+    margin-inline: auto;
+    padding: clamp(6rem, 14vh, 8.5rem) clamp(1.5rem, 5vw, 5rem) clamp(2.5rem, 6vh, 4rem);
+  }
+
+  .producto-hero__crumb {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .producto-hero__panel {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-self: center;
+  }
+
+  /* Kicker tipo cápsula tech/glassmorphism */
+  .producto-hero__kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    padding: 0.35rem 0.875rem;
+    border-radius: 9999px;
+    background: rgb(0 145 209 / 0.12);
+    border: 1px solid rgb(0 145 209 / 0.28);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #54b5e0;
+  }
+
+  .producto-hero__kicker::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--color-secondary);
+    box-shadow: 0 0 8px var(--color-secondary);
+  }
+
+  .producto-hero__title {
+    font-size: clamp(2.25rem, 4.25vw, 4rem);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .producto-hero__title-accent {
+    display: block;
+    background: linear-gradient(135deg, #54b5e0 0%, #8eb952 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .producto-hero__desc {
+    max-width: 38ch;
+    font-size: 15px;
+    line-height: 1.65;
+    color: rgb(255 255 255 / 0.82);
+    border-left: 2px solid rgb(0 145 209 / 0.4);
+    padding-left: 1rem;
+    margin-top: 0.125rem;
+  }
+
+  .producto-hero__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .producto-hero__group-label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .producto-hero__group-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .producto-hero__group-text {
+    color: rgb(255 255 255 / 0.9);
+  }
+
+  .producto-hero__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .producto-hero__pill {
+    padding: 0.5rem 1.125rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.06);
+    font-size: 13px;
+    font-weight: 700;
+    color: rgb(255 255 255 / 0.75);
+    cursor: pointer;
+    transition: border-color .25s ease, background-color .25s ease, color .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__pill:not(.is-active):hover {
+      border-color: rgb(255 255 255 / 0.4);
+      color: var(--color-white);
+    }
+  }
+
+  .producto-hero__pill.is-active {
+    border-color: var(--color-secondary);
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    box-shadow: 0 0 0 4px rgb(0 145 209 / 0.2);
+  }
+
+  .producto-hero__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  /* El aro de selección va con box-shadow (no border) para que el círculo
+     de color no cambie de tamaño entre estados. */
+  .producto-hero__swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--swatch, #fff);
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25);
+    cursor: pointer;
+    transition: box-shadow .25s ease, transform .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__swatch:not(.is-active):hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .producto-hero__swatch.is-active {
+    box-shadow:
+      0 0 0 2px var(--color-primary-900),
+      0 0 0 4px var(--color-secondary),
+      0 0 16px rgb(0 145 209 / 0.5);
+  }
+
+  .producto-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .producto-hero__ficha {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.375rem;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-white);
+    text-decoration: none;
+    transition: border-color .25s ease, background-color .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__ficha:hover {
+      border-color: rgb(255 255 255 / 0.5);
+      background-color: rgb(255 255 255 / 0.08);
+    }
+  }
+
+  .producto-hero__ficha[aria-disabled="true"] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  /* ---------- Escena: isla + producto ---------- */
+
+  /* Fila 2 (no 1/3): así se centra sobre la misma caja que el panel de
+     configuración y el aside — con `1 / 3` incluía la fila del breadcrumb y
+     los tres quedaban con centros verticales distintos. */
+  .producto-hero__scene {
+    position: relative;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 620px);
+    height: clamp(380px, 52vh, 560px);
+  }
+
+  /* Isla angosta (64%) y baja (4%): al ocupar menos alto de la escena deja
+     sitio para que el producto crezca y para el aire entre ambos. */
+  .producto-hero__pedestal {
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    right: 0;
+    bottom: 4%;
+    width: 64%;
+    margin-inline: auto;
+    pointer-events: none;
+  }
+
+  .producto-hero__pedestal img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Mismo criterio que .catalogo-banner__product--main: `padding-bottom` +
+     `align-items: flex-start` dejan un hueco bajo la foto para que la
+     sombra caiga sobre la isla en vez de quedar tapada por el producto. */
+  .producto-hero__product {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    bottom: 18%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    /* Este padding ES la separación entre la foto y su sombra: la sombra se
+       ancla al borde inferior del wrapper y la foto al superior, así que
+       subirlo levanta el producto sobre la isla sin moverle la sombra.
+       Escala con la altura de viewport para no meter la foto bajo el header
+       en pantallas bajas. */
+    padding-bottom: clamp(60px, 12vh, 120px);
+  }
+
+  /* min(vw, vh) en vez de solo vw: en viewports anchos pero bajos el ancho
+     no es el límite real — el header sí. */
+  .producto-hero__product img {
+    display: block;
+    width: auto;
+    height: clamp(240px, min(32vw, 44vh), 420px);
+    max-width: none;
+    filter: drop-shadow(0 24px 30px rgb(0 0 0 / 0.45));
+  }
+
+  .producto-hero__product .product-card__shadow {
+    bottom: 6px;
+    width: 150px;
+    height: 46px;
+    background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.5), transparent 65%);
+  }
+
+  .producto-hero__scroll-hint {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(1rem, 2.5vh, 2rem);
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.04));
+    border: 1px solid rgb(255 255 255 / 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25), inset 0 1px 0 rgb(255 255 255 / 0.2);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.85);
+    z-index: 10;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: background-color .3s ease, border-color .3s ease, transform .3s ease, box-shadow .3s ease;
+  }
+
+  .producto-hero__scroll-icon {
+    position: relative;
+    width: 14px;
+    height: 22px;
+    border: 1.5px solid rgb(255 255 255 / 0.7);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    padding-top: 3px;
+  }
+
+  .producto-hero__scroll-dot {
+    width: 3px;
+    height: 5px;
+    border-radius: 2px;
+    background-color: var(--color-white);
+    animation: scrollWheel 2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  @keyframes scrollWheel {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(7px);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(9px);
+    }
+  }
+
+  .producto-hero__scroll-arrow {
+    color: var(--color-secondary);
+    animation: bounceDown 2s ease-in-out infinite;
+  }
+
+  @keyframes bounceDown {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__scroll-hint:hover {
+      background: linear-gradient(135deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.08));
+      border-color: rgb(255 255 255 / 0.35);
+      color: var(--color-white);
+      transform: translate(-50%, 2px);
+      box-shadow: 0 12px 30px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.3);
+    }
+  }
+
+  /* ---------- Panel de features + tira de miniaturas ---------- */
+
+  .producto-hero__aside {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: center;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  /* Mismo glass que .contacto__card (doble gradiente plano + blur): las dos
+     viven sobre una foto de fondo, no sobre un color sólido. */
+  .producto-hero__features {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    width: min(19rem, 34vw);
+    padding: 1.5rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 20px;
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.32)),
+      linear-gradient(rgb(143 143 143 / 0.2), rgb(143 143 143 / 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .producto-hero__feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+
+  .producto-hero__feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background-color: rgb(0 145 209 / 0.16);
+    color: var(--color-secondary-300);
+  }
+
+  .producto-hero__feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .producto-hero__feature-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-white);
+  }
+
+  .producto-hero__feature-desc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .producto-hero__features-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding-top: 1.125rem;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .producto-hero__features-foot img {
+    flex: none;
+    width: 48px;
+    height: auto;
+    filter:brightness(0) invert(1)
+  }
+
+  .producto-hero__thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .producto-hero__thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    padding: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 14px;
+    background-color: rgb(255 255 255 / 0.06);
+    cursor: pointer;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__thumb:not(.is-active):hover {
+      border-color: rgb(255 255 255 / 0.35);
+    }
+  }
+
+  .producto-hero__thumb.is-active {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 14px rgb(0 145 209 / 0.45);
+  }
+
+  .producto-hero__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* ---------- Especificaciones ---------- */
+
+  .producto-specs {
+    --specs-divider-h: clamp(48px, 6vw, 96px);
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-primary-900);
+    padding: clamp(3rem, 8vh, 5.5rem) clamp(1.5rem, 5vw, 5rem);
+    /* El divider ocupa la franja de arriba, así que el padding superior lo
+       suma para que el contenido no quede debajo de la onda. */
+    padding-top: calc(clamp(3rem, 8vh, 5.5rem) + var(--specs-divider-h));
+  }
+
+  .producto-specs__divider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--specs-divider-h);
+    line-height: 0;
+    pointer-events: none;
+  }
+
+  /* preserveAspectRatio="none" en el SVG: la onda se estira al ancho de la
+     pantalla sin recortarse ni dejar bordes. */
+  .producto-specs__divider svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .producto-specs__divider-front {
+    fill: #001545;
+  }
+
+  /* El azul interior del degradado del hero: #0b1f52 quedaba a un paso del
+     fondo de specs y la segunda cresta no se leía. */
+  .producto-specs__divider-back {
+    fill: #1a3574;
+    opacity: 0.42;
+  }
+
+  /* Una sola columna: el header va arriba de las cards, no al costado. */
+  .producto-specs__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+    max-width: 1920px;
+    margin-inline: auto;
+  }
+
+  .producto-specs__header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .producto-specs__title {
+    font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+    font-weight: 300;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .producto-specs__desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .producto-specs__more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgb(255 255 255 / 0.25);
+    border-radius: 50%;
+    color: var(--color-white);
+    transition: background-color .25s ease, border-color .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-specs__more:hover {
+      border-color: var(--color-secondary);
+      background-color: var(--color-secondary);
+    }
+  }
+
+  /* Desktop: Embla está desactivado, así que el viewport no recorta y el
+     track se comporta como la grilla de siempre. */
+  .producto-specs__viewport {
+    overflow: visible;
+  }
+
+  .producto-specs__track {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+  }
+
+  .producto-specs__dots {
+    display: none;
+  }
+
+  .producto-spec {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.25rem;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 16px;
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.32)),
+      linear-gradient(rgb(143 143 143 / 0.2), rgb(143 143 143 / 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .producto-spec__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background-color: rgb(0 145 209 / 0.16);
+    color: var(--color-secondary-300);
+  }
+
+  .producto-spec__label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.5);
+  }
+
+  .producto-spec__value {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-white);
+  }
+
+  /* ---------- Franja de material ---------- */
+
+  .producto-material {
+    display: grid;
+    grid-template-columns: minmax(200px, 18rem) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    max-width: 1920px;
+    margin-inline: auto;
+    padding: 0 clamp(1.5rem, 5vw, 5rem) clamp(3rem, 8vh, 5rem);
+    background-color: var(--color-primary-900);
+  }
+
+  .producto-material__brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .producto-material__brand img {
+    flex: none;
+    width: 72px;
+    height: auto;
+  }
+
+  .producto-material__card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    overflow: hidden;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 20px;
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.32)),
+      linear-gradient(rgb(143 143 143 / 0.2), rgb(143 143 143 / 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Placeholder del material: falta la foto real de pellets de HDPE — el
+     degradado usa el verde de marca y el mismo corte diagonal del diseño. */
+  .producto-material__media {
+    flex: none;
+    width: clamp(120px, 22vw, 260px);
+    height: 84px;
+    border-radius: 12px;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgb(255 255 255 / 0.25), transparent 45%),
+      linear-gradient(120deg, var(--color-accent), #2f7d34);
+    clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .producto-material__body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .producto-material__title {
+    font-size: 18px;
+    line-height: 1.25;
+    color: var(--color-white);
+  }
+
+  .producto-material__title strong {
+    font-weight: 700;
+  }
+
+  .producto-material__desc {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  .producto-material__more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgb(255 255 255 / 0.25);
+    border-radius: 50%;
+    color: var(--color-white);
+    transition: background-color .25s ease, border-color .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-material__more:hover {
+      border-color: var(--color-secondary);
+      background-color: var(--color-secondary);
+    }
+  }
+
+  /* ---------- Desktop angosto ----------
+     Entre 1024px y 1440px las tres columnas conviven a presión: el panel y el
+     aside son casi fijos, así que la del medio es la única que cede y el
+     producto —posicionado absoluto— se desbordaba sobre ambas. Acá el panel
+     vuelve a 24rem y el alto de la foto se ata al ancho real de la columna
+     (col2 ≈ 84vw − 784px con estos paddings y gaps), con margen. */
+  @media (64rem <= width < 90rem) {
+    .producto-hero__inner {
+      grid-template-columns: minmax(280px, 24rem) minmax(0, 1fr) auto;
+    }
+
+    .producto-hero__product img {
+      height: clamp(170px, calc(84vw - 800px), 340px);
+    }
+  }
+
+  /* ---------- Tablet / mobile ---------- */
+
+  @media (width < 64rem) {
+    /* Una sola columna en flujo normal (sin `height` fijo ni absolutes para
+       apilar): breadcrumb → escena → configuración → features. El producto
+       queda arriba, que es el gancho visual de la ficha. */
+    .producto-hero {
+      min-height: auto;
+    }
+
+    .producto-hero__inner {
+      display: flex;
+      flex-direction: column;
+      min-height: auto;
+      padding: clamp(5rem, 12vh, 6.5rem) 1.25rem 2.5rem;
+    }
+
+    .producto-hero__scene {
+      order: -1;
+      width: min(100%, 420px);
+      height: clamp(300px, 46vh, 400px);
+      margin-inline: auto;
+    }
+
+    /* El producto es mucho más chico acá, así que el mismo hueco del desktop
+       se lee desproporcionado: se recorta para mantener la misma relación. */
+    .producto-hero__product {
+      padding-bottom: clamp(48px, 9vh, 90px);
+    }
+
+    .producto-hero__product img {
+      height: clamp(240px, 62vw, 340px);
+    }
+
+    .producto-hero__crumb {
+      order: -2;
+    }
+
+    .producto-hero__aside {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .producto-hero__features {
+      width: 100%;
+    }
+
+    /* Las miniaturas pasan a una fila deslizable — mismo patrón que
+       .productos__filters y el slider del banner de catálogo. */
+    .producto-hero__thumbs {
+      flex-direction: row;
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+
+    .producto-hero__thumbs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .producto-hero__thumb {
+      flex: none;
+      scroll-snap-align: start;
+    }
+
+    /* Las specs pasan a carril Embla: el track deja de ser grilla y se vuelve
+       flex (lo que Embla necesita para medir y transformar). El gap va acá y
+       no en los slides para que el primero y el último queden al ras del
+       borde de la sección. */
+    .producto-specs__viewport {
+      overflow: hidden;
+    }
+
+    .producto-specs__track {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .producto-specs__track > .producto-spec {
+      flex: 0 0 62%;
+      min-width: 0;
+    }
+
+    .producto-specs__dots {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.25rem;
+    }
+
+    .producto-material {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (width < 48rem) {
+    .producto-hero__scroll-hint {
+      display: none;
+    }
+
+    .producto-material__card {
+      flex-wrap: wrap;
+    }
+
+    .producto-material__media {
+      width: 100%;
+      clip-path: none;
+    }
+  }
+}
+
+/* =========================================================
+   COMPONENTE — Pruebas de rigurosidad (single-producto.php,
+   Figma: 3694-6617)
+   Mismo lenguaje que .residuos (Figma 3328-3006): tarjetas que se activan al
+   clic, una a la vez. Acá son 6 en vez de 3, repartidas en dos columnas que
+   flanquean un panel central — así que la tarjeta activa no cambia el
+   contenido de un panel aparte (no hay foto/copy por prueba todavía): solo
+   se resalta a sí misma (borde celeste + opacidad plena) y atenúa las demás.
+   Insignia y flecha son un solo SVG compartido por las 6 (ver $ese_pruebas_*
+   en single-producto.php), recoloreado acá por .is-active — no hay assets
+   duplicados por estado. El panel de video es un placeholder decorativo
+   (fondo navy + botón play) a la espera del asset real.
+   ========================================================= */
+@layer components {
+  .pruebas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(3rem, 8vh, 5rem);
+    padding: clamp(4rem, 10vh, 7.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(5rem, 12vh, 8rem);
+    background-color: var(--color-bg);
+  }
+
+  .pruebas__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 900px;
+    text-align: center;
+  }
+
+  .pruebas__desc {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+
+  /* overflow:visible explícito: las columnas de tarjetas se salen del marco
+     gris por los costados (ver .pruebas__cards--left/--right) — es la propia
+     tarjeta blanca la que sobresale, no el fondo neutral-100, que mantiene su
+     ancho. El padding vive en una variable propia para que ese sangrado se
+     calcule EN RELACIÓN a él (ver más abajo) en vez de ajustar a mano dos
+     clamp() por separado que tendrían que coincidir en cada ancho. */
+  .pruebas__frame {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) minmax(280px, 1fr) minmax(260px, 380px);
+    align-items: center;
+    gap: clamp(1rem, 2.5vw, 2rem);
+    width: 100%;
+    max-width: 1600px;
+    --pruebas-pad: clamp(1.5rem, 3vw, 3rem);
+    padding: var(--pruebas-pad);
+    background-color: var(--color-neutral-100);
+    border-radius: 32px;
+    overflow: visible;
+  }
+
+  .pruebas__cards {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  /* El margen negativo = el padding del marco (var(--pruebas-pad), heredada)
+     + un extra que también escala con el viewport. Al restar exactamente el
+     padding, la tarjeta queda a ras del padding-box del marco; el extra es
+     lo único que la hace sobresalir — así el sangrado real (extra) es
+     siempre el mismo sin importar cuánto valga el padding en ese ancho, y
+     nunca puede "comerse" el padding y quedar más adentro por error (el bug
+     de la primera versión de este ajuste). El extra tope (2.5rem/40px) es
+     bien inferior al padding de .pruebas (mínimo 1.5rem/24px en los anchos
+     donde esta grilla de 3 columnas sigue activa, ≥64rem), así que nunca
+     empuja el scroll horizontal. Por debajo de 64rem estas columnas pasan a
+     `display: contents` (ver el media query) y el margen deja de aplicar. */
+  .pruebas__cards--left {
+    margin-left: calc(-1 * (var(--pruebas-pad) + clamp(1rem, 2vw, 2.5rem)));
+  }
+
+  .pruebas__cards--right {
+    margin-right: calc(-1 * (var(--pruebas-pad) + clamp(1rem, 2vw, 2.5rem)));
+  }
+
+  .pruebas__card {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+    padding: 1.25rem 2.5rem 1.25rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background-color: var(--color-white);
+    box-shadow: 0 8px 8px rgb(0 0 0 / 0.04);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .3s ease, box-shadow .3s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .pruebas__card:not(.is-active):hover {
+      border-color: var(--color-neutral-200);
+    }
+  }
+
+  .pruebas__card.is-active {
+    border-color: var(--color-secondary-300);
+    box-shadow: 0 8px 17px rgb(0 0 0 / 0.03), 0 12px 30px rgb(0 0 0 / 0.01);
+  }
+
+  /* Insignia y texto se atenúan juntos en el estado inactivo — el marco de
+     la tarjeta (fondo, borde, sombra) queda casi igual en los dos estados,
+     lo que cambia es su contenido, igual que en el diseño. */
+  .pruebas__card-badge,
+  .pruebas__card-text {
+    opacity: 0.45;
+    transition: opacity .3s ease;
+  }
+
+  .pruebas__card.is-active .pruebas__card-badge,
+  .pruebas__card.is-active .pruebas__card-text {
+    opacity: 1;
+  }
+
+  .pruebas__card-badge {
+    flex-shrink: 0;
+    width: 44px;
+  }
+
+  .pruebas__card-badge svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .pruebas__card-badge-shape {
+    fill: var(--color-white);
+    stroke: var(--color-neutral-100);
+    transition: fill .3s ease, stroke .3s ease;
+  }
+
+  .pruebas__card-badge-glyph {
+    fill: var(--color-secondary);
+    transition: fill .3s ease;
+  }
+
+  .pruebas__card.is-active .pruebas__card-badge {
+    filter: drop-shadow(0 6px 10px rgb(0 145 209 / 0.25));
+  }
+
+  .pruebas__card.is-active .pruebas__card-badge-shape {
+    fill: var(--color-secondary);
+    stroke: transparent;
+  }
+
+  .pruebas__card.is-active .pruebas__card-badge-glyph {
+    fill: var(--color-white);
+  }
+
+  .pruebas__card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .pruebas__card-title {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary);
+  }
+
+  .pruebas__card-desc {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-neutral-500);
+  }
+
+  .pruebas__card-arrow {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    display: inline-flex;
+    width: 20px;
+  }
+
+  .pruebas__card-arrow svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    fill: var(--color-primary);
+    opacity: 0.3;
+    transition: fill .3s ease, opacity .3s ease;
+  }
+
+  .pruebas__card.is-active .pruebas__card-arrow svg {
+    fill: var(--color-secondary);
+    opacity: 1;
+  }
+
+  /* ---------- Panel de video (placeholder) ---------- */
+
+  .pruebas__media {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 700 / 372;
+    border-radius: 16px;
+    background-color: var(--color-primary);
+    overflow: hidden;
+  }
+
+  .pruebas__play {
+    display: inline-flex;
+    width: 72px;
+  }
+
+  .pruebas__play svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* ---------- Tablet / mobile ---------- */
+
+  @media (width < 64rem) {
+    .pruebas__frame {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    /* Video arriba (gancho visual) a ancho completo, mismo criterio que
+       .producto-hero__scene en mobile; las 6 tarjetas se desenvuelven de sus
+       dos columnas (display:contents) y quedan como celdas sueltas de esta
+       misma grilla de 2 columnas. */
+    .pruebas__media {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+
+    .pruebas__cards--left,
+    .pruebas__cards--right {
+      display: contents;
+    }
+  }
+
+  @media (width < 48rem) {
+    .pruebas {
+      gap: 2.5rem;
+    }
+
+    .pruebas__frame {
+      grid-template-columns: 1fr;
+      padding: 1.25rem;
+      border-radius: 24px;
+    }
+
+    .pruebas__card {
+      padding: 1rem 2.25rem 1rem 1rem;
+    }
+
+    .pruebas__card-badge {
+      width: 36px;
+    }
+
+    .pruebas__card-title {
+      font-size: 14px;
+    }
+
+    .pruebas__card-desc {
+      font-size: 12.5px;
+    }
+
+    .pruebas__card-arrow {
+      top: 1rem;
+      right: 1rem;
+      width: 16px;
+    }
+  }
+}
+
+/* =========================================================
+   COMPONENTE — En terreno (single-producto.php, Figma: 3715-6801)
+   Foto + cita a la derecha, kicker/título + grilla 2×2 de features a la
+   izquierda. El degradado de la foto (gris transparente → navy 80%) es la
+   misma técnica de capas apiladas que .catalogo-banner__shade: una capa
+   aparte encima de la <img>, no un filtro sobre la imagen. Los 4 íconos son
+   el mismo trazo (arrow_forward-ish) exportado una vez por color en el
+   propio Figma — se recolorean con una custom property por tarjeta en vez
+   de currentColor fijo, así el color del ícono y el del título pueden
+   coincidir o no sin duplicar el SVG.
+   ========================================================= */
+@layer components {
+  .terreno {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+    align-items: start;
+    gap: clamp(2rem, 5vw, 4rem);
+    max-width: 1920px;
+    margin-inline: auto;
+    padding: clamp(4rem, 10vh, 7.5rem) clamp(1.5rem, 6.25vw, 7.5rem);
+    background-color: var(--color-white);
+  }
+
+  .terreno__content {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vh, 4rem);
+  }
+
+  .terreno__header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .terreno__features {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .terreno__feature {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .terreno__feature-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--feature-color);
+  }
+
+  .terreno__feature-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 28px;
+    color: var(--feature-icon-color);
+  }
+
+  .terreno__feature-icon svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .terreno__feature-desc {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-neutral-500);
+  }
+
+  /* margin:0 resetea el <figure>; isolation:isolate contiene la capa del
+     degradado (z-index:-1) sin que se filtre por detrás de la sección. */
+  .terreno__photo {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin: 0;
+    aspect-ratio: 71 / 68;
+    border-radius: 16px;
+    background-color: var(--color-neutral-100);
+  }
+
+  .terreno__photo img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .terreno__photo-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: linear-gradient(to bottom,
+        rgb(102 102 102 / 0) 30%,
+        rgb(0 14 44 / 0.8) 74.5%);
+  }
+
+  .terreno__quote {
+    position: relative;
+    margin: 0;
+    padding: 0 clamp(1.25rem, 3vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem);
+    font-size: clamp(14px, 1.4vw, 18px);
+    font-style: italic;
+    font-weight: 600;
+    line-height: 1.6;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.9);
+  }
+
+  /* 80rem y no 64rem: a 1024px la columna de texto (~420px) no le alcanza
+     al título de .type-h2 (clamp hasta 64px) para una sola palabra como
+     "FUNCIONANDO" — se salía de su columna y se montaba sobre la foto. En
+     una sola columna el título tiene toda la sección para sí y no le hace
+     falta ajustar el tamaño de una utilidad de Tailwind (que además no se
+     puede pisar desde @layer components, ver .certificaciones--dark). */
+  @media (width < 80rem) {
+    .terreno {
+      grid-template-columns: 1fr;
+    }
+
+    /* La foto es el gancho visual: sube arriba de las tarjetas, justo
+       debajo del header — mismo criterio que .producto-hero__scene y
+       .pruebas__media en mobile. display:contents desenvuelve .terreno__content
+       así header/features quedan como hijos directos del grid, al mismo
+       nivel que la foto, y order puede intercalarla entre los dos. */
+    .terreno__content {
+      display: contents;
+    }
+
+    .terreno__photo {
+      order: 1;
+    }
+
+    .terreno__features {
+      order: 2;
+    }
+  }
+
+  @media (width < 48rem) {
+    .terreno__features {
+      grid-template-columns: 1fr;
     }
   }
 }

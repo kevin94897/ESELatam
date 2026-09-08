@@ -54,3 +54,33 @@ function ese_latam_cta_button(array $args = []): void {
     </a>
     <?php
 }
+
+/**
+ * Íconos de trazo inline (stroke="currentColor", 24×24) compartidos por las
+ * fichas de producto (template-parts/producto-hero.php y producto-specs.php).
+ * Decorativos y siempre acompañados de texto, así que no ameritan un archivo
+ * SVG propio por ícono en assets/icons/ — devuelve solo el/los `<path>`, para
+ * envolver en el `<svg>` de cada sitio con su propio tamaño.
+ *
+ * @return string Markup de `<path>`/`<circle>`/`<rect>`, o cadena vacía si
+ *                 `$name` no existe.
+ */
+function ese_latam_icon_svg(string $name): string {
+    $icons = [
+        'shield'   => '<path d="M12 2 4 5.5v6c0 5 3.4 8.9 8 10.5 4.6-1.6 8-5.5 8-10.5v-6L12 2Z"/>',
+        'wheel'    => '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>',
+        'check'    => '<path d="M12 2 4 5.5v6c0 5 3.4 8.9 8 10.5 4.6-1.6 8-5.5 8-10.5v-6L12 2Z"/><path d="m9 12 2 2 4-4"/>',
+        'leaf'     => '<path d="M20 4c0 9-5.5 14-14 14 0-9 5-14 14-14Z"/><path d="M6 18c3-4 6-6 10-8"/>',
+        'volumen'  => '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/>',
+        'peso'     => '<path d="M7 8h10l2 12H5L7 8Z"/><path d="M9.5 8a2.5 2.5 0 1 1 5 0"/>',
+        'carga'    => '<path d="M12 3v10M8 9l4 4 4-4"/><path d="M4 17h16v4H4z"/>',
+        'material' => '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/>',
+        'ruedas'   => '<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6M12 17V7M8 7h8"/>',
+        'cart'     => '<circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2 3h3l2.5 12h11L21 7H6"/>',
+        'download' => '<path d="M12 3v11M8 10l4 4 4-4"/><path d="M4 19h16"/>',
+        'mouse'    => '<rect x="8" y="3" width="8" height="14" rx="4"/><path d="M12 6.5v2.5"/>',
+        'plus'     => '<path d="M12 6v12M6 12h12"/>',
+        'arrow'    => '<path d="M4 12h15M13 6l6 6-6 6"/>',
+    ];
+    return $icons[$name] ?? '';
+}
