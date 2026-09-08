@@ -147,7 +147,10 @@
  */
 @utility type-display {
   font-family: var(--font-sans);
-  font-size: var(--text-display);
+  /* clamp en vez del token fijo: a 80px, una palabra en mayúsculas (p. ej.
+     "TRANSFORMAR") se sale del ancho disponible en móvil — es la principal
+     causa del scroll horizontal de la home. El techo sigue siendo el token. */
+  font-size: clamp(2.25rem, 9vw, var(--text-display));
   line-height: 1.1;
   font-weight: 300;
   color: var(--color-text-dark);
@@ -156,7 +159,7 @@
 
 @utility type-h2 {
   font-family: var(--font-sans);
-  font-size: var(--text-h2);
+  font-size: clamp(2rem, 7.5vw, var(--text-h2));
   line-height: 1.125;
   font-weight: 300;
   color: var(--color-text-dark);
@@ -164,7 +167,7 @@
 
 @utility type-h3 {
   font-family: var(--font-sans);
-  font-size: var(--text-h3);
+  font-size: clamp(1.5rem, 6vw, var(--text-h3));
   line-height: 1.2;
   font-weight: 600;
   color: var(--color-primary);
@@ -334,16 +337,28 @@
   /* El logo arranca visible en su posición de layout; header.ts lo esconde
      tras el nav-pill (scrubbed) al hacer scroll. */
 
-  /* Pill blanco del menú */
+  /* Pill blanco del menú. El leve agrandado al scrollear lo anima GSAP
+     (header.ts) y no CSS: el nav-pill ya recibe un transform inline propio
+     (translateX, ver initLogoReveal) — un transform por CSS aquí quedaría
+     pisado por ese inline style. El borde sí es solo CSS: por defecto es
+     transparente (invisible sobre el hero oscuro) y gana color al scrollear,
+     para que la pastilla blanca no se pierda contra secciones de fondo
+     blanco (Certificaciones, Residuos Inteligentes, etc.). */
   .nav-pill {
     display: none;
     align-items: center;
     gap: 2.4375rem;
     /* 39px */
     background-color: var(--color-white);
+    border: 1px solid transparent;
     border-radius: 12px;
     padding: 4px 4px 4px 0;
     box-shadow: 0 4px 24px rgb(0 0 0 / 0.08);
+    transition: border-color .3s ease, box-shadow .3s ease;
+  }
+  .site-header.is-scrolled .nav-pill {
+    border-color: var(--color-neutral-100);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.12);
   }
 
   @media (width >=64rem) {
@@ -358,7 +373,15 @@
     gap: 0.5rem;
   }
 
+  /* El transform (scale) de estos items ya NO es CSS: lo maneja
+     initDockMagnify en header.ts, una magnificación estilo dock de macOS
+     que reacciona a la distancia del cursor sobre TODA la fila, no solo al
+     ítem bajo el puntero — por eso no hay `transform` acá (competiría con
+     los quickTo de GSAP). Crece desde su propio centro (transform-origin),
+     sin fondo ni borde en hover — solo cambia el color del texto. */
   .nav-pill__list a {
+    position: relative;
+    z-index: 0;
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
@@ -370,11 +393,14 @@
     color: var(--color-neutral-700);
     white-space: nowrap;
     border-radius: 8px;
+    transform-origin: center;
     transition: color .2s ease;
   }
 
-  .nav-pill__list a:hover {
-    color: var(--color-primary);
+  @media (hover: hover) and (pointer: fine) {
+    .nav-pill__list a:hover {
+      color: var(--color-primary);
+    }
   }
 
   /* Chevron para items con submenú */
@@ -403,18 +429,21 @@
     transition: color .2s ease;
   }
 
-  .nav-pill__search:hover {
-    color: var(--color-primary);
+  @media (hover: hover) and (pointer: fine) {
+    .nav-pill__search:hover {
+      color: var(--color-primary);
+    }
   }
 
   .nav-pill__cta {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.375rem;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 600;
     line-height: 1.5;
     text-transform: uppercase;
     color: var(--color-white);
@@ -422,8 +451,10 @@
     transition: filter .2s ease;
   }
 
-  .nav-pill__cta:hover {
-    filter: brightness(1.35);
+  @media (hover: hover) and (pointer: fine) {
+    .nav-pill__cta:hover {
+      filter: brightness(1.35);
+    }
   }
 
   /* Toggle hamburguesa (móvil): botón cuadrado redondeado navy con dos
@@ -496,7 +527,20 @@
 
   .mobile-nav {
     position: fixed;
-    inset: 0;
+    /* Ni `inset: 0` ni `bottom: 0`: .site-header (su ancestro) recibe un
+       `transform` inline de GSAP en la home (hero-scroll.ts anima yPercent
+       sobre el header) — incluso en yPercent:0 el valor sigue siendo un
+       matrix(), no la palabra "none", y CUALQUIER transform en un ancestro
+       convierte a ESE ancestro en el containing block de los descendientes
+       `fixed`. Con `inset:0`, "pantalla completa" se calculaba contra la
+       caja del header (~76px de alto) y no contra el viewport real: el
+       panel quedaba aplastado en una franja arriba en vez de cubrir todo.
+       `height: 100svh` es inmune a ese containing block: siempre es relativo
+       al viewport real, sea cual sea el ancestro. */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100svh;
     z-index: 1;
     display: flex;
     flex-direction: column;
@@ -676,6 +720,16 @@
     max-width: 16em;
   }
 
+  @media (width < 48rem) {
+    .hero__title {
+      /* En mobile el 4vw no llega ni cerca del piso de 2.25rem (a 390px son
+         ~15.6px) — el clamp queda fijo en 2.25rem sin importar cuánto
+         angoste el viewport. Piso más alto para que se note más grande
+         (ligeramente más chico que el primer intento de 2.75rem). */
+      font-size: clamp(2.5rem, 10vw, 3.75rem);
+    }
+  }
+
   .hero__title strong {
     font-weight: 700;
   }
@@ -686,6 +740,18 @@
      que su viaje de entrada se adapta solo. */
   .hero__title-wrap {
     margin-block: auto;
+  }
+
+  @media (width < 48rem) {
+    /* Sin animación de entrada en mobile: el titular "real" ahí es
+       .hero__title-settled (dentro de .hero__intro, ver hero-scroll.ts),
+       que entra con un simple fade junto al lede/CTA. Este ya no cumple
+       ningún rol visible, así que se saca del todo en vez de ocultarlo con
+       autoAlpha (evita correr getBoundingClientRect/tweens sobre un
+       elemento que nunca se ve). */
+    .hero__title-wrap {
+      display: none;
+    }
   }
 
   /* Máscara por línea para el reveal del titular (el texto sube por detrás) */
@@ -706,6 +772,31 @@
   .hero-card,
   .hero [data-hero-reveal] {
     visibility: hidden;
+  }
+
+  /* Duplicado de .hero__title (misma clase, mismas reglas de tipografía)
+     que solo se ve en mobile — ver el porqué en front-page.php y
+     hero-scroll.ts. En desktop no existe visualmente: .hero__title de
+     arriba sigue siendo el único titular. */
+  .hero__title-settled {
+    display: none;
+  }
+
+  @media (width < 48rem) {
+    .hero__title-settled {
+      display: block;
+      margin-bottom: 1.5rem;
+    }
+
+    /* .hero__title-wrap es display:none acá (ver arriba) — con un solo hijo
+       visible en .hero__content, el justify-content:space-between de ese
+       flex ya no tiene "entre" que repartir y .hero__bottom quedaba pegado
+       arriba, justo debajo del padding-top, con todo el resto de la sección
+       vacío abajo. margin-top:auto lo empuja al pie, sin tocar el layout
+       de desktop (ahí .hero__title-wrap sí sigue ocupando su lugar). */
+    .hero__bottom {
+      margin-top: auto;
+    }
   }
 
   .hero__bottom {
@@ -748,9 +839,9 @@
     height: 58px;
     width: fit-content;
     position: relative;
-    margin-top: 2rem;
+    /* margin-top: 2rem; */
     text-decoration: none;
-    filter: drop-shadow(0 1px 20px rgb(255 255 255 / 0.25));
+    /* filter: drop-shadow(0 1px 20px rgb(255 255 255 / 0.25)); */
   }
 
   .hero-cta__label {
@@ -855,7 +946,7 @@
       background-color: var(--cta-label-bg-hover);
       color: var(--cta-label-color-hover);
       margin-right: 12px;
-      padding-right: 14px;
+      padding-right: 30px;
     }
 
     .hero-cta:hover .hero-cta__corner svg path {
@@ -903,7 +994,7 @@
   }
 
   .hero-card__tag {
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 800;
     line-height: 1.4;
     letter-spacing: 0.01em;
@@ -916,7 +1007,7 @@
     position: relative;
     max-width: 322px;
     padding-left: 1.25rem;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1.5;
     color: rgb(255 255 255 / 0.8);
   }
@@ -1074,8 +1165,39 @@
   @media (width < 64rem) {
     .sectores__slider {
       flex-direction: column;
-      gap: 2.5rem;
-      padding-right: clamp(1.5rem, 6.25vw, 7.5rem);
+      /* En fila (desktop) align-items:flex-start no importa: el ancho lo da
+         flex:1 en el eje principal. En columna (mobile) el eje principal es
+         vertical, así que sin stretch cada hijo encoge a su ancho de
+         contenido — y el de .embla__viewport es el de sus 8 slides SIN
+         recortar (overflow:hidden no achica el shrink-to-fit), lo que
+         empujaba la página entera a ~2960px de ancho. */
+      align-items: stretch;
+      gap: 1.5rem;
+      /* Sin padding-right acá: es un contenedor COMPARTIDO por la leyenda y
+         el carril (apilados en columna en mobile), y este padding les
+         llegaba a los dos por igual — le comía al carril el "bleedea hasta
+         el borde derecho" que el propio comentario de .embla__viewport ya
+         declara como diseño. Ahora el right-padding vive en .sectores__legend
+         (abajo), que es a quien realmente le hace falta. */
+    }
+
+    /* En mobile solo se ve UNA card por vez (no hay vecina asomando al lado
+       para justificar el margin de separación) — se notaba como un espacio
+       vacío suelto a la derecha de la card activa. */
+    .sectores .embla__slide {
+      margin-right: 0;
+    }
+
+    /* La excepción es la propia costura del loop: con Embla reposicionando
+       nodos (no clonándolos) para el carril infinito, ese punto de unión no
+       pasa por el `gap` normal del flex — sin un margin puntual ahí, la
+       última y la primera card quedaban pegadas al dar la vuelta. Como el
+       DOM order cambia con el loop, :last-child apunta siempre al slide que
+       en cada momento ocupa esa posición, no a un índice fijo.
+       2rem: mismo valor que el `gap` del contenedor, para que la costura se
+       vea igual de espaciada que el resto de las cards. */
+    .sectores .embla__slide:last-child {
+      margin-right: 2rem;
     }
 
     .sectores__legend {
@@ -1085,6 +1207,18 @@
       align-items: flex-end;
       justify-content: space-between;
       gap: 2rem;
+      /* El right-padding que antes tenía .sectores__slider (compartido con
+         el carril) se muda acá: la leyenda sí necesita ese margen para
+         alinear con el header, el carril no (debe sangrar). */
+      padding-right: clamp(1.5rem, 6.25vw, 7.5rem);
+    }
+
+    .sectores__desc {
+      font-size: 15px;
+    }
+
+    .sectores__legend-text {
+      font-size: 14px;
     }
   }
 
@@ -1100,6 +1234,15 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+  }
+
+  @media (width < 64rem) {
+    /* La card ya venía angosta (min(500px,84vw)) — con 2.5rem (40px) de
+       padding a cada lado, el texto quedaba con muy poco ancho real para
+       respirar. */
+    .sector-card {
+      padding: 1.5rem;
+    }
   }
 
   .sector-card__img {
@@ -1144,9 +1287,11 @@
   }
 
   /* Mismo hover que .embla__arrow--solid: solo cambia el fondo a secondary */
-  .sector-card__chip:hover {
-    background-color: var(--color-secondary);
-    border-color: var(--color-secondary);
+  @media (hover: hover) and (pointer: fine) {
+    .sector-card__chip:hover {
+      background-color: var(--color-secondary);
+      border-color: var(--color-secondary);
+    }
   }
 
   .sector-card__chip svg {
@@ -1154,8 +1299,10 @@
     transition: transform 0.3s ease;
   }
 
-  .sector-card__chip:hover svg {
-    transform: rotate(-45deg) translate(2px, -2px) scale(1.1);
+  @media (hover: hover) and (pointer: fine) {
+    .sector-card__chip:hover svg {
+      transform: rotate(-45deg) translate(2px, -2px) scale(1.1);
+    }
   }
 
   .sector-card__body {
@@ -1202,9 +1349,11 @@
     color: var(--color-white);
   }
 
-  .embla__arrow.embla__arrow--solid:hover:not(:disabled) {
-    background-color: var(--color-secondary);
-    color: var(--color-white);
+  @media (hover: hover) and (pointer: fine) {
+    .embla__arrow.embla__arrow--solid:hover:not(:disabled) {
+      background-color: var(--color-secondary);
+      color: var(--color-white);
+    }
   }
 
   .embla__arrow.embla__arrow--solid.is-mirrored svg {
@@ -1292,22 +1441,33 @@
     will-change: transform;
   }
 
-  .productos__leaves {
+  /* Wrapper del parallax (JS: [data-parallax]): el desplazamiento continuo
+     con el scroll vive acá, separado del <img> interno, que trae su propia
+     animación de entrada (data-reveal="corner-tl/tr"). Son dos tweens de
+     GSAP tocando `transform` a la vez (uno continuo, scrubeado; el otro, de
+     una sola pasada) — sobre el MISMO elemento se pisarían entre sí; en
+     elementos distintos, cada uno controla su propio transform sin choques. */
+  .productos__leaves-wrap {
     position: absolute;
     top: -32px;
     width: min(353px, 30vw);
-    height: auto;
     pointer-events: none;
     z-index: 1;
   }
 
-  .productos__leaves--left {
+  .productos__leaves-wrap--left {
     left: -64px;
   }
 
-  .productos__leaves--right {
+  .productos__leaves-wrap--right {
     right: -64px;
     transform: scaleX(-1);
+  }
+
+  .productos__leaves {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   .productos__header {
@@ -1371,8 +1531,10 @@
     transition: background-color .25s ease, color .25s ease;
   }
 
-  .productos__filter:hover {
-    background-color: var(--color-secondary-50);
+  @media (hover: hover) and (pointer: fine) {
+    .productos__filter:hover {
+      background-color: var(--color-secondary-50);
+    }
   }
 
   .productos__filter.is-active {
@@ -1399,6 +1561,7 @@
   .product-card {
     position: relative;
     cursor: grab;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .product-card__media {
@@ -1441,6 +1604,7 @@
     max-width: none;
     margin-inline: auto;
     filter: drop-shadow(0 5px 5px rgb(0 0 0 / 0.25));
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease;
   }
 
   .product-card__body {
@@ -1469,6 +1633,11 @@
     text-transform: uppercase;
     text-align: center;
     color: var(--color-neutral-800);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 3em;
   }
 
   .product-card__specs {
@@ -1509,11 +1678,12 @@
     justify-content: center;
     opacity: 0;
     transform: translateY(8px);
-    transition: opacity .35s ease, transform .35s ease;
+    transition: opacity .35s ease, transform .35s cubic-bezier(0.25, 1, 0.5, 1), background-color .3s ease, box-shadow .3s ease;
   }
 
   .product-card__chip svg {
     transform: rotate(-45deg);
+    transition: transform .35s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   .swiper-slide-active .product-card__chip {
@@ -1532,9 +1702,11 @@
     color: var(--color-primary);
   }
 
-  .embla__arrow.embla__arrow--light:hover:not(:disabled) {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+  @media (hover: hover) and (pointer: fine) {
+    .embla__arrow.embla__arrow--light:hover:not(:disabled) {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
   }
 
   .embla__arrow.embla__arrow--light.is-mirrored svg {
@@ -1582,8 +1754,10 @@
     transition: filter .2s ease;
   }
 
-  .productos__cta:hover {
-    filter: brightness(1.35);
+  @media (hover: hover) and (pointer: fine) {
+    .productos__cta:hover {
+      filter: brightness(1.35);
+    }
   }
 
   @media (width < 48rem) {
@@ -1591,12 +1765,109 @@
       display: none;
     }
 
-    .productos .embla__container {
-      padding-top: 130px;
+    .product-card__img {
+      /* Se mantiene igual a propósito — el pedido fue achicar la CARD, no
+         la foto del producto. */
+      height: 250px;
     }
 
-    .product-card__img {
-      height: 250px;
+    /* Card más compacta en mobile: mismo criterio que .productos__filters
+       de acá arriba — la card ya venía angosta (76vw, ver el fix del
+       degradado del carril) y con el padding/tipografía de desktop se leía
+       demasiado grande para su propio ancho. La foto (arriba) no cambia. */
+    .product-card__media {
+      height: 150px;
+    }
+
+    .product-card__body {
+      padding: 20px 20px 24px;
+      gap: 1rem;
+    }
+
+    .product-card__name {
+      margin-top: -0.5rem;
+      font-size: 16px;
+    }
+
+    .product-card__specs {
+      gap: 1.5rem;
+      padding-top: 1rem;
+    }
+
+    .product-card__specs dt {
+      font-size: 10px;
+    }
+
+    .product-card__specs dd {
+      font-size: 14px;
+    }
+
+    /* 150 - 28 = 122: misma proporción que el 192px de desktop (220 - 28),
+       para que el chip siga asentado justo sobre el límite media/body. */
+    .product-card__chip {
+      top: 122px;
+      right: 16px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+    }
+
+    /* Los 6 filtros envolvían en 3 filas de a 2, centradas y de ancho
+       dispar ("Ver todo" vs "Contenedores") — un bloque de 150px antes de
+       llegar al carril, con una lectura de "grilla mal alineada" en vez de
+       tabs. En una sola fila deslizable ocupan 56px y quedan ordenados: el
+       ancho de cada botón lo da su propio texto, no una celda compartida. */
+    .productos__filters {
+      /* Sin esto, overflow-x no tiene una caja fija de la cual desbordar:
+         el contenedor crecía a lo ancho de sus 6 botones (812px) y ese
+         bloque entero quedaba centrado por su padre, sobresaliendo la
+         mitad de cada lado — no era scroll, era la caja completa corrida. */
+      width: 100%;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+      /* Sin scrollbar visible: no hace falta la barra nativa para leer que
+         se desliza, ya se nota que sobran botones fuera de vista. Sin
+         degradado en los bordes a propósito: acá el fondo es un pill BLANCO
+         sólido (no una foto), así que desvanecerlo mostraría el celeste de
+         la sección detrás — se leía como un glitch, no como profundidad. */
+      scrollbar-width: none;
+    }
+
+    .productos__filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .productos__filter {
+      flex: none;
+      scroll-snap-align: start;
+    }
+
+    .productos__filter:first-child {
+      scroll-margin-left: 4px;
+    }
+
+    /* Hojas decorativas: en desktop sobresalen 32px hacia arriba del borde
+       del contenedor (overflow:hidden las recorta en mobile). En mobile se
+       anclan al top del contenedor y se agrandan para que sean visibles. */
+    .productos__leaves-wrap {
+      top: 0;
+      width: min(220px, 48vw);
+    }
+
+    .productos__leaves-wrap--left {
+      left: -32px;
+    }
+
+    .productos__leaves-wrap--right {
+      right: -32px;
+    }
+
+    /* Más padding arriba para que las hojas no tapen el header de texto */
+    .productos {
+      padding-top: clamp(7rem, 14vw, 9rem);
     }
   }
 
@@ -1691,8 +1962,10 @@
     transition: color .2s ease;
   }
 
-  .footer-links__col a:hover {
-    color: var(--color-primary);
+  @media (hover: hover) and (pointer: fine) {
+    .footer-links__col a:hover {
+      color: var(--color-primary);
+    }
   }
 
   .footer-news {
@@ -1747,8 +2020,10 @@
     transition: filter .2s ease;
   }
 
-  .footer-news__form button:hover {
-    filter: brightness(1.35);
+  @media (hover: hover) and (pointer: fine) {
+    .footer-news__form button:hover {
+      filter: brightness(1.35);
+    }
   }
 
   .footer-news__note {
@@ -1787,8 +2062,10 @@
     transition: background-color .25s ease;
   }
 
-  .footer-social__link:hover {
-    background-color: var(--color-secondary);
+  @media (hover: hover) and (pointer: fine) {
+    .footer-social__link:hover {
+      background-color: var(--color-secondary);
+    }
   }
 
   /* Marca de agua "ESE" gigante con parallax (JS: [data-parallax]) */
@@ -1835,8 +2112,10 @@
     align-items: stretch;
   }
 
-  .embla__container article:first-child {
-    margin-left: 30px;
+  @media (width >= 64rem) {
+    .embla__container article:first-child {
+      margin-left: 30px;
+    }
   }
 
   .embla__slide {
@@ -1890,9 +2169,11 @@
     transition: background-color .25s ease, color .25s ease, opacity .25s ease;
   }
 
-  .embla__arrow:hover:not(:disabled) {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+  @media (hover: hover) and (pointer: fine) {
+    .embla__arrow:hover:not(:disabled) {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
   }
 
   .embla__arrow:disabled {
@@ -1902,13 +2183,20 @@
 
   /* Corona de nubes de la sección que sigue al hero: sobresale por su borde
      superior, así el frente de la transición al deslizarse sobre el hero es
-     la nube orgánica y no un corte recto. */
+     la nube orgánica y no un corte recto.
+     El overlap hacia adentro de la sección va en % de la ALTURA PROPIA de
+     la imagen (43%, la misma proporción que ya tenía desktop: 200px sobre
+     sus 465px de alto), no en px fijos. Con `img { width:100% }`, la altura
+     renderizada escala con el ancho del viewport (465px en desktop, apenas
+     126px en mobile) — con el viejo `calc(100% - 200px)` esos 200px fijos
+     superaban la altura ENTERA de la nube en mobile, y la corona quedaba
+     hundida por completo dentro de la sección en vez de coronar el borde. */
   .hero-next__clouds {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: calc(100% - 200px);
-    /* -2px: evita línea entre nube y sección */
+    bottom: 100%;
+    transform: translateY(43%);
     pointer-events: none;
   }
 
@@ -1923,11 +2211,24 @@
       /* Vía la custom property, no `width`: así el `right` calculado arriba
          (que descuenta el margen transparente del PNG) sigue el ancho real. */
       --island-w: min(120vw, 640px);
-      bottom: 6%;
+      /* Arriba del bloque de texto (.hero__title-settled + lede + CTA), no
+         detrás/superpuesta — con .hero__title-settled ahora en el layout
+         (ver hero-scroll.ts), .hero__bottom ocupa más alto que antes. */
+      bottom: 50%;
     }
 
     .hero-card {
       display: none;
+    }
+
+    /* Mismo criterio que .sector-card: en mobile 45px/30px de padding para
+       un label de 14px se leía desproporcionado contra el resto de la
+       tipografía ya reducida — el 45px izquierdo se conserva más grande
+       que el derecho (guarda la proporción original) porque ahí es donde
+       empalma con .hero-cta__corner. */
+    .hero-cta__label {
+      padding: 8px 20px 8px 32px;
+      font-size: 12px;
     }
   }
 
@@ -1963,7 +2264,15 @@
     color: var(--color-white);
   }
 
-  /* Anillos concéntricos decorativos, centrados en la sección */
+  /* Anillos concéntricos decorativos. Viven DENTRO de .distribuidores__globe
+     (ver front-page.php), así que comparten su centro por construcción en
+     cualquier breakpoint, y se miden en % del globo para que el halo guarde
+     siempre la misma proporción.
+     Antes cada uno traía su propio min(vw, px) independiente del globo: a
+     1440px el anillo interior (54vw → 778px) quedaba MÁS CHICO que el globo
+     (62vw → 820px) y desaparecía detrás, y en mobile —donde el globo pasa a
+     ser un elemento en flujo— su ancla de 56%/48% de la sección no tenía ya
+     ninguna relación con dónde había quedado el globo. */
   .distribuidores__rings {
     position: absolute;
     inset: 0;
@@ -1973,8 +2282,8 @@
 
   .distribuidores__rings span {
     position: absolute;
-    left: 56%;
-    top: 48%;
+    left: 50%;
+    top: 50%;
     aspect-ratio: 1;
     border: 1px solid rgb(255 255 255 / 0.12);
     border-radius: 50%;
@@ -1982,11 +2291,11 @@
   }
 
   .distribuidores__rings span:first-child {
-    width: min(54vw, 828px);
+    width: 116%;
   }
 
   .distribuidores__rings span:last-child {
-    width: min(70vw, 1086px);
+    width: 148%;
   }
 
   /* El globo es el fondo: más grande que antes y corrido a la derecha, para
@@ -2004,6 +2313,8 @@
 
   .distribuidores__globe [data-globe-canvas] {
     position: relative;
+    /* Por encima de los anillos, que son su hermano previo dentro del globo */
+    z-index: 1;
     width: 100%;
     height: 100%;
   }
@@ -2104,7 +2415,7 @@
   }
 
   .distribuidores__rail-head {
-    font-size: 12px;
+    font-size: 15px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -2113,7 +2424,7 @@
 
   .distribuidores__rail-count {
     margin-right: 6px;
-    font-size: 28px;
+    font-size: 35px;
     font-weight: 300;
     letter-spacing: 0;
     color: var(--color-white);
@@ -2125,6 +2436,46 @@
     gap: 2px;
   }
 
+  /* Selector de país (solo mobile, ver el @media de abajo): el desktop se
+     queda con el riel de pastillas, que ahí sí entra entero al costado del
+     globo. */
+  .distribuidores__select {
+    display: none;
+    position: relative;
+    align-items: center;
+  }
+
+  .distribuidores__select select {
+    appearance: none;
+    width: 100%;
+    min-height: 52px;
+    padding: 0 3rem 0 1rem;
+    border: 1px solid rgb(255 255 255 / 0.28);
+    border-radius: 12px;
+    background-color: rgb(255 255 255 / 0.1);
+    backdrop-filter: blur(8px);
+    color: var(--color-white);
+    font-family: var(--font-sans);
+    /* 16px a propósito: por debajo de eso, iOS hace zoom al enfocar el campo
+       y deja la página descuadrada al volver. */
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    /* El desplegable lo pinta el sistema operativo, no el CSS: sin esto sale
+       en claro y queda ilegible contra el azul de la sección. */
+    color-scheme: dark;
+  }
+
+  .distribuidores__select-icon {
+    position: absolute;
+    right: 1rem;
+    display: inline-flex;
+    color: var(--color-white);
+    pointer-events: none;
+  }
+
   .country-pill {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -2133,7 +2484,7 @@
     width: 100%;
     padding: 9px 16px;
     border: 1px solid transparent;
-    border-radius: 99px;
+    border-radius: 10px;
     background-color: transparent;
     color: rgb(255 255 255 / 0.7);
     text-align: left;
@@ -2142,9 +2493,11 @@
       transform .4s cubic-bezier(.22, 1, .36, 1);
   }
 
-  .country-pill:hover {
-    background-color: rgb(255 255 255 / 0.12);
-    color: var(--color-white);
+  @media (hover: hover) and (pointer: fine) {
+    .country-pill:hover {
+      background-color: rgb(255 255 255 / 0.12);
+      color: var(--color-white);
+    }
   }
 
   /* El activo se despega hacia el globo: refuerza el vínculo pastilla ↔ marcador */
@@ -2171,7 +2524,7 @@
   }
 
   .country-pill__name {
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -2324,12 +2677,14 @@
     transition: transform .35s cubic-bezier(.34, 1.56, .64, 1);
   }
 
-  .distribuidores__link:hover .distribuidores__link-text {
-    border-color: var(--color-white);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    .distribuidores__link:hover .distribuidores__link-text {
+      border-color: var(--color-white);
+    }
 
-  .distribuidores__link:hover .distribuidores__link-icon {
-    transform: rotate(45deg);
+    .distribuidores__link:hover .distribuidores__link-icon {
+      transform: rotate(45deg);
+    }
   }
 
   @media (width < 64rem) {
@@ -2363,14 +2718,15 @@
       width: 100%;
     }
 
+    /* Las 13 pastillas dejan paso al <select>: envolvían en 9 filas
+       irregulares (2·1·2·2·1·1·2·1·1 a 390px, con anchos de 116 a 235px) y
+       empujaban el globo fuera de pantalla. */
     .distribuidores__rail-items {
-      flex-direction: row;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: none;
     }
 
-    .country-pill {
-      width: auto;
+    .distribuidores__select {
+      display: flex;
     }
 
     /* El desplazamiento hacia el globo solo tiene sentido con el riel vertical */
@@ -2424,10 +2780,12 @@
     transition: transform .35s cubic-bezier(.34, 1.56, .64, 1), background-color .25s ease, color .25s ease;
   }
 
-  .link-arrow:hover .link-arrow__icon {
-    transform: rotate(45deg);
-    background-color: var(--color-primary);
-    color: var(--color-white);
+  @media (hover: hover) and (pointer: fine) {
+    .link-arrow:hover .link-arrow__icon {
+      transform: rotate(45deg);
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
   }
 }
 
@@ -2493,20 +2851,47 @@
     border-radius: 16px;
     background-color: var(--color-white);
     border: 1px solid var(--color-neutral-100);
-    box-shadow: 0 2px 2px rgb(0 0 0 / 0.05), 0 8px 4px rgb(0 0 0 / 0.04);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
     text-align: left;
     cursor: pointer;
     transition: border-color .3s ease, box-shadow .3s ease, transform .3s ease;
+    /* 0-100, animado por GSAP (residuos-selector.ts) mientras el autoplay
+       cuenta hacia la próxima tab — leído por el anillo de .is-active::after. */
+    --tab-progress: 0;
   }
 
-  .residuos__tab:hover:not(.is-active) {
-    border-color: var(--color-neutral-200);
+  @media (hover: hover) and (pointer: fine) {
+    .residuos__tab:hover:not(.is-active) {
+      border-color: var(--color-neutral-200);
+    }
   }
 
   .residuos__tab.is-active {
     transform: translateX(clamp(-1.25rem, -1.5vw, -0.75rem));
-    border: 2px solid var(--color-secondary-300);
+    /* border: 2px solid var(--color-secondary-300); */
     box-shadow: 0 3px 2px rgb(0 0 0 / 0.04), 0 1px 1px rgb(0 0 0 / 0.06);
+  }
+
+  /* Anillo de progreso: un conic-gradient recortado a un aro de 2px (mismo
+     grosor que el borde de .is-active) que se "llena" en sentido horario a
+     medida que --tab-progress avanza de 0 a 100 — la cuenta regresiva visual
+     hacia la próxima tab del autoplay. Con autoplay apagado o
+     prefers-reduced-motion, --tab-progress nunca se anima y el aro queda
+     invisible (0% de arco), sin más efecto que el borde estático de siempre. */
+  .residuos__tab.is-active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(from -90deg,
+        var(--color-secondary) calc(var(--tab-progress) * 1%),
+        transparent 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
   .residuos__tab-icon {
@@ -2640,6 +3025,90 @@
       transform: none;
     }
   }
+
+  /* Mobile: las 3 cards verticales completas (ícono+título+subtítulo)
+     enterraban el panel (foto+descripción) que controlan varias pantallas
+     más abajo — había que scrollear a ciegas para ver qué cambiaba al
+     tocar una tab. Mismo patrón que .productos__filters: fila horizontal
+     scrolleable de pills compactas (ícono + título, sin el subtítulo
+     repetido "Información clara..." en las 3), con el panel pegado justo
+     debajo, visible sin scroll. El JS y el anillo de progreso no cambian —
+     solo el layout. */
+  @media (width < 48rem) {
+    .residuos__selector {
+      padding: 1.25rem;
+      gap: 0.25rem;
+    }
+
+    .residuos__panel {
+      gap: 1rem;
+    }
+
+    /* El gap de .residuos__panel es parejo entre TODOS sus hijos (foto →
+       título → desc) — acá se achica solo título → desc con un margen
+       negativo, sin tocar el espacio foto → título. */
+    .residuos__panel-desc {
+      margin-top: -0.625rem;
+    }
+
+    .residuos__tabs {
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+    }
+
+    .residuos__tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .residuos__tab {
+      flex: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 18px 8px 8px;
+      scroll-snap-align: start;
+      margin-bottom: 10px;
+    }
+
+    .residuos__tab:first-child {
+      scroll-margin-left: 4px;
+    }
+
+    .residuos__tab-icon {
+      width: 36px;
+      height: 36px;
+    }
+
+    .residuos__tab-icon img {
+      width: 18px;
+      height: 18px;
+    }
+
+    .residuos__tab-text {
+      flex: none;
+    }
+
+    .residuos__tab-title {
+      font-size: 13px;
+    }
+
+    .residuos__tab-sub,
+    .residuos__tab-arrow {
+      display: none;
+    }
+
+    /* Sin el anillo de carga acá: en una pill tan chica, un aro de 2px
+       animándose alrededor del borde es más ruido que señal. Queda solo el
+       color estático de "activo" (fondo del ícono, texto) — el JS del
+       autoplay/anillo sigue corriendo igual, esto es puramente visual. */
+    .residuos__tab.is-active::after {
+      display: none;
+    }
+  }
 }
 
 /* =========================================================
@@ -2727,12 +3196,14 @@
     transition: transform .45s cubic-bezier(.22, 1, .36, 1);
   }
 
-  .certificaciones__item:hover {
-    background-color: #f6fafe;
-  }
+  @media (hover: hover) and (pointer: fine) {
+    .certificaciones__item:hover {
+      background-color: #f6fafe;
+    }
 
-  .certificaciones__item:hover::after {
-    transform: scaleX(1);
+    .certificaciones__item:hover::after {
+      transform: scaleX(1);
+    }
   }
 
   .certificaciones__logo {
@@ -2758,10 +3229,12 @@
       transform .45s cubic-bezier(.22, 1, .36, 1);
   }
 
-  .certificaciones__item:hover .certificaciones__logo img {
-    filter: none;
-    opacity: 1;
-    transform: translateY(-6px);
+  @media (hover: hover) and (pointer: fine) {
+    .certificaciones__item:hover .certificaciones__logo img {
+      filter: none;
+      opacity: 1;
+      transform: translateY(-6px);
+    }
   }
 
   .certificaciones__divider {
@@ -2878,6 +3351,15 @@
     display: inline-block;
   }
 
+  /* .word (nivel agregado en contacto-reveal.ts) agrupa las letras de cada
+     palabra para que el navegador corte líneas ENTRE palabras, no adentro.
+     Sin nowrap, el inline-block igual se re-envuelve solo si no le queda
+     ancho disponible en la línea (shrink-to-fit) — se veía "resid-uos"
+     partido a la mitad en mobile pese a existir el wrapper. */
+  .contacto__heading .word {
+    white-space: nowrap;
+  }
+
   .contacto__divider {
     margin: 0;
     border: none;
@@ -2911,6 +3393,1012 @@
 }
 
 /* =========================================================
+   BANNER CATÁLOGO (Figma node 3639-16225) — cabecera de la página de
+   archivo de productos. Capas apiladas igual que .hero (foto + degradado +
+   textura + contenido), así que reutiliza ese mismo patrón en vez de
+   inventar uno nuevo. El "01/08" del Figma es de ejemplo — aquí el contador
+   sale del número real de slides (archive-producto.php); con una sola
+   entrada, .embla__arrow queda deshabilitado solo (mismo estado :disabled
+   que ya usa el resto del sitio).
+   ========================================================= */
+@layer components {
+  .catalogo-banner {
+    position: relative;
+    min-height: 100svh;
+    overflow: hidden;
+    background-color: var(--color-primary-900);
+  }
+
+  .catalogo-banner__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .catalogo-banner__bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Oscurece de izquierda (texto) a derecha (foto del producto) */
+  .catalogo-banner__shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: linear-gradient(100deg,
+        rgb(0 4 12 / 0.88) 8%,
+        rgb(13 19 32 / 0.78) 30%,
+        rgb(26 38 65 / 0.55) 52%,
+        rgb(38 56 97 / 0.25) 70%,
+        rgb(51 75 129 / 0) 88%);
+  }
+
+  .catalogo-banner__noise {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.05;
+    background-image: url("../imgs/catalogo/banner-noise-texture.png");
+    background-size: 60px 60px;
+  }
+
+  /* Rejilla 8x8 decorativa, mismo look que el Figma (líneas al 4%) sin
+     tirar 64 divs al DOM: dos repeating-linear-gradient bastan. */
+  .catalogo-banner__grid {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.04;
+    background-image:
+      repeating-linear-gradient(to right, var(--color-white) 0 1px, transparent 1px 12.5%),
+      repeating-linear-gradient(to bottom, var(--color-white) 0 1px, transparent 1px 12.5%);
+  }
+
+  /* Titular gigante en outline, decorativo, detrás del contenido */
+  .catalogo-banner__watermark {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-38%, -46%);
+    font-size: clamp(6rem, 17vw, 16.5rem);
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--color-neutral-100);
+    opacity: 0.04;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .catalogo-banner__content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 90svh;
+    padding: clamp(6rem, 16vh, 9.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2.5rem, 6vh, 4.5rem);
+  }
+
+  .catalogo-banner__crumb {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__crumb-sep {
+    display: inline-flex;
+    align-items: center;
+    color: rgb(255 255 255 / 0.32);
+    flex-shrink: 0;
+  }
+
+  .catalogo-banner__crumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgb(255 255 255 / 0.32);
+    text-decoration: none;
+    transition: color .2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .catalogo-banner__crumb a:hover {
+      color: rgb(255 255 255 / 0.6);
+    }
+  }
+
+  .catalogo-banner__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    max-width: 44rem;
+    margin-top: 2rem;
+  }
+
+  .catalogo-banner__eyebrow {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__title {
+    font-size: clamp(2rem, 3.75vw, 3.75rem);
+    font-weight: 600;
+    line-height: 1.1;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__title strong {
+    font-weight: 700;
+  }
+
+  .catalogo-banner__desc {
+    max-width: 34rem;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.65;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__bottom {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+
+  /* Slider de productos, debajo de .catalogo-banner__crumb: cada card es un
+     producto real, con el texto DENTRO del mismo box "glass" que la foto
+     (litraje arriba, nombre+desc abajo-izquierda, foto grande escapando la
+     esquina inferior derecha) — mismo criterio de composición que una card
+     de e-commerce moderna. El JS (product-island.ts) crea su propio Embla
+     acá (no pasa por el genérico .embla__container/__slide de layout
+     completo, por eso se pisan sus valores de flex-basis y gap con estos,
+     más chicos). */
+  /* max-width exacto para 2 cards enteras (200px x2 + 1rem de gap) — nunca
+     una tercera a medio cortar en el borde: la navegación la dan las
+     flechas de .catalogo-banner__shop-controls, no un peek de la próxima
+     card (mismo criterio que .sectores, que tampoco asoma la que sigue). */
+  .catalogo-banner__shop-cards {
+    width: 100%;
+    max-width: 26rem;
+    margin-top: 1.5rem;
+  }
+
+  .catalogo-banner__shop-cards .embla__container {
+    gap: 1rem;
+  }
+
+  .catalogo-banner__shop-card {
+    flex: 0 0 200px;
+    cursor: pointer;
+    perspective: 600px;
+  }
+
+  .catalogo-banner__shop-card-frame {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    aspect-ratio: 1;
+    padding: 1.125rem;
+    border-radius: 20px;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background-image:
+      linear-gradient(rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.32)),
+      linear-gradient(rgb(143 143 143 / 0.2), rgb(143 143 143 / 0.2));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    overflow: visible;
+    transform-style: preserve-3d;
+    transition: border-color .25s ease;
+  }
+
+  .catalogo-banner__shop-card-kicker {
+    position: relative;
+    z-index: 1;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.7);
+  }
+
+  .catalogo-banner__shop-card-text {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 68%;
+  }
+
+  .catalogo-banner__shop-card-name {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__shop-card-meta {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgb(255 255 255 / 0.6);
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .catalogo-banner__shop-card-img {
+    position: absolute;
+    right: -14px;
+    bottom: -14px;
+    z-index: 1;
+    width: 70%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 12px 16px rgb(0 0 0 / 0.45));
+    transform: translateZ(28px);
+    transition: transform .3s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .catalogo-banner__shop-card:not(.is-active):hover .catalogo-banner__shop-card-frame {
+      border-color: rgb(255 255 255 / 0.4);
+    }
+
+    .catalogo-banner__shop-card:hover .catalogo-banner__shop-card-img {
+      transform: translateZ(28px) scale(1.06) translate(-3px, -3px);
+    }
+  }
+
+  .catalogo-banner__shop-card.is-active .catalogo-banner__shop-card-frame {
+    border-color: var(--color-secondary);
+  }
+
+  .catalogo-banner__scene {
+    position: absolute;
+    z-index: 2;
+    right: clamp(1.5rem, 6vw, 6rem);
+    bottom: 8%;
+    width: min(40vw, 640px);
+    height: clamp(380px, 46vw, 560px);
+    pointer-events: none;
+  }
+
+  .catalogo-banner__products {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .catalogo-banner__product img {
+    display: block;
+    max-width: none;
+    filter: drop-shadow(0 20px 24px rgb(0 0 0 / 0.4));
+  }
+
+  .catalogo-banner__product--main {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: 42%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-bottom: 64px;
+  }
+
+  .catalogo-banner__product--main .product-card__shadow {
+    bottom: 6px;
+    width: 170px;
+    height: 52px;
+    background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.5), transparent 65%);
+  }
+
+  .catalogo-banner__product--main img {
+    width: auto;
+    height: clamp(300px, 36vw, 460px);
+  }
+
+  .catalogo-banner__pedestal {
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    pointer-events: none;
+  }
+
+  .catalogo-banner__pedestal img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .catalogo-banner__shop-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    background: rgb(0 0 0 / 0.25);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(255 255 255 / 0.15);
+  }
+
+  .catalogo-banner__control-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    background: transparent;
+    color: rgb(255 255 255 / 0.75);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: color .2s ease, background-color .2s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .catalogo-banner__control-btn:hover:not(:disabled) {
+      color: var(--color-white);
+      background-color: rgb(255 255 255 / 0.15);
+    }
+  }
+
+  .catalogo-banner__control-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .catalogo-banner__dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+  }
+
+  .catalogo-banner__dot {
+    width: 6px;
+    height: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background-color: rgb(255 255 255 / 0.4);
+    cursor: pointer;
+    transition: background-color .25s ease, width .25s ease, border-radius .25s ease;
+  }
+
+  .catalogo-banner__dot.is-active {
+    width: 14px;
+    border-radius: 4px;
+    background-color: var(--color-white);
+  }
+
+  .catalogo-banner__bottom-bar {
+    position: absolute;
+    z-index: 2;
+    left: clamp(1.5rem, 6.25vw, 7.5rem);
+    right: clamp(1.5rem, 6.25vw, 7.5rem);
+    bottom: clamp(2rem, 5vh, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .catalogo-banner__bottom-bar-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+  }
+
+  .catalogo-banner__counter {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--color-white);
+  }
+
+  .catalogo-banner__counter-current {
+    font-size: 40px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .catalogo-banner__counter-total {
+    font-size: 16px;
+    color: rgb(255 255 255 / 0.5);
+  }
+
+  .catalogo-banner__progress {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background-color: rgb(255 255 255 / 0.16);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .catalogo-banner__progress-bar {
+    display: block;
+    height: 100%;
+    background-color: var(--color-white);
+    border-radius: 2px;
+    transition: width .4s ease;
+  }
+
+  @media (width < 64rem) {
+    .catalogo-banner {
+      height: 100svh;
+      min-height: 560px;
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+
+    .catalogo-banner__content {
+      height: 100%;
+      min-height: 100%;
+      padding-top: clamp(4.5rem, 12vh, 6rem);
+      padding-inline: 1.25rem;
+      padding-bottom: 5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .catalogo-banner__shop-cards {
+      display: none;
+    }
+
+    .catalogo-banner__body {
+      margin-top: 1.5rem;
+      gap: 0.5rem;
+    }
+
+    .catalogo-banner__title {
+      font-size: clamp(1.75rem, 7vw, 2.5rem);
+      font-weight: 700;
+    }
+
+    .catalogo-banner__desc {
+      font-size: 14px;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .catalogo-banner__scene {
+      position: absolute;
+      left: 50%;
+      bottom: 3.5rem;
+      transform: translateX(-50%);
+      width: min(85vw, 340px);
+      height: clamp(240px, 45vh, 340px);
+      margin: 0;
+      pointer-events: none;
+    }
+
+    .catalogo-banner__product--main {
+      bottom: 36%;
+      padding-bottom: 18px;
+    }
+
+    .catalogo-banner__product--main img {
+      height: clamp(200px, 36vh, 280px);
+    }
+
+    .catalogo-banner__bottom-bar {
+      position: absolute;
+      left: 1.25rem;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      margin-top: 0;
+    }
+
+    .catalogo-banner__bottom-bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.625rem;
+    }
+
+    .catalogo-banner__shop-controls {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .catalogo-banner__counter {
+      margin-top: 0;
+    }
+  }
+}
+
+/* =========================================================
+   GRILLA DE PRODUCTOS (Figma node 3618-3354) — buscador, resultado del
+   filtro y la grilla de cards bajo el banner de Catálogo. Las cards
+   reutilizan .product-card* (mismo componente del slider "Productos" del
+   home): mismas medidas de media/chip/specs, solo con el chip siempre
+   visible (.product-card--grid) en vez de aparecer con el hover del swiper.
+   ========================================================= */
+@layer components {
+  .catalogo-productos {
+    max-width: 1920px;
+    margin-inline: auto;
+    padding: clamp(2.5rem, 6vh, 4.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(4rem, 10vh, 7rem);
+  }
+
+  .catalogo-filters {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1.5rem;
+    border: 1px solid var(--color-neutral-100);
+    border-radius: 16px;
+    background-color: var(--color-bg);
+  }
+
+  .catalogo-filters__row {
+    display: flex;
+    flex: 2 1 440px;
+    gap: 1.5rem;
+  }
+
+  .catalogo-filters__field {
+    display: flex;
+    flex: 1 1 220px;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .catalogo-filters__field--search {
+    flex: 1 1 300px;
+  }
+
+  .catalogo-filters__label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-text-soft);
+  }
+
+  .catalogo-filters__control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-neutral-100);
+    border-radius: 12px;
+    background-color: var(--color-white);
+    color: var(--color-text-dark);
+  }
+
+  .catalogo-filters__control svg {
+    flex: none;
+  }
+
+  .catalogo-filters__control input,
+  .catalogo-filters__control select {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-dark);
+    appearance: none;
+  }
+
+  .catalogo-filters__control input::placeholder {
+    color: var(--color-text-soft);
+  }
+
+  .catalogo-filters__control:has(select) {
+    justify-content: space-between;
+  }
+
+  .catalogo-filters__control select:disabled {
+    color: var(--color-neutral-400);
+  }
+
+  .catalogo-results {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-bottom: 7rem;
+    border-bottom: 1px solid var(--color-neutral-100);
+    font-size: 15px;
+    color: var(--color-text-mid);
+  }
+
+  .catalogo-results strong {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .catalogo-results__right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .catalogo-results__sort {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .catalogo-results__sort-select {
+    border: 0;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-primary);
+    cursor: pointer;
+    appearance: none;
+    padding-right: 0.25rem;
+  }
+
+  .catalogo-results__reset {
+    font-size: 13px;
+    color: var(--color-primary-400);
+    text-decoration: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .catalogo-results__reset:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .catalogo-empty {
+    padding: 4rem 1.5rem;
+    text-align: center;
+    color: var(--color-neutral-500);
+    font-size: 16px;
+  }
+
+  .catalogo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    column-gap: 1.5rem;
+    row-gap: 3.5rem;
+    margin-top: 2rem;
+  }
+
+  /* Card del catálogo en la grilla: hover moderno con zoom al producto y elevación de chip */
+  .product-card--grid {
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .product-card--grid .product-card__media {
+    background-image: linear-gradient(to bottom, #8ac2ea, #f0f5ff);
+  }
+
+  .product-card--grid .product-card__img {
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease;
+  }
+
+  .product-card--grid .product-card__chip {
+    opacity: 1;
+    transform: translateY(0);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .product-card--grid .product-card__chip svg {
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  @media (hover: hover) and (pointer: fine) and (width >= 48rem) {
+    .product-card--grid:hover,
+    .swiper-slide-active .product-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .product-card--grid:hover .product-card__img,
+    .swiper-slide-active .product-card:hover .product-card__img {
+      transform: scale(1.08);
+      filter: drop-shadow(0 14px 20px rgb(0 0 0 / 0.3));
+    }
+
+    .product-card--grid:hover .product-card__chip,
+    .swiper-slide-active .product-card:hover .product-card__chip {
+      transform: translateY(-4px);
+      background-color: var(--color-primary-dark);
+      box-shadow: 0 10px 22px rgb(0 30 97 / 0.35);
+    }
+
+    .product-card--grid:hover .product-card__chip svg,
+    .swiper-slide-active .product-card:hover .product-card__chip svg {
+      transform: rotate(-45deg) translate(5px, 0);
+    }
+  }
+
+  .catalogo-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 4rem;
+  }
+
+  .catalogo-pagination__side {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .catalogo-pagination__side--prev {
+    border: 1px solid var(--color-neutral-100);
+    background-color: var(--color-bg);
+    color: var(--color-neutral-300);
+  }
+
+  .catalogo-pagination__side--prev:not([aria-disabled="true"]) {
+    color: var(--color-text-dark);
+  }
+
+  .catalogo-pagination__side--next {
+    border: 1px solid var(--color-neutral-200);
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .catalogo-pagination__side svg:first-child {
+    transform: rotate(180deg);
+  }
+
+  .catalogo-pagination__pages {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .catalogo-pagination__page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 0.875rem;
+    border: 1px solid var(--color-neutral-100);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--color-primary);
+    text-decoration: none;
+    background-color: var(--color-white);
+  }
+
+  .catalogo-pagination__page.is-active {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  @media (width < 64rem) {
+    .catalogo-grid {
+      grid-template-columns: repeat(2, 1fr);
+      column-gap: 1.25rem;
+      row-gap: 2.5rem;
+    }
+  }
+
+  @media (width < 48rem) {
+    .catalogo-productos {
+      padding: 1.5rem 1.25rem 3.5rem;
+    }
+
+    .catalogo-filters {
+      padding: 0;
+      border: 0;
+      background: none;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .catalogo-filters__row {
+      /* Resetea el flex-basis:440px del desktop (ver regla base): ahí es
+         ANCHO dentro de una fila, pero acá .catalogo-filters pasó a
+         flex-direction:column — ese mismo 440px se aplicaba como ALTO,
+         estirando la fila de selects a 440px de hueco vacío. */
+      flex: none;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.625rem;
+      width: 100%;
+    }
+
+    .catalogo-filters__field {
+      flex: 1 1 auto;
+      gap: 0.375rem;
+    }
+
+    .catalogo-filters__label {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+    }
+
+    .catalogo-filters__control {
+      padding: 0.625rem 0.75rem;
+      border-radius: 12px;
+      height: 42px;
+    }
+
+    .catalogo-filters__control input,
+    .catalogo-filters__control select {
+      font-size: 13px;
+    }
+
+    .catalogo-results {
+      margin-top: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 0;
+      font-size: 13px;
+    }
+
+    .catalogo-results__sort-select {
+      font-size: 13px;
+    }
+
+    .catalogo-grid {
+      grid-template-columns: repeat(2, 1fr);
+      column-gap: 0.75rem;
+      row-gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    /* Ajuste de cards de producto para grilla móvil de 2 columnas */
+    .product-card--grid {
+      border-radius: 16px;
+      border: 1px solid #f0f3fa;
+      background-color: var(--color-white);
+      box-shadow: 0 4px 14px rgb(0 0 0 / 0.04);
+    }
+
+    .product-card--grid .product-card__media {
+      aspect-ratio: 1;
+      border-radius: 14px 14px 0 0;
+      background-image: linear-gradient(180deg, #dbeefe 0%, #f0f7ff 100%);
+      padding: 0.625rem;
+      width: 100%;
+    }
+
+    .product-card--grid .product-card__img {
+      max-height: 88%;
+      width: auto;
+      filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.15));
+    }
+
+    .product-card--grid .product-card__chip {
+      width: 32px;
+      height: 32px;
+      right: 8px;
+      bottom: 8px;
+      border-radius: 50%;
+      background-color: var(--color-primary);
+      box-shadow: 0 4px 10px rgb(0 30 97 / 0.25);
+    }
+
+    .product-card--grid .product-card__chip svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    .product-card--grid .product-card__body {
+      padding: 0.75rem 0.625rem;
+      gap: 4px;
+    }
+
+    .product-card--grid .product-card__cat {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--color-secondary);
+    }
+
+    .product-card--grid .product-card__name {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--color-text-dark);
+      margin-top: 1px;
+    }
+
+    .product-card--grid .product-card__specs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .product-card--grid .product-card__specs dt {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: var(--color-text-soft);
+    }
+
+    .product-card--grid .product-card__specs dd {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--color-text-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .catalogo-pagination {
+      gap: 0.5rem;
+      justify-content: space-between;
+      margin-top: 2rem;
+    }
+
+    .catalogo-pagination__side {
+      padding: 0.5rem 0.875rem;
+      font-size: 11px;
+      border-radius: 8px;
+    }
+
+    .catalogo-pagination__pages {
+      gap: 4px;
+    }
+
+    .catalogo-pagination__page {
+      min-width: 32px;
+      height: 32px;
+      padding: 0;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+  }
+}
+
+/* =========================================================
    BASE
    ========================================================= */
 @layer base {
@@ -2918,25 +4406,41 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Red de seguridad: ya no debería haber overflow horizontal (ver el
+       fix de .sectores__slider y type-h2/h3/display), pero con tantos
+       elementos en clamp()/vw es fácil que algo nuevo se pase por unos px
+       — clip (no hidden) para no crear un nuevo contenedor de scroll ni
+       cortar los `position: fixed` del header. */
+    overflow-x: clip;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-text-dark);
+    /* El clip en <html> no bastaba: elementos [data-reveal="right"/corner-*]
+       muy por debajo del fold (offset x:+48 de scroll-reveals.ts, invisibles
+       vía autoAlpha pero con su transform ya aplicado antes de entrar en
+       viewport) seguían agrandando el scrollWidth de <body> — y ESE tamaño
+       es el que se filtraba hacia arriba y volvía a inflar el de <html>. Con
+       clip en ambos, document.documentElement.scrollWidth vuelve a igualar
+       al ancho real aunque el usuario nunca haya scrolleado esas secciones. */
+    overflow-x: clip;
   }
 
   /* Botones nativos: aplican estilo base + estado hover */
-  .btn-primary:hover {
-    background-color: var(--color-secondary);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      background-color: var(--color-secondary);
+    }
 
-  .btn-secondary:hover {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-  }
+    .btn-secondary:hover {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
 
-  .btn-accent:hover {
-    background-color: var(--color-primary-dark);
+    .btn-accent:hover {
+      background-color: var(--color-primary-dark);
+    }
   }
 
   /* Focus visible accesible */
@@ -2967,8 +4471,19 @@
   flex: 1;
   min-width: 0;
   /* espacio para que la foto del producto sobresalga por encima de la card */
-  padding-top: 170px;
+  padding-top: 120px;
   padding-bottom: 8px;
+  /* Degradado en los bordes del carril: el coverflow deja muy poco margen
+     entre la card activa y el borde de .swiper (a 80vw la activa ocupaba
+     ~98% del ancho del carril), así que la vecina asomaba casi toda su
+     cara — incluida la fila de specs, cortada a mitad de texto sin importar
+     cuánto se ajustara el overlap numérico (la fila de specs cae siempre a
+     la misma altura en TODAS las cards). En vez de perseguir un ancho
+     "perfecto" que dependa del largo del título de cada producto, se
+     desvanece lo que asome: dentro de los primeros 90px se ilustra el
+     borde de la vecina en profundidad, no un corte en seco. */
+  -webkit-mask-image: linear-gradient(to right, transparent, black 90px, black calc(100% - 90px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 90px, black calc(100% - 90px), transparent);
 }
 
 .productos .swiper-wrapper {
@@ -2983,6 +4498,26 @@
   height: auto;
   transition-property: opacity, transform;
   opacity: 0.65;
+}
+
+@media (width < 48rem) {
+  .productos .swiper-slide {
+    /* Con el degradado de arriba ya no hace falta que la activa ocupe casi
+       todo el carril: un poco más angosta le da a la vecina un margen real
+       para asomar (y al degradado, overlap de sobra que disimular) sin
+       comerse la propia card activa. */
+    width: min(353px, 76vw);
+  }
+
+  .productos .swiper {
+    /* .product-card__img se ancla (bottom:36px) contra .product-card__media,
+       no contra la card entera — así que al achicar el media para la card
+       compacta de mobile (220px → 150px) sin tocar la foto (250px, sigue
+       igual a propósito), lo que sobresale por ARRIBA del media pasó de
+       66px a 136px. Sin este padding a la altura, .swiper (overflow:hidden)
+       recortaba la punta de la foto contra su propio borde superior. */
+    padding-top: 160px;
+  }
 }
 
 .productos .swiper-slide-active {

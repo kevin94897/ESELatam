@@ -29,6 +29,14 @@ const PATHS = {
 type MorphState = keyof typeof PATHS.corner;
 
 export function initHeroCta(): void {
+  // Mismo guard que el hover CSS de `.hero-cta` (main.css, `hover: hover` +
+  // `pointer: fine`): sin él, el primer TAP en táctil disparaba el morph a
+  // 'hover' (el JS no tiene equivalente a `:hover` que se suelte solo al
+  // levantar el dedo) mientras el color/escala en CSS sí quedaba protegido
+  // — un estado a medio camino que solo se corregía tocando otra parte de
+  // la pantalla.
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
   document.querySelectorAll<HTMLAnchorElement>('.hero-cta').forEach((cta) => {
     const cornerPath = cta.querySelector<SVGPathElement>('.hero-cta__corner path');
     const blobPath = cta.querySelector<SVGPathElement>('.hero-cta__arrow path');

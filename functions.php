@@ -24,4 +24,6 @@ define('ESE_LATAM_VITE_SERVER', 'http://localhost:5173');
 require_once ESE_LATAM_DIR . '/inc/setup.php';
 require_once ESE_LATAM_DIR . '/inc/enqueue.php';
 require_once ESE_LATAM_DIR . '/inc/template-tags.php';
+require_once ESE_LATAM_DIR . '/inc/cpt-productos.php';
+require_once ESE_LATAM_DIR . '/inc/acf-productos.php';
 add_filter( 'show_admin_bar', '__return_false' );

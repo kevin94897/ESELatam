@@ -155,8 +155,15 @@ function setupAutoplay(root: HTMLElement, embla: EmblaCarouselType): void {
   embla.on('pointerDown', () => { pointerDown = true; stop(); });
   embla.on('pointerUp', () => { pointerDown = false; play(); });
 
-  root.addEventListener('mouseenter', () => { hovered = true; stop(); });
-  root.addEventListener('mouseleave', () => { hovered = false; play(); });
+  // mouseenter/mouseleave son solo para la pausa "por intención de mouse"
+  // de desktop. En táctil, un tap dispara mouseenter sin que llegue nunca
+  // un mouseleave si el usuario no vuelve a tocar otro elemento — el
+  // autoplay quedaba pausado para siempre. pointerDown/pointerUp de Embla
+  // (arriba) ya cubre pausar/reanudar alrededor de la interacción táctil.
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    root.addEventListener('mouseenter', () => { hovered = true; stop(); });
+    root.addEventListener('mouseleave', () => { hovered = false; play(); });
+  }
   root.addEventListener('focusin', () => { hovered = true; stop(); });
   root.addEventListener('focusout', () => { hovered = false; play(); });
 

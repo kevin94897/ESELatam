@@ -41,6 +41,19 @@ add_action('wp_enqueue_scripts', static function (): void {
     add_action('wp_head', static function (): void {
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+
+        // La isla del hero es el elemento LCP de la home: se precarga con el
+        // mismo srcset/sizes del <img> para que el navegador la priorice
+        // desde el <head>, en vez de descubrirla al parsear el <body>.
+        if (is_front_page()) {
+            $base = ESE_LATAM_URI . '/assets/imgs/island/island-';
+            echo '<link rel="preload" as="image" href="' . esc_url($base . '2400.webp') . '"'
+                . ' imagesrcset="' . esc_url($base . '480.webp') . ' 480w, '
+                . esc_url($base . '768.webp') . ' 768w, '
+                . esc_url($base . '1200.webp') . ' 1200w, '
+                . esc_url($base . '2400.webp') . ' 2400w"'
+                . ' imagesizes="(max-width: 47.9375rem) min(120vw, 640px), min(92vw, 1720px, 142svh)">' . "\n";
+        }
     }, 1);
 
     wp_enqueue_style(

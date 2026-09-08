@@ -45,6 +45,14 @@ function bootstrap(): void {
     });
   }
 
+  // Escena "isla + productos flotantes" del banner de catálogo
+  const productIsland = document.querySelector<HTMLElement>('[data-product-island]');
+  if (productIsland) {
+    void import('./modules/product-island').then(({ initProductIsland }) => {
+      initProductIsland(productIsland);
+    });
+  }
+
   // Lazy-load Three.js solo si la página tiene un canvas 3D
   const has3d = document.querySelector<HTMLElement>('[data-three-scene]');
   if (has3d) {
@@ -53,12 +61,30 @@ function bootstrap(): void {
     });
   }
 
-  // Distribuidores: globo 3D (Three.js + GSAP), solo si la sección existe
+  // Distribuidores: globo 3D (Three.js + texturas, ~1.1MB) — la sección está
+  // varias pantallas abajo del fold, así que se difiere su import hasta que
+  // esté por entrar en viewport. Sin esto compite por ancho de banda con el
+  // contenido crítico del hero desde el primer instante de la carga.
   const globeSection = document.querySelector<HTMLElement>('[data-globe]');
   if (globeSection) {
-    void import('./modules/distribuidores').then(({ initDistribuidores }) => {
-      initDistribuidores(globeSection);
-    });
+    if (typeof IntersectionObserver === 'function') {
+      const observer = new IntersectionObserver(
+        (entries, obs) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            obs.disconnect();
+            void import('./modules/distribuidores').then(({ initDistribuidores }) => {
+              initDistribuidores(globeSection);
+            });
+          }
+        },
+        { rootMargin: '200px' }
+      );
+      observer.observe(globeSection);
+    } else {
+      void import('./modules/distribuidores').then(({ initDistribuidores }) => {
+        initDistribuidores(globeSection);
+      });
+    }
   }
 }
 

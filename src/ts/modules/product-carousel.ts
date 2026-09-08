@@ -26,6 +26,10 @@ export function initProductCarousel(): void {
   if (!el) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Swiper implementa pauseOnMouseEnter con mouseenter/mouseleave reales: en
+  // táctil un tap puede disparar el mouseenter sintético sin un mouseleave
+  // que lo suelte después, dejando el autoplay pausado para siempre.
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const root = el.closest<HTMLElement>('.productos') ?? document.body;
 
   // Impar: uno al centro y (visible - 1) / 2 a cada lado.
@@ -57,6 +61,11 @@ export function initProductCarousel(): void {
     centeredSlides: true,
     loop: true,
     slidesPerView: 'auto',
+    // Un poco de aire entre slides: sin esto, la vecina se metía ~27px
+    // debajo de la activa (el ancho de la card ya deja muy poco margen
+    // dentro del propio .swiper) y el degradado de máscara (main.css) tenía
+    // menos overlap que disimular.
+    spaceBetween: 16,
     slideToClickedSlide: true,
     speed: 600,
     coverflowEffect: {
@@ -68,7 +77,7 @@ export function initProductCarousel(): void {
     },
     autoplay: prefersReducedMotion
       ? false
-      : { delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: true },
+      : { delay: 3000, disableOnInteraction: false, pauseOnMouseEnter: canHover },
     navigation: {
       prevEl: root.querySelector<HTMLElement>('[data-carousel-prev]'),
       nextEl: root.querySelector<HTMLElement>('[data-carousel-next]'),

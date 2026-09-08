@@ -17,6 +17,10 @@ export function initDistribuidores(section: HTMLElement): void {
   const canvasHost = section.querySelector<HTMLElement>('[data-globe-canvas]');
   const pills = Array.from(section.querySelectorAll<HTMLButtonElement>('[data-country]'));
   const panels = Array.from(section.querySelectorAll<HTMLElement>('[data-country-panel]'));
+  // Mismo set de países que el riel, pero como <select> (solo visible en
+  // mobile, ver .distribuidores__select en main.css). Los datos de cada país
+  // se siguen leyendo del riel, que está en el DOM en los dos breakpoints.
+  const countrySelect = section.querySelector<HTMLSelectElement>('[data-country-select]');
   if (!canvasHost || !pills.length) return;
 
   const countries: GlobeCountry[] = pills.map((pill) => ({
@@ -47,6 +51,12 @@ export function initDistribuidores(section: HTMLElement): void {
         panel.classList.toggle('is-active', panel.dataset.countryPanel === slug);
       });
 
+      // La selección también puede venir de un marcador del globo: en ese
+      // caso el <select> tiene que reflejarla, no quedarse en el país viejo.
+      if (countrySelect && countrySelect.value !== slug) {
+        countrySelect.value = slug;
+      }
+
       handle.focusCountry(slug);
     };
 
@@ -67,6 +77,10 @@ export function initDistribuidores(section: HTMLElement): void {
         const slug = pill.dataset.countrySlug;
         if (slug) selectCountry(slug);
       });
+    });
+
+    countrySelect?.addEventListener('change', () => {
+      selectCountry(countrySelect.value);
     });
   });
 }

@@ -13,7 +13,12 @@ export function initContactoReveal(): void {
   const heading = document.querySelector<HTMLElement>('[data-contacto-heading]');
   if (!heading) return;
 
-  const split = new SplitText(heading, { type: 'chars', charsClass: 'char' });
+  // 'words, chars': sin el nivel de palabra, cada letra queda como un
+  // elemento independiente sin ninguna agrupación — el navegador puede
+  // cortar la línea entre dos letras cualesquiera (se veía "ge-stión" partido
+  // a la mitad en mobile). El wrapper .word que agrega SplitText mantiene
+  // cada palabra junta (nowrap) sin afectar la animación letra por letra.
+  const split = new SplitText(heading, { type: 'words, chars', charsClass: 'char', wordsClass: 'word' });
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     gsap.set(split.chars, { opacity: 1 });

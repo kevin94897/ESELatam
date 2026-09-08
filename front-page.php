@@ -12,14 +12,21 @@ get_header();
 
 <section class="hero" data-hero>
     <video class="hero__video" data-hero-video
-        src="<?php echo esc_url(ESE_LATAM_URI . '/assets/video/hero-banner-video.mp4'); ?>" muted playsinline
-        preload="auto" aria-hidden="true" tabindex="-1"></video>
+        src="<?php echo esc_url(ESE_LATAM_URI . '/assets/video/hero-banner-video.mp4'); ?>"
+        poster="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/hero-poster.webp'); ?>" muted playsinline
+        preload="none" aria-hidden="true" tabindex="-1"></video>
 
     <div class="hero__shade" aria-hidden="true"></div>
 
     <div class="hero__island" data-hero-island aria-hidden="true">
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island.png'); ?>" alt="" width="2400" height="1350"
-            decoding="async">
+        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-2400.webp'); ?>"
+            srcset="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-480.webp'); ?> 480w,
+                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-768.webp'); ?> 768w,
+                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-1200.webp'); ?> 1200w,
+                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-2400.webp'); ?> 2400w"
+            sizes="(max-width: 47.9375rem) min(120vw, 640px), min(92vw, 1720px, 142svh)" alt=""
+            width="2400" height="1350"
+            fetchpriority="high" decoding="async">
     </div>
 
     <div class="hero__content">
@@ -35,6 +42,20 @@ get_header();
 
         <div class="hero__bottom" data-hero-bottom>
             <div class="hero__intro">
+                <?php
+                // Duplicado de .hero__title, visible solo en mobile (ver
+                // .hero__title-settled en main.css): ahí el titular de arriba
+                // es puramente el adorno de la intro (centrado, grande) y se
+                // desvanece del todo en vez de viajar a una posición asentada
+                // — este es el que realmente queda en el layout, justo
+                // arriba del lede. En desktop no se muestra (display:none) y
+                // .hero__title de arriba sigue siendo el único titular.
+                ?>
+                <p class="hero__title hero__title-settled" data-hero-reveal>
+                    <?php esc_html_e('Contener', 'ese-latam'); ?> <?php esc_html_e('para', 'ese-latam'); ?>
+                    <strong><?php esc_html_e('transformar', 'ese-latam'); ?></strong>
+                </p>
+
                 <p class="hero__lede" data-hero-reveal>
                     <?php esc_html_e('Diseñamos y distribuimos soluciones de contención de residuos que combinan ingeniería, certificaciones y acompañamiento en cada sector.', 'ese-latam'); ?>
                 </p>
@@ -72,48 +93,48 @@ $ese_sectores = [
     [
         'title' => __('Municipalidades y gobiernos locales', 'ese-latam'),
         'desc' => __('Contenerización certificada para recolección urbana a gran escala.', 'ese-latam'),
-        'img' => 'municipalidades.jpg',
+        'img' => 'municipalidades.webp',
     ],
     [
         'title' => __('Empresas de recolección', 'ese-latam'),
         'desc' => __('Flotas de contenedores compatibles con sistemas de carga mecanizada.', 'ese-latam'),
-        'img' => 'recoleccion.jpg',
+        'img' => 'recoleccion.webp',
     ],
     [
         'title' => __('Inmobiliarias', 'ese-latam'),
         'desc' => __('Soluciones de contención para edificios y condominios.', 'ese-latam'),
-        'img' => 'municipalidades.jpg',
+        'img' => 'municipalidades.webp',
     ],
     [
         'title' => __('Hospitalarios', 'ese-latam'),
         'desc' => __('Contenedores certificados para residuos biocontaminados.', 'ese-latam'),
-        'img' => 'recoleccion.jpg',
+        'img' => 'recoleccion.webp',
     ],
     [
         'title' => __('Uso doméstico', 'ese-latam'),
         'desc' => __('Contenedores durables para la gestión de residuos en el hogar.', 'ese-latam'),
-        'img' => 'municipalidades.jpg',
+        'img' => 'municipalidades.webp',
     ],
     [
         'title' => __('Supermercados y aeropuertos', 'ese-latam'),
         'desc' => __('Gestión de alto tránsito para espacios comerciales y terminales.', 'ese-latam'),
-        'img' => 'recoleccion.jpg',
+        'img' => 'recoleccion.webp',
     ],
     [
         'title' => __('Restaurantes y hostelería', 'ese-latam'),
         'desc' => __('Contención higiénica para operaciones gastronómicas.', 'ese-latam'),
-        'img' => 'municipalidades.jpg',
+        'img' => 'municipalidades.webp',
     ],
     [
         'title' => __('Industria y manufactura', 'ese-latam'),
         'desc' => __('Operaciones de largo plazo en entornos industriales exigentes.', 'ese-latam'),
-        'img' => 'recoleccion.jpg',
+        'img' => 'recoleccion.webp',
     ],
 ];
 ?>
 <section id="sectores" class="hero-next bg-white relative z-10">
     <div class="hero-next__clouds" aria-hidden="true" data-reveal="fade">
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/clouds.png'); ?>" alt="" decoding="async">
+        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/clouds.webp'); ?>" alt="" decoding="async">
     </div>
 
     <div class="sectores" data-embla data-embla-contain="false" data-embla-loop="true" data-embla-autoplay="6000">
@@ -245,15 +266,24 @@ $ese_producto_filtros = [
             <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/bg-skyline.png'); ?>" alt=""
                 loading="lazy" decoding="async">
         </div>
-        <?php // Las hojas entran con un fade al llegar la sección. `fade` (y no
-        // una variante direccional) porque --right va espejada con
-        // transform: scaleX(-1) y esa variante no toca transforms. ?>
-        <img class="productos__leaves productos__leaves--left"
-            src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt="" loading="lazy"
-            decoding="async" aria-hidden="true" data-reveal="corner-tl">
-        <img class="productos__leaves productos__leaves--right"
-            src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt="" loading="lazy"
-            decoding="async" aria-hidden="true" data-reveal="corner-tr" data-reveal-delay="0.18">
+        <?php // Las hojas entran con un fade+diagonal al llegar la sección, y
+        // además derivan hacia abajo con el scroll (parallax) mientras el
+        // usuario recorre la sección — dos animaciones GSAP independientes,
+        // por eso van en dos elementos distintos (wrapper + img, ver
+        // main.css): la entrada en el <img>, el parallax continuo en el
+        // wrapper. ?>
+        <div class="productos__leaves-wrap productos__leaves-wrap--left" aria-hidden="true" data-parallax
+            data-parallax-from="-20" data-parallax-to="20">
+            <img class="productos__leaves"
+                src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt=""
+                loading="lazy" decoding="async" data-reveal="corner-tl">
+        </div>
+        <div class="productos__leaves-wrap productos__leaves-wrap--right" aria-hidden="true" data-parallax
+            data-parallax-from="-20" data-parallax-to="20">
+            <img class="productos__leaves"
+                src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt=""
+                loading="lazy" decoding="async" data-reveal="corner-tr" data-reveal-delay="0.18">
+        </div>
 
         <header class="productos__header" data-reveal-header>
             <p class="type-kicker text-white/90">/ <?php esc_html_e('Nuestra gama de productos', 'ese-latam'); ?></p>
@@ -476,16 +506,23 @@ $ese_distribuidores = [
 ];
 ?>
 <section id="distribuidores" class="distribuidores relative z-10" data-globe>
-    <div class="distribuidores__rings" aria-hidden="true">
-        <span></span><span></span>
-    </div>
-
     <?php // El globo es el fondo de la sección: ocupa todo y el resto flota encima. ?>
     <div class="distribuidores__globe" data-reveal="fade" data-lenis-prevent aria-hidden="true">
+        <?php
+        // Los anillos van ADENTRO del globo, no como hermanos de la sección:
+        // así heredan su centro solos. Como hermanos tenían sus propias
+        // coordenadas (56%/48% de la sección) y en mobile el globo pasa a ser
+        // un elemento en flujo dentro de la grilla, con lo cual los anillos
+        // quedaban anclados en cualquier otro lado.
+        ?>
+        <div class="distribuidores__rings" aria-hidden="true">
+            <span></span><span></span>
+        </div>
+
         <div data-globe-canvas
-            data-earth-map="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-daymap.jpg'); ?>"
-            data-earth-specular="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-specular.jpg'); ?>"
-            data-earth-normal="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-normal.jpg'); ?>">
+            data-earth-map="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-daymap.webp'); ?>"
+            data-earth-specular="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-specular.webp'); ?>"
+            data-earth-normal="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/distribuidores/earth-normal.webp'); ?>">
         </div>
     </div>
 
@@ -506,6 +543,32 @@ $ese_distribuidores = [
             <span class="distribuidores__rail-count"><?php echo count($ese_distribuidores); ?></span>
             <?php esc_html_e('países conectados', 'ese-latam'); ?>
         </p>
+
+        <?php
+        // Mobile: el mismo set de países en un <select> nativo. El riel de 13
+        // pastillas envolvía en 9 filas irregulares y ocupaba ~500px de alto,
+        // así que el globo y el control nunca entraban juntos en pantalla.
+        // Va en el marcado (no armado por JS) para que exista aunque el JS
+        // todavía no haya corrido; CSS decide cuál de los dos se ve. El picker
+        // del sistema no se puede estilar, y está bien: es el que el usuario
+        // ya conoce en su teléfono.
+        ?>
+        <div class="distribuidores__select">
+            <label class="sr-only"
+                for="distribuidores-pais"><?php esc_html_e('Elegir país', 'ese-latam'); ?></label>
+            <select id="distribuidores-pais" data-country-select>
+                <?php foreach ($ese_distribuidores as $i => $pais): ?>
+                    <option value="<?php echo esc_attr($pais['slug']); ?>" <?php selected(0, $i); ?>>
+                        <?php echo esc_html($pais['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <span class="distribuidores__select-icon" aria-hidden="true">
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12L4 7H14L9 12Z" fill="currentColor" />
+                </svg>
+            </span>
+        </div>
 
         <div class="distribuidores__rail-items" data-country-list role="tablist"
             aria-label="<?php esc_attr_e('Países con distribuidor', 'ese-latam'); ?>">
@@ -583,14 +646,14 @@ $ese_servicios = [
         'title' => __('Segregar', 'ese-latam'),
         'desc' => __('Clasificamos los residuos en origen con contenedores diferenciados por color y tipo, optimizando cada etapa de la recolección.', 'ese-latam'),
         'icon' => 'icon-segregar.svg',
-        'img' => 'sectores/recoleccion.jpg',
+        'img' => 'sectores/recoleccion.webp',
     ],
     [
         'slug' => 'transformar',
         'title' => __('Transformar', 'ese-latam'),
         'desc' => __('Convertimos los residuos correctamente segregados en materia prima para nuevos productos, cerrando el ciclo de la economía circular.', 'ese-latam'),
         'icon' => 'icon-transformar.svg',
-        'img' => 'sectores/municipalidades.jpg',
+        'img' => 'sectores/municipalidades.webp',
     ],
 ];
 ?>
@@ -721,33 +784,6 @@ $ese_certificaciones = [
 </section>
 
 <?php // Sección "Contactemos" (Figma node 535-782) — CTA de cierre, al pie de todo el contenido ?>
-<section id="contacto" class="contacto">
-    <div class="contacto__bg" aria-hidden="true">
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/contacto-bg.jpg'); ?>" alt="" loading="lazy"
-            decoding="async">
-    </div>
-
-    <div class="contacto__card" data-reveal="fade">
-        <p class="type-kicker text-white">/ <?php esc_html_e('Contactemos', 'ese-latam'); ?></p>
-
-        <h2 class="contacto__heading" data-contacto-heading>
-            <?php esc_html_e('¿Listo para llevar tu gestión de residuos al ', 'ese-latam'); ?><?php esc_html_e('siguiente nivel', 'ese-latam'); ?></span>?
-        </h2>
-
-        <hr class="contacto__divider">
-
-        <div class="contacto__row">
-            <p class="contacto__desc">
-                <?php esc_html_e('Fomentamos la cultura del reciclaje a través de contenedores con señalética clara y pedagogía urbana, facilitando la identificación correcta de cada tipo de residuo.', 'ese-latam'); ?>
-            </p>
-            <?php
-            ese_latam_cta_button([
-                'href' => 'mailto:hola@eselatam.com',
-                'label' => __('Contactar', 'ese-latam'),
-            ]);
-            ?>
-        </div>
-    </div>
-</section>
+<?php get_template_part('template-parts/contacto'); ?>
 
 <?php get_footer(); ?>

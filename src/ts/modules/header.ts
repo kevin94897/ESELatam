@@ -48,13 +48,29 @@ export function initHeader(): void {
     }
   }
 
-  // Solo gobierna el fondo translúcido tras el header (blur) — el logo ya
-  // no depende de este umbral, ver initLogoReveal.
+  // Gobierna el fondo/borde translúcido del header (CSS, vía .is-scrolled)
+  // y el leve agrandado del nav-pill al scrollear. Va por GSAP y no CSS: el
+  // nav-pill ya recibe un transform inline propio (translateX, ver
+  // initLogoReveal) que pisaría un `transform: scale()` puesto por clase.
+  const navPill = header.querySelector<HTMLElement>('.nav-pill');
   const onScroll = (): void => {
-    header.classList.toggle('is-scrolled', window.scrollY > SCROLL_THRESHOLD);
+    const scrolled = window.scrollY > SCROLL_THRESHOLD;
+    header.classList.toggle('is-scrolled', scrolled);
+    if (navPill) {
+      gsap.to(navPill, { scale: scrolled ? 1.05 : 1, duration: 0.35, ease: 'power2.out', overwrite: 'auto' });
+    }
   };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
+
+  // `.nav-pill` ya está `display:none` bajo 64rem (main.css), pero un
+  // tablet táctil por encima de ese ancho (p. ej. iPad en horizontal) SÍ lo
+  // muestra sin tener mouse — sin este guard, mousemove nunca dispara ahí
+  // pero igual se arma un quickTo por ítem en cada carga, y en cualquier
+  // híbrido con mouse+touch el "hover" quedaría pegado tras un tap.
+  if (navPill && !prefersReducedMotion && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    initDockMagnify(navPill);
+  }
 
   const toggle = header.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const panel = header.querySelector<HTMLElement>('[data-nav-panel]');
@@ -77,6 +93,54 @@ export function initHeader(): void {
       setOpen(false);
     }
   });
+}
+
+// Radio de influencia (px) a cada lado del cursor y escala máxima en su
+// centro — como el dock de macOS: el ítem bajo el cursor crece más, los
+// vecinos un poco menos, con una caída suave (coseno) hasta volver a 1.
+const DOCK_RADIUS = 150; // >= la separación real centro-a-centro entre items, si no los vecinos nunca reaccionan
+const DOCK_MAX_SCALE = 1.1;
+
+/**
+ * Magnificación estilo dock de macOS sobre los links del nav-pill: al mover
+ * el cursor por la fila, cada ítem escala según su distancia al cursor.
+ * Crece desde su propio centro (transform-origin: center, en main.css) —
+ * sin desplazamiento vertical, para que no parezca que "sube" del pill.
+ *
+ * Cada ítem tiene un solo quickTo sobre un proxy numérico (0 = reposo,
+ * 1 = pico bajo el cursor); el `scale` se aplica en el onUpdate del proxy.
+ */
+function initDockMagnify(navPill: HTMLElement): void {
+  const items = Array.from(navPill.querySelectorAll<HTMLElement>('.nav-pill__list a'));
+  if (!items.length) return;
+
+  const proxies = items.map(() => ({ t: 0 }));
+  const setters = items.map((item, i) => gsap.quickTo(proxies[i], 't', {
+    duration: 0.35,
+    ease: 'power3.out',
+    onUpdate: () => {
+      const t = proxies[i].t;
+      gsap.set(item, { scale: 1 + (DOCK_MAX_SCALE - 1) * t });
+      item.style.zIndex = t > 0.05 ? '1' : '0';
+    },
+  }));
+
+  const onMove = (event: MouseEvent): void => {
+    items.forEach((item, i) => {
+      const rect = item.getBoundingClientRect();
+      const distance = Math.abs(event.clientX - (rect.left + rect.width / 2));
+      const t = Math.min(distance / DOCK_RADIUS, 1);
+      const falloff = Math.cos((t * Math.PI) / 2); // 1 bajo el cursor, 0 en el borde del radio
+      setters[i](falloff);
+    });
+  };
+
+  const onLeave = (): void => {
+    setters.forEach((set) => set(0));
+  };
+
+  navPill.addEventListener('mousemove', onMove);
+  navPill.addEventListener('mouseleave', onLeave);
 }
 
 // Distancia de scroll (px) que tarda en completarse la transición — cuanto
@@ -151,6 +215,16 @@ function initLogoReveal(header: HTMLElement, prefersReducedMotion: boolean): voi
     );
 
     ScrollTrigger.addEventListener('refreshInit', measure);
+
+    // La primera medición corre con la fuente de respaldo (Google Fonts usa
+    // `display=swap`): si Plus Jakarta Sans todavía no cargó, el nav-pill
+    // mide un ancho distinto al final y el centrado sale mal — se veía
+    // "arreglado solo" al resizear porque eso fuerza un refresh tardío, ya
+    // con la fuente puesta. Se repite el refresh en cuanto la fuente esté
+    // lista, para no depender de que el usuario redimensione.
+    if ('fonts' in document) {
+      document.fonts.ready.then(() => ScrollTrigger.refresh());
+    }
 
     // Se ejecuta automáticamente al salir de este breakpoint (matchMedia).
     return () => {

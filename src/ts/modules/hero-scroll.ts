@@ -25,6 +25,18 @@ const VIDEO_END = SWEEP_START + 0.15;           // el video muere durante el bar
 
 export function initHeroScroll(section: HTMLElement): void {
   const video = section.querySelector<HTMLVideoElement>('[data-hero-video]');
+
+  // El video tiene preload="none" (ver front-page.php) para no competirle
+  // ancho de banda a la imagen LCP (la isla) durante el primer paint. Recién
+  // acá, con el navegador ya libre, se dispara la descarga real — a tiempo
+  // para que el scrub tenga datos cuando el usuario empiece a scrollear.
+  const loadVideo = (): void => video?.load();
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(loadVideo, { timeout: 2000 });
+  } else {
+    setTimeout(loadVideo, 300);
+  }
+
   const island = section.querySelector<HTMLElement>('[data-hero-island]');
   const titleWrap = section.querySelector<HTMLElement>('[data-hero-title-wrap]');
   const bottom = section.querySelector<HTMLElement>('[data-hero-bottom]');
@@ -33,13 +45,33 @@ export function initHeroScroll(section: HTMLElement): void {
   const titleLines = section.querySelectorAll<HTMLElement>('[data-hero-line]');
   const revealEls = section.querySelectorAll<HTMLElement>('[data-hero-reveal]');
   const header = document.querySelector<HTMLElement>('[data-header]');
-
+  // .hero__title-settled (ver main.css) es un duplicado estático de este
+  // titular, visible solo en mobile, dentro de .hero__intro justo arriba
+  // del lede — no hace falta capturarlo acá: ya trae `data-hero-reveal`, así
+  // que `revealEls` (abajo) lo agarra solo. En mobile .hero__title de arriba
+  // queda como el adorno puro de la intro (centrado, grande) y termina
+  // ocultándose del todo en vez de viajar a una posición asentada; ese
+  // duplicado es el que realmente queda en el layout final. En desktop no
+  // existe visualmente (display:none) y .hero__title sigue siendo el único.
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // En mobile `.hero__title` ocupa TODO el ancho de contenido de
+  // `.hero__content` (el padding lateral es simétrico, no hay nada que lo
+  // angoste) — su CAJA ya cae centrada en el viewport de por sí, así que
+  // centrar la caja (lo que hace titleDx) no mueve nada visible: el texto,
+  // más angosto y con text-align:left, seguía pegado al borde izquierdo de
+  // esa caja ya centrada. Acá sí hace falta centrar el TEXTO (no solo la
+  // caja), y solo durante la intro — el layout asentado usa .hero__title-settled.
+  const isMobile = window.matchMedia('(width < 48rem)').matches;
 
   if (prefersReducedMotion) {
     // Sin animación: estado final legible, todo visible, video en su primer frame.
-    const staticEls = [island, title, card, ...revealEls].filter((el): el is HTMLElement => el !== null);
+    // En mobile el titular real es .hero__title-settled (ya incluido en
+    // revealEls) — el de arriba (.hero__title) se queda oculto en vez de
+    // mostrarse duplicado.
+    const staticEls = [island, card, ...revealEls].filter((el): el is HTMLElement => el !== null);
     gsap.set(staticEls, { autoAlpha: 1 });
+    if (title) gsap.set(title, { autoAlpha: isMobile ? 0 : 1 });
     video?.pause();
     return;
   }
@@ -51,7 +83,7 @@ export function initHeroScroll(section: HTMLElement): void {
   // podría interferir con animaciones propias de cada elemento después
   // (p. ej. el hover del hero-cta, que anima el `d` de su SVG conector).
   const finishIntroState = (): void => {
-    if (title) gsap.set(title, { x: 0, y: 0, scale: 1, autoAlpha: 1 });
+    if (title) gsap.set(title, isMobile ? { autoAlpha: 0 } : { x: 0, y: 0, scale: 1, autoAlpha: 1 });
     if (island) gsap.set(island, { autoAlpha: 1 });
     if (header) gsap.set(header, { yPercent: 0, autoAlpha: 1 });
     if (revealEls.length) gsap.set(revealEls, { autoAlpha: 1, clearProps: 'transform' });
@@ -63,9 +95,14 @@ export function initHeroScroll(section: HTMLElement): void {
   const startsAtTop = window.scrollY <= 8 && window.location.hash === '';
 
   if (startsAtTop) {
-    // Desplazamiento del titular desde su posición de layout hasta el centro
-    // del viewport, medido del DOM antes de aplicar cualquier transform.
-    if (title) {
+    // .hero__title-wrap es display:none en mobile (ver main.css) — sin
+    // animación de entrada ahí, el titular real es .hero__title-settled,
+    // que entra con el resto de revealEls en el paso 5. Medir/animar el
+    // original igual (con su ancestro display:none) daría un
+    // getBoundingClientRect() en cero y una escena inútil.
+    if (!isMobile && title) {
+      // Desplazamiento del titular desde su posición de layout hasta el centro
+      // del viewport, medido del DOM antes de aplicar cualquier transform.
       const r = title.getBoundingClientRect();
       const titleDx = window.innerWidth / 2 - (r.left + r.width / 2);
       const titleDy = window.innerHeight / 2 - (r.top + r.height / 2);
@@ -85,12 +122,18 @@ export function initHeroScroll(section: HTMLElement): void {
     // 1) El video asienta desde un ligero zoom
     intro.from(video ?? [], { scale: 1.12, duration: 2, ease: 'power2.out' }, 0);
 
-    // 2) Titular centrado: cada línea sube desde detrás de su máscara
-    intro.from(titleLines, { yPercent: 115, duration: 1.1, stagger: 0.14 }, 0.2);
-
-    // 3) El titular viaja del centro a su posición de layout, a la izquierda.
-    // Termina en 1.5 + 1.1 = 2.6, que es lo que marca cuándo entra la isla.
-    intro.to(title ?? [], { x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.inOut' }, 1.5);
+    // 2) y 3) Solo desktop: el titular centrado sube tras su máscara y
+    // luego viaja del centro a su posición de layout, a la izquierda. En
+    // mobile .hero__title-wrap es display:none (ver main.css) — no hay
+    // nada que animar; el titular que se ve ahí es .hero__title-settled,
+    // que entra plano con el resto de revealEls en el paso 5. Los pasos
+    // siguientes quedan en sus mismas posiciones absolutas de todos modos
+    // (2.15, 2.25, 2.55), así que saltarse este tramo en mobile no
+    // desarma la coreografía del resto — solo dejan de correr en el vacío.
+    if (!isMobile) {
+      intro.from(titleLines, { yPercent: 115, duration: 1.1, stagger: 0.14 }, 0.2);
+      intro.to(title ?? [], { x: 0, y: 0, scale: 1, duration: 1.1, ease: 'power3.inOut' }, 1.5);
+    }
 
     // 4) El menú baja y entra
     intro.to(header ?? [], { yPercent: 0, autoAlpha: 1, duration: 0.8 }, 2.15);
@@ -106,7 +149,13 @@ export function initHeroScroll(section: HTMLElement): void {
 
     // 6) Recién ahora aparece la isla: no está desde la carga, entra cuando el
     // titular ya aterrizó a la izquierda (arranca 0.05s antes de que termine
-    // ese viaje, lo justo para que encadene en vez de sentirse un corte).
+    // ese viaje, lo justo para que encadene en vez de sentirse un corte). Es
+    // una decisión de diseño deliberada (la isla no debe verse hasta que el
+    // título se asiente a la izquierda) a costa del LCP: con la isla oculta
+    // hasta ISLAND_IN, el navegador mide el Largest Contentful Paint recién
+    // ahí (o en el reveal de texto del paso 5 si pinta antes) — unos 4-6s en
+    // conexión lenta, en vez de los <2s posibles si la isla fuera visible
+    // desde el primer frame. Aceptado a cambio del efecto de entrada.
     //
     // Anima `y` en px (no yPercent): el parallax de scroll usa yPercent en el
     // mismo wrapper y ambas capas de transform componen sin pisarse. `scale` y
