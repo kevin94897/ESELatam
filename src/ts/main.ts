@@ -68,6 +68,24 @@ function bootstrap(): void {
     });
   }
 
+  // Página Nosotros (page-nosotros.php): hero por líneas, aside sticky de
+  // objetivos, tabs ESG, escena de pellets... todo en un módulo aparte.
+  const nosotros = document.querySelector<HTMLElement>('[data-nosotros]');
+  if (nosotros) {
+    void import('./modules/nosotros').then(({ initNosotros }) => {
+      initNosotros(nosotros);
+    });
+  }
+
+  // Página Contacto (page-contacto.php): acordeón de FAQ + envío del
+  // formulario sin recarga.
+  const contactoPage = document.querySelector<HTMLElement>('[data-contacto-page]');
+  if (contactoPage) {
+    void import('./modules/contacto-page').then(({ initContactoPage }) => {
+      initContactoPage(contactoPage);
+    });
+  }
+
   // Lazy-load Three.js solo si la página tiene un canvas 3D
   const has3d = document.querySelector<HTMLElement>('[data-three-scene]');
   if (has3d) {

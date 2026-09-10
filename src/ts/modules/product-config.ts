@@ -37,8 +37,10 @@ export function initProductConfig(root: HTMLElement): void {
   const mainImg = root.querySelector<HTMLImageElement>('[data-producto-img]');
   const colorEls = Array.from(root.querySelectorAll<HTMLElement>('[data-producto-color]'));
   const litrajeEls = Array.from(root.querySelectorAll<HTMLElement>('[data-producto-litraje]'));
-  // La card de "Volumen" vive en otra sección, fuera de `root` (el hero).
-  const volumenEl = document.querySelector<HTMLElement>('[data-producto-volumen]');
+  // "Capacidad" en la barra de atributos del hero y la card "Volumen" de la
+  // sección de especificaciones (fuera de `root`): todos los que haya.
+  const volumenEls = Array.from(document.querySelectorAll<HTMLElement>('[data-producto-volumen]'));
+  const colorNameEl = root.querySelector<HTMLElement>('[data-producto-color-name]');
 
   // ---------- Color ----------
 
@@ -57,6 +59,7 @@ export function initProductConfig(root: HTMLElement): void {
       colorEls.forEach((el) => {
         el.classList.toggle('is-active', Number(el.dataset.productoColor) === index);
       });
+      if (colorNameEl) colorNameEl.textContent = color.nombre;
 
       if (prefersReducedMotion) {
         mainImg.src = color.img;
@@ -96,8 +99,11 @@ export function initProductConfig(root: HTMLElement): void {
   litrajeEls.forEach((el) => {
     el.addEventListener('click', () => {
       litrajeEls.forEach((other) => other.classList.toggle('is-active', other === el));
-      if (volumenEl) {
-        volumenEl.textContent = el.dataset.productoLitraje ?? volumenEl.textContent;
+      const litraje = el.dataset.productoLitraje;
+      if (litraje) {
+        volumenEls.forEach((target) => {
+          target.textContent = litraje;
+        });
       }
     });
   });

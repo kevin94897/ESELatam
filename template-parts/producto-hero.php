@@ -1,10 +1,18 @@
 <?php
 /**
- * Ficha de producto — hero "panel de configuración" (litraje + color +
- * compra, con el producto flotando sobre la isla). Se llama desde
+ * Ficha de producto — hero "panel de configuración". Se llama desde
  * single-producto.php DENTRO del loop (the_post() ya corrió), así que lee el
  * post actual directamente — mismo criterio autocontenido que
  * template-parts/catalogo-banner.php.
+ *
+ * Composición (desktop):
+ *
+ *   breadcrumb ────────────────────────────────────────
+ *   [ panel de configuración ]   [ escena isla+producto ]
+ *   [ barra de atributos: capacidad · colores · specs ACF … ]
+ *
+ * Solo el producto y sus atributos, sin columnas laterales extra. En mobile
+ * todo se apila: breadcrumb → escena → panel → atributos.
  *
  * Casi todo sale de los campos ACF de inc/acf-productos.php. Mientras el
  * cliente no los complete, cada bloque cae a un valor estático que calca el
@@ -76,20 +84,49 @@ $ese_colores_data = array_map(
     $ese_colores
 );
 
-// El título va en dos renglones: la primera palabra en blanco y el resto
-// en celeste (ver .producto-hero__title-accent), como en el diseño.
+// Kicker: la categoría real del producto (taxonomía producto_categoria).
+$ese_terms  = get_the_terms($ese_producto_id, 'producto_categoria');
+$ese_kicker = is_array($ese_terms) && ! empty($ese_terms)
+    ? $ese_terms[0]->name
+    : __('Producto ESE Latam', 'ese-latam');
+
+// El título va en dos renglones: la primera palabra en peso light y el
+// resto en bold celeste (ver .producto-hero__title-accent).
 $ese_titulo       = get_the_title();
 $ese_titulo_parts = explode(' ', $ese_titulo, 2);
 $ese_titulo_l1    = $ese_titulo_parts[0];
 $ese_titulo_l2    = $ese_titulo_parts[1] ?? '';
 
-// Features del panel derecho: todavía no hay campo ACF para esto.
-$ese_features = [
-    ['icon' => 'shield', 'title' => __('Alta resistencia', 'ese-latam'), 'desc' => __('HDPE virgen de alta densidad.', 'ese-latam')],
-    ['icon' => 'wheel',  'title' => __('Movilidad total', 'ese-latam'),  'desc' => __('3 ruedas para mayor estabilidad.', 'ese-latam')],
-    ['icon' => 'check',  'title' => __('Larga vida útil', 'ese-latam'),  'desc' => __('Resistente a impactos, UV y químicos.', 'ese-latam')],
-    ['icon' => 'leaf',   'title' => __('Ecológico', 'ese-latam'),        'desc' => __('Material 100% reciclable.', 'ese-latam')],
+// Barra de datos clave (pie del hero): capacidad activa (se sincroniza con
+// las píldoras vía data-producto-volumen), cantidad de colores y hasta dos
+// características ACF que no sean el volumen (ya está en "Capacidad").
+$ese_stats = [
+    ['label' => __('Capacidad', 'ese-latam'), 'value' => $ese_litraje_default, 'sync' => true],
+    ['label' => __('Colores', 'ese-latam'), 'value' => sprintf(
+        /* translators: %d: cantidad de colores disponibles */
+        _n('%d disponible', '%d disponibles', count($ese_colores_data), 'ese-latam'),
+        count($ese_colores_data)
+    ), 'sync' => false],
 ];
+$ese_caracteristicas = get_field('caracteristicas');
+if (is_array($ese_caracteristicas)) {
+    foreach ($ese_caracteristicas as $ese_caract) {
+        $ese_etiqueta = (string) ($ese_caract['etiqueta'] ?? '');
+        if ('' === $ese_etiqueta || false !== mb_strpos(mb_strtolower($ese_etiqueta), 'volumen')) {
+            continue;
+        }
+        $ese_stats[] = ['label' => $ese_etiqueta, 'value' => (string) ($ese_caract['valor'] ?? ''), 'sync' => false];
+        if (count($ese_stats) >= 4) {
+            break;
+        }
+    }
+}
+if (count($ese_stats) < 4) {
+    $ese_stats[] = ['label' => __('Material', 'ese-latam'), 'value' => __('HDPE de alta densidad', 'ese-latam'), 'sync' => false];
+}
+if (count($ese_stats) < 4) {
+    $ese_stats[] = ['label' => __('Origen', 'ese-latam'), 'value' => __('Ingeniería europea', 'ese-latam'), 'sync' => false];
+}
 ?>
 
 <section class="producto-hero" data-product-config
@@ -102,9 +139,7 @@ $ese_features = [
     <div class="catalogo-banner__grid" aria-hidden="true"></div>
 
     <div class="producto-hero__inner">
-        <?php // Fuera del panel a propósito: así en mobile el orden puede ser
-        // breadcrumb → escena → configuración sin reordenar hijos anidados. ?>
-        <p class="producto-hero__crumb catalogo-banner__crumb">
+        <p class="producto-hero__crumb catalogo-banner__crumb" data-reveal="fade">
             <a href="<?php echo esc_url(home_url('/')); ?>">
                 <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg"
                     aria-hidden="true">
@@ -112,28 +147,33 @@ $ese_features = [
                         d="M10 5.27979V10.56C10 10.6767 9.9561 10.7886 9.87796 10.8711C9.79982 10.9536 9.69384 11 9.58333 11H6.66667C6.55616 11 6.45018 10.9536 6.37204 10.8711C6.2939 10.7886 6.25 10.6767 6.25 10.56V7.69988C6.25 7.64153 6.22805 7.58557 6.18898 7.54431C6.14991 7.50305 6.09692 7.47987 6.04167 7.47987H3.95833C3.90308 7.47987 3.85009 7.50305 3.81102 7.54431C3.77195 7.58557 3.75 7.64153 3.75 7.69988V10.56C3.75 10.6767 3.7061 10.7886 3.62796 10.8711C3.54982 10.9536 3.44384 11 3.33333 11H0.416667C0.30616 11 0.200179 10.9536 0.122039 10.8711C0.0438988 10.7886 0 10.6767 0 10.56V5.27979C0.000102442 5.04643 0.0879669 4.82267 0.244271 4.65772L4.41094 0.257552C4.5672 0.0926383 4.77908 0 5 0C5.22092 0 5.4328 0.0926383 5.58906 0.257552L9.75573 4.65772C9.91203 4.82267 9.9999 5.04643 10 5.27979Z"
                         fill="currentColor" />
                 </svg>
+                <?php esc_html_e('Inicio', 'ese-latam'); ?>
             </a>
             <span class="catalogo-banner__crumb-sep" aria-hidden="true">/</span>
             <a href="<?php echo esc_url(get_post_type_archive_link('producto')); ?>">
                 <?php esc_html_e('Productos', 'ese-latam'); ?>
             </a>
             <span class="catalogo-banner__crumb-sep" aria-hidden="true">/</span>
-            <?php echo esc_html($ese_titulo); ?>
+            <span class="producto-hero__crumb-current"><?php echo esc_html($ese_titulo); ?></span>
         </p>
 
-        <div class="producto-hero__panel">
+        <?php // data-reveal-stagger: cada bloque del panel entra en cascada al cargar
+        // (scroll-reveals.ts dispara enseguida lo que ya está en viewport). ?>
+        <div class="producto-hero__panel" data-reveal-stagger>
             <div class="producto-hero__kicker">
-                <span><?php esc_html_e('Panel de configuración', 'ese-latam'); ?></span>
+                <span><?php echo esc_html($ese_kicker); ?></span>
             </div>
 
             <h1 class="producto-hero__title">
-                <?php echo esc_html($ese_titulo_l1); ?>
+                <span class="producto-hero__title-light"><?php echo esc_html($ese_titulo_l1); ?></span>
                 <?php if ('' !== $ese_titulo_l2) : ?>
                     <span class="producto-hero__title-accent"><?php echo esc_html($ese_titulo_l2); ?></span>
                 <?php endif; ?>
             </h1>
 
-            <p class="producto-hero__desc"><?php echo esc_html($ese_desc); ?></p>
+            <?php if ($ese_desc) : ?>
+                <p class="producto-hero__desc"><?php echo esc_html($ese_desc); ?></p>
+            <?php endif; ?>
 
             <div class="producto-hero__group">
                 <p class="producto-hero__group-label">
@@ -162,6 +202,7 @@ $ese_features = [
                 <p class="producto-hero__group-label">
                     <span class="producto-hero__group-num">02</span>
                     <span class="producto-hero__group-text"><?php esc_html_e('Selecciona el color', 'ese-latam'); ?></span>
+                    <span class="producto-hero__group-value" data-producto-color-name><?php echo esc_html($ese_colores_data[0]['nombre'] ?? ''); ?></span>
                 </p>
                 <div class="producto-hero__swatches">
                     <?php foreach ($ese_colores_data as $ese_i => $ese_color) : ?>
@@ -169,6 +210,7 @@ $ese_features = [
                             class="producto-hero__swatch<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
                             style="--swatch: <?php echo esc_attr($ese_color['color']); ?>;"
                             data-producto-color="<?php echo (int) $ese_i; ?>"
+                            title="<?php echo esc_attr($ese_color['nombre']); ?>"
                             aria-label="<?php echo esc_attr($ese_color['nombre']); ?>"></button>
                     <?php endforeach; ?>
                 </div>
@@ -190,15 +232,19 @@ $ese_features = [
                         stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <?php echo ese_latam_icon_svg('download'); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     </svg>
-                    <?php esc_html_e('Descargar ficha técnica', 'ese-latam'); ?>
+                    <?php esc_html_e('Ficha técnica', 'ese-latam'); ?>
                 </a>
             </div>
         </div>
 
         <?php // Escena: mismo patrón que template-parts/catalogo-banner.php — la sombra
         // debe ser HERMANA del <img data-float> dentro del mismo wrapper (float.ts la
-        // busca en el parentElement del elemento que flota). ?>
-        <div class="producto-hero__scene">
+        // busca en el parentElement del elemento que flota). El foco de luz y los
+        // anillos son solo CSS, dan profundidad detrás del producto. ?>
+        <div class="producto-hero__scene" data-reveal="fade" data-reveal-delay="0.15">
+            <div class="producto-hero__spot" aria-hidden="true"></div>
+            <div class="producto-hero__ring" aria-hidden="true"></div>
+
             <div class="producto-hero__pedestal" aria-hidden="true">
                 <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-catalogo.webp'); ?>"
                     alt="" loading="lazy" decoding="async">
@@ -207,45 +253,28 @@ $ese_features = [
             <div class="producto-hero__product" data-product>
                 <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
                 <img data-producto-img src="<?php echo esc_url($ese_img_default); ?>"
-                    alt="<?php echo esc_attr($ese_titulo); ?>" decoding="async" data-float
-                    data-float-distance="14" data-float-duration="3.2">
+                    alt="<?php echo esc_attr($ese_titulo); ?>" decoding="async" fetchpriority="high" data-float
+                    data-float-distance="12" data-float-duration="3.4">
             </div>
         </div>
 
-        <aside class="producto-hero__aside">
-            <div class="producto-hero__features">
-                <?php foreach ($ese_features as $ese_feature) : ?>
-                    <div class="producto-hero__feature">
-                        <span class="producto-hero__feature-icon" aria-hidden="true">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                <?php echo ese_latam_icon_svg($ese_feature['icon']); // phpcs:ignore WordPress.Security.EscapeOutput ?>
-                            </svg>
-                        </span>
-                        <span class="producto-hero__feature-text">
-                            <span class="producto-hero__feature-title"><?php echo esc_html($ese_feature['title']); ?></span>
-                            <span class="producto-hero__feature-desc"><?php echo esc_html($ese_feature['desc']); ?></span>
-                        </span>
-                    </div>
-                <?php endforeach; ?>
 
-                <div class="producto-hero__features-foot">
-                    <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/logo-ese.png'); ?>" alt="ESE Latam"
-                        width="48" height="20" loading="lazy" decoding="async">
-                    <span><?php esc_html_e('Calidad y respaldo garantizado.', 'ese-latam'); ?></span>
+        <?php // Sin data-reveal: en pantallas de 1080px queda por debajo del umbral
+        // (top 85%) de scroll-reveals.ts y no llegaría a mostrarse sin scrollear. ?>
+        <dl class="producto-hero__stats">
+            <?php foreach ($ese_stats as $ese_stat) : ?>
+                <div class="producto-hero__stat">
+                    <dt class="producto-hero__stat-label"><?php echo esc_html($ese_stat['label']); ?></dt>
+                    <dd class="producto-hero__stat-value" <?php echo $ese_stat['sync'] ? 'data-producto-volumen' : ''; ?>><?php echo esc_html($ese_stat['value']); ?></dd>
                 </div>
-            </div>
-        </aside>
+            <?php endforeach; ?>
+        </dl>
     </div>
 
-    <div class="producto-hero__scroll-hint" aria-hidden="true">
-        <span class="producto-hero__scroll-icon">
-            <span class="producto-hero__scroll-dot"></span>
-        </span>
-        <span class="producto-hero__scroll-text"><?php esc_html_e('Desliza para ver más', 'ese-latam'); ?></span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-            stroke-linecap="round" stroke-linejoin="round" class="producto-hero__scroll-arrow">
-            <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
-    </div>
+    <?php // Mismo cue que el hero de Nosotros (.nos-hero__scroll): línea vertical
+    // con degradado que "cae" en bucle + la palabra Scroll, abajo a la derecha. ?>
+    <a href="#especificaciones" class="producto-hero__scroll-hint" aria-label="<?php esc_attr_e('Ir a las especificaciones', 'ese-latam'); ?>">
+        <span class="producto-hero__scroll-line" aria-hidden="true"></span>
+        <span class="producto-hero__scroll-text"><?php esc_html_e('Scroll', 'ese-latam'); ?></span>
+    </a>
 </section>

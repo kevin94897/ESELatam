@@ -132,7 +132,7 @@ $ese_catalogo_current = $ese_catalogo_slides[0];
                 ese_latam_cta_button([
                     'href'  => $ese_catalogo_current['href'],
                     'label' => __('Ver producto', 'ese-latam'),
-                    'class' => 'hero-cta--light',
+                    'class' => '',
                 ]);
                 ?>
             </div>

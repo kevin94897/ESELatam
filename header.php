@@ -47,7 +47,7 @@ declare(strict_types=1);
                     </svg>
                 </button>
 
-                <a href="#contacto" class="nav-pill__cta">
+                <a href="<?php echo esc_url(ese_latam_contacto_url()); ?>" class="nav-pill__cta">
                     <?php esc_html_e('Contacto', 'ese-latam'); ?>
                 </a>
             </div>
@@ -70,7 +70,7 @@ declare(strict_types=1);
             'depth'          => 1,
         ]);
         ?>
-        <a href="#contacto" class="nav-pill__cta mobile-nav__cta">
+        <a href="<?php echo esc_url(ese_latam_contacto_url()); ?>" class="nav-pill__cta mobile-nav__cta">
             <?php esc_html_e('Contacto', 'ese-latam'); ?>
         </a>
         <a class="mobile-nav__mail" href="mailto:hola@eselatam.com">hola@eselatam.com</a>

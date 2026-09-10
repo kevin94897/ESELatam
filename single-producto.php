@@ -17,9 +17,10 @@ while (have_posts()) :
     the_post();
 
     get_template_part('template-parts/producto-hero');
-    get_template_part('template-parts/producto-specs');
+    // get_template_part('template-parts/producto-specs');
     get_template_part('template-parts/producto-pruebas');
     get_template_part('template-parts/producto-terreno');
+    get_template_part('template-parts/producto-recomendados');
 
 endwhile;
 

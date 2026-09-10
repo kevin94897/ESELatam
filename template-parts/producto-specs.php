@@ -57,7 +57,7 @@ $ese_spec_icon = static function (string $etiqueta): string {
 };
 ?>
 
-<section class="producto-specs">
+<section id="especificaciones" class="producto-specs">
     <?php // Shape divider: la onda se dibuja DENTRO de specs con el color del
     // hero (#001545, la parada exterior de su degradado radial) en vez de
     // colgar hacia arriba. Así no tapa el indicador "Desliza para ver más",
@@ -88,12 +88,12 @@ $ese_spec_icon = static function (string $etiqueta): string {
                 <div class="producto-specs__track" data-reveal-stagger>
                     <?php foreach ($ese_caracteristicas as $ese_caract) : ?>
                         <article class="producto-spec">
-                            <span class="producto-spec__icon" aria-hidden="true">
+                            <!-- <span class="producto-spec__icon" aria-hidden="true">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                     <?php echo ese_latam_icon_svg($ese_spec_icon((string) $ese_caract['etiqueta'])); // phpcs:ignore WordPress.Security.EscapeOutput ?>
                                 </svg>
-                            </span>
+                            </span> -->
                             <p class="producto-spec__label"><?php echo esc_html($ese_caract['etiqueta']); ?></p>
                             <p class="producto-spec__value"
                                 <?php echo 0 === mb_strpos(mb_strtolower((string) $ese_caract['etiqueta']), 'volumen') ? 'data-producto-volumen' : ''; ?>>

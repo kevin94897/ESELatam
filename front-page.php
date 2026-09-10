@@ -240,17 +240,30 @@ $ese_sectores = [
 
 <?php
 // Sección "Productos" (Figma node 3287-243) — slider de foco central con
-// parallax de fondo. Los productos alternan las 3 fotos disponibles.
-$ese_productos = [
-    ['cat' => __('Soterrados', 'ese-latam'), 'name' => __('Contenedor de 2 ruedas', 'ese-latam'), 'litraje' => '5000 Litros', 'material' => 'HDPE Virgen', 'img' => 'bin-3.png'],
-    ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 4 ruedas', 'ese-latam'), 'litraje' => '1100 Litros', 'material' => 'HDPE Reciclado', 'img' => 'bin-1.png'],
-    ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 2 ruedas', 'ese-latam'), 'litraje' => '240 Litros', 'material' => 'HDPE Virgen', 'img' => 'bin-2.png'],
-    ['cat' => __('Papeleras', 'ese-latam'), 'name' => __('Papelera urbana', 'ese-latam'), 'litraje' => '120 Litros', 'material' => 'HDPE Reciclado', 'img' => 'bin-1.png'],
-    ['cat' => __('Biológicos', 'ese-latam'), 'name' => __('Contenedor sanitario', 'ese-latam'), 'litraje' => '360 Litros', 'material' => 'HDPE Virgen', 'img' => 'bin-2.png'],
-    ['cat' => __('Domésticos', 'ese-latam'), 'name' => __('Contenedor doméstico', 'ese-latam'), 'litraje' => '120 Litros', 'material' => 'HDPE Reciclado', 'img' => 'bin-3.png'],
-    ['cat' => __('Soterrados', 'ese-latam'), 'name' => __('Contenedor soterrado', 'ese-latam'), 'litraje' => '3000 Litros', 'material' => 'HDPE Virgen', 'img' => 'bin-1.png'],
-    ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 3 ruedas', 'ese-latam'), 'litraje' => '770 Litros', 'material' => 'HDPE Reciclado', 'img' => 'bin-2.png'],
-];
+// parallax de fondo. Productos reales del CPT (mismo criterio que
+// template-parts/catalogo-banner.php): cada card enlaza a su propia ficha;
+// si el cliente todavía no publicó ninguno, cae al set estático de ejemplo
+// (que enlaza al catálogo). Datos de card y fallback viven en
+// inc/template-tags.php, compartidos con "Soluciones recomendadas" de la
+// ficha de producto.
+$ese_productos_catalogo_url = get_post_type_archive_link('producto');
+
+$ese_productos_query = new WP_Query([
+    'post_type'      => 'producto',
+    'post_status'    => 'publish',
+    'posts_per_page' => 12,
+    'orderby'        => 'menu_order date',
+    'order'          => 'ASC',
+]);
+
+$ese_productos = array_map(
+    static fn (WP_Post $p): array => ese_latam_producto_card_data($p->ID),
+    $ese_productos_query->posts
+);
+
+if (empty($ese_productos)) {
+    $ese_productos = ese_latam_productos_placeholder();
+}
 $ese_producto_filtros = [
     __('Ver todo', 'ese-latam'),
     __('Contenedores', 'ese-latam'),
@@ -323,7 +336,7 @@ $ese_producto_filtros = [
                             <div class="product-card__media">
                                 <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
                                 <img class="product-card__img"
-                                    src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/' . $producto['img']); ?>"
+                                    src="<?php echo esc_url($producto['img']); ?>"
                                     alt="<?php echo esc_attr($producto['name']); ?>" loading="lazy" decoding="async"
                                     data-float data-float-distance="14" data-float-duration="3.2">
                             </div>
@@ -341,14 +354,18 @@ $ese_producto_filtros = [
                                     </div>
                                 </dl>
                             </div>
-                            <span class="product-card__chip" aria-hidden="true">
+                            <?php // Mismo criterio que template-parts/catalogo-grid.php: el chip
+                            // ES el enlace (no la card entera), así el drag/swipe del slider
+                            // sobre el resto de la tarjeta no compite con la navegación. ?>
+                            <a class="product-card__chip" href="<?php echo esc_url($producto['href']); ?>"
+                                aria-label="<?php echo esc_attr(sprintf(__('Ver %s', 'ese-latam'), $producto['name'])); ?>">
                                 <svg width="16" height="13" viewBox="0 0 16 13" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path
                                         d="M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z"
                                         fill="currentColor" />
                                 </svg>
-                            </span>
+                            </a>
                         </article>
                     <?php endforeach; ?>
                 </div>
@@ -367,7 +384,7 @@ $ese_producto_filtros = [
 
         <div class="productos__pagination" aria-hidden="true"></div>
 
-        <a href="#" class="productos__cta" data-reveal="up">
+        <a href="<?php echo esc_url($ese_productos_catalogo_url); ?>" class="productos__cta" data-reveal="up">
             <?php esc_html_e('Explora todo el catálogo', 'ese-latam'); ?>
         </a>
     </div>

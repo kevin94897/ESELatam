@@ -12,7 +12,13 @@ $ese_footer_cols = [
         'title' => __('Soluciones', 'ese-latam'),
         'links' => [
             ['label' => __('Sectores', 'ese-latam'),        'url' => '#sectores'],
-            ['label' => __('Productos', 'ese-latam'),       'url' => '#productos'],
+            // A diferencia de Sectores/Certificaciones/Impacto (secciones que
+            // solo existen dentro de la home), Productos ya tiene su propia
+            // página — así que en vez de un ancla #productos (que no
+            // encuentra nada y no hace nada al hacer clic desde cualquier
+            // otra página del sitio, footer.php se comparte en todas via
+            // get_footer()), enlaza directo al catálogo real.
+            ['label' => __('Productos', 'ese-latam'),       'url' => get_post_type_archive_link('producto')],
             ['label' => __('Certificaciones', 'ese-latam'), 'url' => '#certificaciones'],
             ['label' => __('Impacto', 'ese-latam'),         'url' => '#impacto'],
         ],
@@ -20,7 +26,8 @@ $ese_footer_cols = [
     [
         'title' => __('ESE Latam', 'ese-latam'),
         'links' => [
-            ['label' => __('Nosotros', 'ese-latam'),       'url' => '#'],
+            ['label' => __('Nosotros', 'ese-latam'),       'url' => home_url('/nosotros/')],
+            ['label' => __('Contacto', 'ese-latam'),       'url' => ese_latam_contacto_url()],
             ['label' => __('Blog', 'ese-latam'),           'url' => '#'],
             ['label' => __('Casos de éxito', 'ese-latam'), 'url' => '#'],
             ['label' => __('Distribuidores', 'ese-latam'), 'url' => '#'],

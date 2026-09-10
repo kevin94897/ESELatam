@@ -22,9 +22,12 @@ ese-latam/
 ├── functions.php          # Bootstrap del theme
 ├── index.php              # Fallback template
 ├── front-page.php         # Home: hero animado + sección Sectores (slider)
+├── page-nosotros.php      # Página Nosotros (Figma 3441-370), ver abajo
+├── page-contacto.php      # Página Contacto (Figma 3941-8369), ver abajo
 ├── header.php / footer.php
 ├── inc/
 │   ├── setup.php          # Supports, menús (+ fallback del menú), sidebars
+│   ├── contacto.php       # Datos de contacto, página /contacto y envío del form
 │   └── enqueue.php        # Integración con manifest de Vite
 ├── assets/
 │   ├── icons/             # SVGs exportados del Figma (CTA, chevron, search)
@@ -41,6 +44,8 @@ ese-latam/
 │           ├── header.ts         # Header fijo: scrolled + menú móvil
 │           ├── slider.ts         # Sliders Embla (flechas, dots, contador)
 │           ├── scroll-reveals.ts # Reveals genéricos por data-attributes
+│           ├── nosotros.ts       # Coreografía de la página Nosotros (lazy)
+│           ├── contacto-page.ts  # FAQ + envío del formulario (lazy)
 │           └── three-scene.ts
 ├── vite.config.ts
 ├── tsconfig.json
@@ -113,6 +118,68 @@ La sección que sigue al hero lleva la clase **`.hero-next`**: el módulo le
 aplica `margin-top` negativo y `min-height` iguales a la altura real del hero
 (re-medidos en cada refresh) para el solape exacto. Sin JS o con
 `prefers-reduced-motion` todo queda estático, visible y en flujo normal.
+
+---
+
+## 👥 Página Nosotros
+
+`page-nosotros.php` — WordPress la aplica sola a la página con slug
+`nosotros` (también se puede asignar como plantilla "Nosotros" desde el
+editor). Estilos con prefijo `.nos-*` en `main.css`; animaciones en
+`src/ts/modules/nosotros.ts`, que `main.ts` importa perezosamente cuando
+existe `[data-nosotros]`. Assets propios en `assets/imgs/nosotros/`.
+
+Secciones y sus efectos GSAP:
+
+- **Hero**: titular por líneas (SplitText + máscara), zoom lento de la foto,
+  contador del "13 países", halo que sigue al cursor, salida scrubbed.
+- **Construimos**: paneles con cortina `[data-nos-panel="left|right|up"]`
+  (clip-path + zoom de la foto), isla con entrada + parallax + flotación.
+- **Objetivos**: aside sticky con scroll-spy (el chevron viaja al ítem
+  activo), paneles con parallax interno y tilt 3D al mouse.
+- **Aliados**: anillos que se expanden con el scroll, logos que entran en
+  3D en cascada, isla con tilt que sigue al mouse.
+- **Método Circulogic**: tabs ESG con autoplay (`data-nos-metodo-autoplay`,
+  la barra verde es el temporizador) y crossfade de la foto.
+- **HDPE**: escena de pellets en canvas 2D (llueven, se apilan, se
+  reciclan; el cursor los aparta) y chips en cascada.
+- **Contactemos**: `template-parts/contacto.php` acepta `$args`
+  (`heading`, `heading_strong`, `desc`, `bg`, `class`, …) para pisar el copy.
+
+---
+
+## ✉️ Página Contacto
+
+`page-contacto.php` — el theme crea la página con slug `contacto` una sola
+vez (`inc/contacto.php`), así que la URL existe sin tocar wp-admin. Estilos
+con prefijo `.ctc-*`; animaciones en `src/ts/modules/contacto-page.ts`.
+
+Tres bloques, cada uno un template-part autocontenido:
+
+- **Formulario de asesoría** (`contacto-form.php`): campos del Figma, con
+  Sector y País como listas cerradas y Producto de interés poblado desde el
+  CPT `producto`. Al costado, la tarjeta de marca y los cuatro datos de
+  contacto.
+- **Sede central** (`contacto-sede.php`): dirección + mapa de Google
+  embebido (`output=embed`, sin API key).
+- **Preguntas frecuentes** (`contacto-faq.php`): acordeón de `<details>`
+  nativos; el JS solo anima la altura y deja una abierta a la vez.
+
+### Envío del formulario
+
+Sin plugin: `inc/contacto.php` registra `wp_ajax(_nopriv)_ese_latam_contacto`,
+valida, sanitiza y despacha con `wp_mail` al `admin_email` (filtrable con
+`ese_latam_contacto_destino`), con `Reply-To` de quien escribe. Trae honeypot
+y nonce. Con JS el envío es por `fetch`; sin JS el `<form>` postea normal y
+vuelve con `?contacto=ok|error`.
+
+> ⚠️ En el JS **no** se puede usar `form.action`: el formulario tiene un
+> campo oculto llamado `action` (lo exige admin-ajax) y el acceso por nombre
+> a los controles pisa la propiedad nativa. Hay que leer el atributo con
+> `form.getAttribute('action')`.
+
+Los datos de contacto (teléfono, correo, dirección, horario) salen de
+`ese_latam_contacto_datos()`, filtrable con `ese_latam_contacto_datos`.
 
 ---
 
