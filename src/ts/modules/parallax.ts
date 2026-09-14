@@ -6,6 +6,10 @@
  * desciende — reversible 1:1 con el scroll, como el resto de la página.
  *
  * Rango configurable: `data-parallax-from` / `data-parallax-to` (yPercent).
+ * Opcionalmente también en horizontal con `data-parallax-x-from` /
+ * `data-parallax-x-to` (xPercent): combinando ambos ejes el elemento viaja
+ * en diagonal — p. ej. las hojas de la sección Productos, que emergen de
+ * cada esquina superior hacia el centro de la sección.
  */
 
 import { gsap } from '../lib/gsap';
@@ -19,12 +23,16 @@ export function initParallax(): void {
   document.querySelectorAll<HTMLElement>('[data-parallax]').forEach((el) => {
     const from = Number(el.dataset.parallaxFrom ?? 30);
     const to = Number(el.dataset.parallaxTo ?? -30);
+    // Sin los atributos X el eje queda en 0 → mismo comportamiento de siempre.
+    const xFrom = Number(el.dataset.parallaxXFrom ?? 0);
+    const xTo = Number(el.dataset.parallaxXTo ?? 0);
 
     gsap.fromTo(
       el,
-      { yPercent: from },
+      { yPercent: from, xPercent: xFrom },
       {
         yPercent: to,
+        xPercent: xTo,
         ease: 'none',
         scrollTrigger: {
           trigger: el.parentElement ?? el,

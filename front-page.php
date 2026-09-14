@@ -88,49 +88,10 @@ get_header();
 </section>
 
 <?php
-// Sección "Sectores" (Figma node 3266-2331) — slider Embla de áreas de impacto
-$ese_sectores = [
-    [
-        'title' => __('Municipalidades y gobiernos locales', 'ese-latam'),
-        'desc' => __('Contenerización certificada para recolección urbana a gran escala.', 'ese-latam'),
-        'img' => 'municipalidades.webp',
-    ],
-    [
-        'title' => __('Empresas de recolección', 'ese-latam'),
-        'desc' => __('Flotas de contenedores compatibles con sistemas de carga mecanizada.', 'ese-latam'),
-        'img' => 'recoleccion.webp',
-    ],
-    [
-        'title' => __('Inmobiliarias', 'ese-latam'),
-        'desc' => __('Soluciones de contención para edificios y condominios.', 'ese-latam'),
-        'img' => 'municipalidades.webp',
-    ],
-    [
-        'title' => __('Hospitalarios', 'ese-latam'),
-        'desc' => __('Contenedores certificados para residuos biocontaminados.', 'ese-latam'),
-        'img' => 'recoleccion.webp',
-    ],
-    [
-        'title' => __('Uso doméstico', 'ese-latam'),
-        'desc' => __('Contenedores durables para la gestión de residuos en el hogar.', 'ese-latam'),
-        'img' => 'municipalidades.webp',
-    ],
-    [
-        'title' => __('Supermercados y aeropuertos', 'ese-latam'),
-        'desc' => __('Gestión de alto tránsito para espacios comerciales y terminales.', 'ese-latam'),
-        'img' => 'recoleccion.webp',
-    ],
-    [
-        'title' => __('Restaurantes y hostelería', 'ese-latam'),
-        'desc' => __('Contención higiénica para operaciones gastronómicas.', 'ese-latam'),
-        'img' => 'municipalidades.webp',
-    ],
-    [
-        'title' => __('Industria y manufactura', 'ese-latam'),
-        'desc' => __('Operaciones de largo plazo en entornos industriales exigentes.', 'ese-latam'),
-        'img' => 'recoleccion.webp',
-    ],
-];
+// Sección "Sectores" (Figma node 3266-2331) — slider Embla de áreas de impacto.
+// La lista vive en inc/template-tags.php: el submenú "Sectores" del nav
+// (inc/setup.php) muestra los mismos ocho.
+$ese_sectores = ese_latam_sectores();
 ?>
 <section id="sectores" class="hero-next bg-white relative z-10">
     <div class="hero-next__clouds" aria-hidden="true" data-reveal="fade">
@@ -197,7 +158,7 @@ $ese_sectores = [
                             <img class="sector-card__img"
                                 src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/sectores/' . $sector['img']); ?>"
                                 alt="<?php echo esc_attr($sector['title']); ?>" loading="lazy" decoding="async">
-                            <a href="#" class="sector-card__chip"
+                            <a href="<?php echo esc_url(ese_latam_sector_url($sector)); ?>" class="sector-card__chip"
                                 aria-label="<?php echo esc_attr(sprintf(__('Ver más sobre %s', 'ese-latam'), $sector['title'])); ?>">
                                 <svg width="16" height="13" viewBox="0 0 16 13" fill="none"
                                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -223,18 +184,21 @@ $ese_sectores = [
       // track ([data-marquee]), no por sección, así que la segunda conserva su
       // sentido invertido y además ambas comparten el mismo rango de scroll
       // (el trigger es el padre), con lo que se espejan exactamente. ?>
+<?php // Dos frases de marca, una por pista: arriba el claim (el mismo del
+// pie del footer), abajo el diferenciador. Tres copias por pista para que
+// el recorrido del scrub (±12%) nunca descubra el borde. ?>
 <section class="marquee bg-white relative z-10" aria-hidden="true">
     <div class="marquee__track" data-marquee>
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Contener para transformar', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Contener para transformar', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Contener para transformar', 'ese-latam'); ?></span>
     </div>
 
     <?php // data-marquee="right" invierte el recorrido del scrub (ver marquee.ts) ?>
     <div class="marquee__track" data-marquee="right">
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
-        <span><?php esc_html_e('Transformamos', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Ingeniería europea', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Ingeniería europea', 'ese-latam'); ?></span>
+        <span><?php esc_html_e('Ingeniería europea', 'ese-latam'); ?></span>
     </div>
 </section>
 
@@ -275,24 +239,28 @@ $ese_producto_filtros = [
 ?>
 <section id="productos" class="productos-wrap bg-white relative z-10">
     <div class="productos">
+        <?php // Skyline de fondo: el parallax (parallax.ts) va en el <img>, no
+        // en el wrapper — el wrapper es el que recorta (overflow hidden) y es
+        // el trigger que mide el recorrido. ?>
         <div class="productos__bg" aria-hidden="true">
             <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/bg-skyline.png'); ?>" alt=""
-                loading="lazy" decoding="async">
+                loading="lazy" decoding="async" data-parallax data-parallax-from="14" data-parallax-to="-14">
         </div>
         <?php // Las hojas entran con un fade+diagonal al llegar la sección, y
-        // además derivan hacia abajo con el scroll (parallax) mientras el
-        // usuario recorre la sección — dos animaciones GSAP independientes,
-        // por eso van en dos elementos distintos (wrapper + img, ver
-        // main.css): la entrada en el <img>, el parallax continuo en el
-        // wrapper. ?>
+        // además EMERGEN de su esquina hacia el centro de la sección con el
+        // scroll (parallax en diagonal: X e Y a la vez) — dos animaciones GSAP
+        // independientes, por eso van en dos elementos distintos (wrapper +
+        // img, ver main.css): la entrada en el <img>, el parallax continuo en
+        // el wrapper. La izquierda baja hacia la derecha; la derecha (espejada
+        // por CSS en el <img>) baja hacia la izquierda. ?>
         <div class="productos__leaves-wrap productos__leaves-wrap--left" aria-hidden="true" data-parallax
-            data-parallax-from="-20" data-parallax-to="20">
+            data-parallax-from="-34" data-parallax-to="18" data-parallax-x-from="-34" data-parallax-x-to="18">
             <img class="productos__leaves"
                 src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt=""
                 loading="lazy" decoding="async" data-reveal="corner-tl">
         </div>
         <div class="productos__leaves-wrap productos__leaves-wrap--right" aria-hidden="true" data-parallax
-            data-parallax-from="-20" data-parallax-to="20">
+            data-parallax-from="-34" data-parallax-to="18" data-parallax-x-from="34" data-parallax-x-to="-18">
             <img class="productos__leaves"
                 src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/productos/leaves.png'); ?>" alt=""
                 loading="lazy" decoding="async" data-reveal="corner-tr" data-reveal-delay="0.18">
@@ -524,7 +492,7 @@ $ese_distribuidores = [
 ?>
 <section id="distribuidores" class="distribuidores relative z-10" data-globe>
     <?php // El globo es el fondo de la sección: ocupa todo y el resto flota encima. ?>
-    <div class="distribuidores__globe" data-reveal="fade" data-lenis-prevent aria-hidden="true">
+    <div class="distribuidores__globe" data-lenis-prevent aria-hidden="true">
         <?php
         // Los anillos van ADENTRO del globo, no como hermanos de la sección:
         // así heredan su centro solos. Como hermanos tenían sus propias
@@ -543,7 +511,10 @@ $ese_distribuidores = [
         </div>
     </div>
 
-    <div class="distribuidores__intro" data-reveal-header>
+    <?php // La entrada de toda la sección (anillos, globo, textos, riel y tarjeta)
+    // la coreografía distribuidores-intro.ts en un solo timeline — por eso
+    // estos bloques NO llevan data-reveal como el resto de la home. ?>
+    <div class="distribuidores__intro">
         <p class="type-kicker text-white/90">/ <?php esc_html_e('Distribuidores', 'ese-latam'); ?></p>
         <h2 class="distribuidores__title">
             <?php esc_html_e('Presencia', 'ese-latam'); ?> <strong><?php esc_html_e('sin', 'ese-latam'); ?></strong><br>
@@ -555,7 +526,7 @@ $ese_distribuidores = [
     </div>
 
     <?php // Riel de países: los 10 visibles a la vez, sin scroll anidado. ?>
-    <div class="distribuidores__rail" data-reveal="left" data-reveal-delay="0.15">
+    <div class="distribuidores__rail">
         <p class="distribuidores__rail-head">
             <span class="distribuidores__rail-count"><?php echo count($ese_distribuidores); ?></span>
             <?php esc_html_e('países conectados', 'ese-latam'); ?>
@@ -605,7 +576,7 @@ $ese_distribuidores = [
 
     <?php // Tarjeta flotante: los paneles se apilan en la misma celda de grilla,
     // así la tarjeta toma el alto del más largo y no salta al cambiar de país. ?>
-    <div class="distribuidores__panel" data-reveal="up" data-reveal-delay="0.25">
+    <div class="distribuidores__panel">
         <div class="distribuidores__panel-stack" data-country-panels>
             <?php foreach ($ese_distribuidores as $i => $pais): ?>
                 <article class="country-panel<?php echo 0 === $i ? ' is-active' : ''; ?>"
@@ -643,107 +614,7 @@ $ese_distribuidores = [
     </div>
 </section>
 
-<?php
-// Sección "Residuos Inteligentes" (Figma node 3328-3006) — selector de
-// servicios (Educar/Segregar/Transformar): clic en una tarjeta cambia el
-// panel de la derecha (foto + título + descripción) con un crossfade GSAP.
-// Solo "Educar" trae copy real del Figma; Segregar/Transformar son
-// placeholder (mismo tono de marca) a la espera de contenido del cliente,
-// y reutilizan fotos ya existentes en el theme en vez de traer nuevas.
-$ese_servicios = [
-    [
-        'slug' => 'educar',
-        'title' => __('Educar', 'ese-latam'),
-        'desc' => __('Fomentamos la cultura del reciclaje a través de contenedores con señalética clara y pedagogía urbana, facilitando la identificación correcta de cada tipo de residuo.', 'ese-latam'),
-        'icon' => 'icon-educar.svg',
-        'img' => 'residuos/educar-thumb.jpg',
-    ],
-    [
-        'slug' => 'segregar',
-        'title' => __('Segregar', 'ese-latam'),
-        'desc' => __('Clasificamos los residuos en origen con contenedores diferenciados por color y tipo, optimizando cada etapa de la recolección.', 'ese-latam'),
-        'icon' => 'icon-segregar.svg',
-        'img' => 'sectores/recoleccion.webp',
-    ],
-    [
-        'slug' => 'transformar',
-        'title' => __('Transformar', 'ese-latam'),
-        'desc' => __('Convertimos los residuos correctamente segregados en materia prima para nuevos productos, cerrando el ciclo de la economía circular.', 'ese-latam'),
-        'icon' => 'icon-transformar.svg',
-        'img' => 'sectores/municipalidades.webp',
-    ],
-];
-?>
-<section id="residuos-inteligentes" class="residuos bg-white relative z-10">
-    <header class="residuos__header" data-reveal-header>
-        <p class="type-kicker text-secondary">/ <?php esc_html_e('Residuos inteligentes', 'ese-latam'); ?></p>
-        <h2 class="type-h2 uppercase text-center">
-            <?php esc_html_e('ingeniería de', 'ese-latam'); ?><br>
-            <span class="hl"><?php esc_html_e('alto desempeño', 'ese-latam'); ?></span>
-        </h2>
-        <p class="residuos__desc">
-            <?php esc_html_e('Explora nuestra gama de productos diseñados para la', 'ese-latam'); ?>
-            <span class="text-accent font-extrabold"><?php esc_html_e('eficiencia operativa', 'ese-latam'); ?></span>
-            <?php esc_html_e('y la', 'ese-latam'); ?>
-            <span class="text-accent font-extrabold"><?php esc_html_e('sostenibilidad', 'ese-latam'); ?></span>
-            <?php esc_html_e('urbana en toda Latinoamérica.', 'ese-latam'); ?>
-        </p>
-    </header>
-
-    <div class="residuos__selector" data-service-selector data-service-autoplay="5000" data-reveal="up">
-        <div class="residuos__tabs">
-            <?php foreach ($ese_servicios as $i => $servicio): ?>
-                <button type="button" class="residuos__tab<?php echo 0 === $i ? ' is-active' : ''; ?>" data-service-tab
-                    data-title="<?php echo esc_attr($servicio['title']); ?>"
-                    data-desc="<?php echo esc_attr($servicio['desc']); ?>"
-                    data-img="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/' . $servicio['img']); ?>">
-                    <span class="residuos__tab-icon" aria-hidden="true">
-                        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/icons/' . $servicio['icon']); ?>" alt=""
-                            loading="lazy">
-                    </span>
-                    <span class="residuos__tab-text">
-                        <span class="residuos__tab-title"><?php echo esc_html($servicio['title']); ?></span>
-                        <span
-                            class="residuos__tab-sub"><?php esc_html_e('Información clara para tomar decisiones', 'ese-latam'); ?></span>
-                    </span>
-                    <span class="residuos__tab-arrow" aria-hidden="true">
-                        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1.15 14L0 12.9L3.85 7.5L0 2.1L1.15 1L6 7.5L1.15 14Z" fill="currentColor" />
-                        </svg>
-                    </span>
-                </button>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="residuos__panel">
-            <div class="residuos__media" data-service-media>
-                <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/' . $ese_servicios[0]['img']); ?>" alt=""
-                    data-service-img loading="lazy" decoding="async">
-                <span class="residuos__play" aria-hidden="true">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M8 6.82v10.36c0 .8.87 1.29 1.55.86l8.14-5.18a1 1 0 0 0 0-1.72L9.55 5.96A1 1 0 0 0 8 6.82Z"
-                            fill="currentColor" />
-                    </svg>
-                </span>
-            </div>
-            <h3 class="residuos__panel-title" data-service-title><?php echo esc_html($ese_servicios[0]['title']); ?>
-            </h3>
-            <p class="residuos__panel-desc" data-service-desc><?php echo esc_html($ese_servicios[0]['desc']); ?></p>
-        </div>
-    </div>
-
-    <a href="#impacto" class="link-arrow">
-        <span class="link-arrow__text"><?php esc_html_e('Conoce nuestro impacto', 'ese-latam'); ?></span>
-        <span class="link-arrow__icon" aria-hidden="true">
-            <svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z"
-                    fill="currentColor" />
-            </svg>
-        </span>
-    </a>
-</section>
+<?php get_template_part('template-parts/residuos'); ?>
 
 <?php get_template_part('template-parts/certificaciones'); ?>
 

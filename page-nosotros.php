@@ -214,112 +214,20 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
         </div>
     </section>
 
-    <?php // ---------- 3. OBJETIVOS CON PROPÓSITO ---------- ?>
-    <section id="objetivos" class="nos-objetivos" data-nos-objetivos>
-        <header class="nos-objetivos__header" data-reveal-header>
-            <div>
-                <p class="type-kicker text-secondary">/ <?php esc_html_e('Sobre nosotros', 'ese-latam'); ?></p>
-                <h2 class="type-h2 uppercase">
-                    <?php esc_html_e('Objetivos con', 'ese-latam'); ?><br>
-                    <span class="hl"><?php esc_html_e('propósito', 'ese-latam'); ?></span>
-                </h2>
-            </div>
-            <p class="nos-desc" data-reveal-desc>
-                <?php esc_html_e('Metas claras que', 'ese-latam'); ?>
-                <span class="hl-accent"><?php esc_html_e('transforman', 'ese-latam'); ?></span>
-                <?php esc_html_e('y', 'ese-latam'); ?>
-                <span class="hl-accent"><?php esc_html_e('mejoran', 'ese-latam'); ?></span>
-                <?php esc_html_e('la gestión de residuos a nivel global.', 'ese-latam'); ?>
-            </p>
-        </header>
+    <?php // ---------- 3. OBJETIVOS CON PROPÓSITO (template-parts/objetivos-sticky.php) ---------- ?>
+    <?php
+    get_template_part('template-parts/objetivos-sticky', null, [
+        'id'         => 'objetivos',
+        'desc'       => __('Metas claras que', 'ese-latam') . ' <span class="hl-accent">' . __('transforman', 'ese-latam') . '</span> ' . __('y', 'ese-latam') . ' <span class="hl-accent">' . __('mejoran', 'ese-latam') . '</span> ' . __('la gestión de residuos a nivel global.', 'ese-latam'),
+        'items'      => $ese_objetivos,
+        'metas'      => $ese_metas,
+        'skip_label' => __('Saltar objetivos', 'ese-latam'),
+        'skip_href'  => '#aliados',
+    ]);
+    ?>
 
-        <div class="nos-objetivos__layout">
-            <aside class="nos-objetivos__aside">
-                <div class="nos-objetivos__sticky">
-                    <nav class="nos-objetivos__nav" aria-label="<?php esc_attr_e('Objetivos', 'ese-latam'); ?>" data-nos-obj-nav>
-                        <span class="nos-objetivos__chevron" aria-hidden="true" data-nos-obj-chevron>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M23.1249 12.4163L18.8442 18.8325C18.7075 19.0375 18.5224 19.2056 18.3052 19.322C18.0881 19.4384 17.8456 19.4995 17.5992 19.5H3.00049C2.86467 19.5001 2.73138 19.4633 2.61485 19.3935C2.49831 19.3238 2.4029 19.2237 2.3388 19.104C2.27469 18.9843 2.24431 18.8494 2.25088 18.7137C2.25745 18.5781 2.30074 18.4467 2.37611 18.3337L6.59955 12L2.3808 5.66625C2.30564 5.5536 2.26238 5.42271 2.25562 5.28746C2.24885 5.15221 2.27883 5.01765 2.34237 4.89807C2.40591 4.77849 2.50065 4.67834 2.61652 4.60825C2.73239 4.53816 2.86507 4.50076 3.00049 4.5H17.5992C17.8456 4.50046 18.0881 4.5616 18.3052 4.67801C18.5224 4.79443 18.7075 4.96255 18.8442 5.1675L23.122 11.5837C23.2047 11.7067 23.2491 11.8514 23.2496 11.9996C23.2501 12.1477 23.2067 12.2927 23.1249 12.4163Z" fill="currentColor"/>
-                            </svg>
-                        </span>
-                        <?php foreach ($ese_objetivos as $ese_i => $ese_obj): ?>
-                            <a href="#<?php echo esc_attr($ese_obj['id']); ?>"
-                               class="nos-objetivos__nav-item<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
-                               data-nos-obj-link="<?php echo (int) $ese_i; ?>">
-                                <?php echo esc_html($ese_obj['title']); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </nav>
-
-                    <a href="#aliados" class="nos-objetivos__skip" data-reveal="fade">
-                        <?php esc_html_e('Saltar objetivos', 'ese-latam'); ?>
-                    </a>
-
-                    <div class="nos-objetivos__metas" data-reveal="up" data-reveal-delay="0.1">
-                        <p class="nos-objetivos__metas-title"><?php esc_html_e('Algunas de nuestras metas y objetivos del programa:', 'ese-latam'); ?></p>
-                        <ul class="nos-objetivos__metas-list">
-                            <?php foreach ($ese_metas as $ese_meta): ?>
-                                <li>
-                                    <span class="nos-objetivos__metas-icon"><?php echo $ese_check_svg; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-                                    <span><?php echo esc_html($ese_meta); ?></span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                </div>
-            </aside>
-
-            <div class="nos-objetivos__list">
-                <?php foreach ($ese_objetivos as $ese_i => $ese_obj): ?>
-                    <article id="<?php echo esc_attr($ese_obj['id']); ?>" class="nos-objetivo" data-nos-obj="<?php echo (int) $ese_i; ?>">
-                        <div class="nos-objetivo__panel" data-nos-obj-panel>
-                            <img src="<?php echo esc_url($ese_img($ese_obj['img'])); ?>" alt="" loading="lazy" decoding="async"
-                                 data-nos-obj-img>
-                            <span class="nos-objetivo__num" aria-hidden="true"><?php echo esc_html(str_pad((string) ($ese_i + 1), 2, '0', STR_PAD_LEFT)); ?></span>
-                            <h3 class="nos-objetivo__title"><?php echo esc_html($ese_obj['title']); ?></h3>
-                        </div>
-                        <p class="nos-objetivo__text" data-reveal="up">
-                            <?php echo esc_html($ese_obj['text'][0]); ?>
-                            <span class="hl-accent"><?php echo esc_html($ese_obj['text'][1]); ?></span><?php echo esc_html($ese_obj['text'][2]); ?>
-                        </p>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </section>
-
-    <?php // ---------- 4. NUESTROS ALIADOS ---------- ?>
-    <section id="aliados" class="nos-aliados" data-nos-aliados>
-        <div class="nos-aliados__rings" aria-hidden="true">
-            <span class="nos-aliados__ring" data-nos-ring></span>
-            <span class="nos-aliados__ring" data-nos-ring></span>
-            <span class="nos-aliados__ring" data-nos-ring></span>
-        </div>
-
-        <header class="nos-aliados__header" data-reveal-header>
-            <p class="type-kicker text-white">/ <?php esc_html_e('Nuestros aliados', 'ese-latam'); ?></p>
-            <h2 class="nos-aliados__title">
-                <?php esc_html_e('Trabajamos con', 'ese-latam'); ?><br>
-                <strong><?php esc_html_e('los mejores aliados', 'ese-latam'); ?></strong>
-            </h2>
-        </header>
-
-        <ul class="nos-aliados__grid" data-nos-logos>
-            <?php for ($ese_l = 0; $ese_l < 10; $ese_l++): ?>
-                <li class="nos-aliados__card" data-nos-logo>
-                    <img src="<?php echo esc_url($ese_img('nosotros/aliado-logo.svg')); ?>" alt="Logoipsum" width="149" height="30" loading="lazy" decoding="async">
-                </li>
-            <?php endfor; ?>
-        </ul>
-
-        <div class="nos-aliados__island" data-nos-aliados-island>
-            <div class="nos-aliados__island-tilt" data-nos-aliados-tilt>
-                <span class="nos-aliados__island-shadow" aria-hidden="true" data-float-shadow></span>
-                <img src="<?php echo esc_url($ese_img('nosotros/isla.webp')); ?>" alt="" width="1370" height="955"
-                     loading="lazy" decoding="async" data-float data-float-distance="16" data-float-duration="4">
-            </div>
-        </div>
-    </section>
+    <?php // ---------- 4. NUESTROS ALIADOS (template-parts/aliados.php) ---------- ?>
+    <?php get_template_part('template-parts/aliados'); ?>
 
     <?php // ---------- 5. MARQUEE CIRCULOGIC ---------- ?>
     <div class="nos-marquee" aria-hidden="true">
@@ -328,51 +236,14 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
         </p>
     </div>
 
-    <?php // ---------- 6. MÉTODO CIRCULOGIC ---------- ?>
-    <section id="metodo" class="nos-metodo" data-nos-metodo data-nos-metodo-autoplay="6000">
-        <header class="nos-metodo__header" data-reveal-header>
-            <div>
-                <p class="type-kicker text-secondary">/ <?php esc_html_e('Sobre nosotros', 'ese-latam'); ?></p>
-                <h2 class="type-h2 uppercase">
-                    <?php esc_html_e('Método', 'ese-latam'); ?><br>
-                    <span class="hl"><?php esc_html_e('Circulogic', 'ese-latam'); ?></span>
-                </h2>
-            </div>
-            <p class="nos-desc" data-reveal-desc>
-                <?php esc_html_e('Nuestra producción está', 'ese-latam'); ?>
-                <span class="hl-accent"><?php esc_html_e('estratégicamente diseñada', 'ese-latam'); ?></span>
-                <?php esc_html_e('para cumplir con exigentes criterios', 'ese-latam'); ?>
-                <span class="hl-accent"><?php esc_html_e('ESG', 'ese-latam'); ?></span>
-                <?php esc_html_e('(Ambientales, Sociales y de Gobernanza) de forma real, transparente y medible.', 'ese-latam'); ?>
-            </p>
-        </header>
-
-        <div class="nos-metodo__tabs" role="tablist" data-reveal-stagger>
-            <?php foreach ($ese_esg as $ese_i => $ese_pilar): ?>
-                <button type="button" role="tab"
-                        class="nos-metodo__tab<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
-                        aria-selected="<?php echo 0 === $ese_i ? 'true' : 'false'; ?>"
-                        data-nos-metodo-tab
-                        data-img="<?php echo esc_url($ese_img($ese_pilar['img'])); ?>">
-                    <span class="nos-metodo__bar" aria-hidden="true"><span class="nos-metodo__bar-fill"></span></span>
-                    <span class="nos-metodo__tab-title"><?php echo esc_html($ese_pilar['title']); ?></span>
-                    <span class="nos-metodo__tab-desc"><?php echo esc_html($ese_pilar['desc']); ?></span>
-                </button>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="nos-metodo__media" data-nos-panel="up">
-            <div class="nos-metodo__media-inner" data-nos-metodo-media>
-                <img src="<?php echo esc_url($ese_img($ese_esg[0]['img'])); ?>" alt="" width="1800" height="1200"
-                     loading="lazy" decoding="async" data-nos-metodo-img data-parallax data-parallax-from="8" data-parallax-to="-8">
-            </div>
-            <span class="nos-metodo__leaf" aria-hidden="true" data-nos-metodo-leaf>
-                <svg width="72" height="57" viewBox="0 0 72 57" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M59.2155 35.3469C56.3388 37.0774 53.0347 37.9876 49.6681 37.9768C46.8477 37.9547 44.0593 37.3838 41.4615 36.2968C39.4594 39.0939 38.3879 42.4389 38.396 45.8666V54.6201C38.3967 54.9457 38.3298 55.2679 38.1994 55.5667C38.069 55.8656 37.8779 56.1347 37.638 56.3574C37.398 56.5801 37.1144 56.7516 36.8046 56.8613C36.4949 56.9709 36.1657 57.0164 35.8374 56.9948C35.2207 56.9417 34.647 56.6597 34.2314 56.2056C33.8159 55.7514 33.5892 55.1586 33.5968 54.5459V50.8534L22.0128 39.3898C20.2907 40.0255 18.4696 40.358 16.6317 40.3723C14.1015 40.3784 11.6187 39.6933 9.45687 38.3924C2.92097 34.4624 -0.597444 25.4179 0.0834413 14.1888C0.117724 13.6079 0.366375 13.0596 0.782186 12.6481C1.198 12.2366 1.75202 11.9906 2.33906 11.9566C13.6862 11.2947 22.8256 14.7647 26.785 21.2326C28.3405 23.7678 29.0197 26.7353 28.7196 29.6864C28.701 29.915 28.6158 30.1334 28.4744 30.3152C28.333 30.4969 28.1414 30.6342 27.9228 30.7105C27.7042 30.7868 27.4679 30.7988 27.2426 30.7451C27.0172 30.6913 26.8125 30.5741 26.653 30.4076L20.894 24.4414C20.4403 24.0148 19.8362 23.7805 19.2105 23.7885C18.5847 23.7964 17.9869 24.0459 17.5444 24.4838C17.1019 24.9217 16.8498 25.5133 16.8418 26.1325C16.8338 26.7517 17.0705 27.3496 17.5015 27.7985L33.6628 44.1984C33.6808 43.9669 33.7018 43.7354 33.7258 43.5068C34.2505 39.104 36.2137 34.9913 39.3169 31.7939L54.4913 15.9253C54.9416 15.4801 55.1947 14.8761 55.195 14.2463C55.1953 13.6164 54.9427 13.0122 54.4928 12.5666C54.043 12.1211 53.4326 11.8706 52.7962 11.8703C52.1597 11.87 51.5491 12.12 51.0989 12.5652L36.4014 27.9469C36.2542 28.1011 36.0681 28.2135 35.8622 28.2724C35.6563 28.3313 35.4383 28.3346 35.2307 28.2819C35.0231 28.2292 34.8336 28.1224 34.6818 27.9727C34.5301 27.8229 34.4216 27.6357 34.3677 27.4304C32.9459 22.2418 33.5728 17.077 36.2874 12.6423C41.6445 3.89176 54.1104 -0.792232 69.6358 0.110134C70.2228 0.14406 70.7768 0.390125 71.1927 0.801613C71.6085 1.2131 71.8571 1.76136 71.8914 2.3423C72.7912 17.7092 68.058 30.0455 59.2155 35.3469Z" fill="currentColor"/>
-                </svg>
-            </span>
-        </div>
-    </section>
+    <?php // ---------- 6. MÉTODO CIRCULOGIC (template-parts/metodo-tabs.php) ---------- ?>
+    <?php
+    get_template_part('template-parts/metodo-tabs', null, [
+        'id'   => 'metodo',
+        'desc' => __('Nuestra producción está', 'ese-latam') . ' <span class="hl-accent">' . __('estratégicamente diseñada', 'ese-latam') . '</span> ' . __('para cumplir con exigentes criterios', 'ese-latam') . ' <span class="hl-accent">' . __('ESG', 'ese-latam') . '</span> ' . __('(Ambientales, Sociales y de Gobernanza) de forma real, transparente y medible.', 'ese-latam'),
+        'tabs' => $ese_esg,
+    ]);
+    ?>
 
     <?php // ---------- 7. HDPE: EL FUTURO ES CIRCULAR ---------- ?>
     <section id="hdpe" class="nos-hdpe" data-nos-hdpe>
@@ -399,12 +270,11 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
             </header>
 
             <div class="nos-hdpe__scene" data-nos-panel="right">
-                <canvas class="nos-hdpe__canvas" data-nos-pellets aria-hidden="true"></canvas>
+                <video class="nos-hdpe__video" src="<?php echo esc_url(ESE_LATAM_URI . '/assets/video/hdpe-tecnologia.webm'); ?>" autoplay loop muted playsinline aria-hidden="true"></video>
                 <div class="nos-hdpe__scene-label">
                     <p class="nos-hdpe__scene-kicker"><?php esc_html_e('Impacto positivo', 'ese-latam'); ?></p>
                     <p class="nos-hdpe__scene-sub"><?php esc_html_e('Estándar Global', 'ese-latam'); ?></p>
                 </div>
-                <p class="nos-hdpe__scene-hint" aria-hidden="true"><?php esc_html_e('Mueve el cursor', 'ese-latam'); ?></p>
             </div>
         </div>
 

@@ -61,8 +61,11 @@ function initHero(root: HTMLElement): void {
   const glow = hero.querySelector<HTMLElement>('[data-nos-hero-glow]');
   const scrollHint = hero.querySelector<HTMLElement>('[data-nos-hero-scroll]');
   const count = hero.querySelector<HTMLElement>('[data-nos-count]');
+  // Solo en el hero de páginas internas (template-parts/hero-interno.php)
+  const kicker = hero.querySelector<HTMLElement>('[data-nos-hero-kicker]');
+  const cta = hero.querySelector<HTMLElement>('[data-nos-hero-cta]');
 
-  const revealables = [title, desc, crumb, scrollHint].filter((el): el is HTMLElement => el !== null);
+  const revealables = [kicker, title, desc, cta, crumb, scrollHint].filter((el): el is HTMLElement => el !== null);
 
   if (REDUCED) {
     gsap.set(revealables, { autoAlpha: 1 });
@@ -84,11 +87,13 @@ function initHero(root: HTMLElement): void {
 
   if (bgImg) tl.fromTo(bgImg, { scale: 1.18, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 2.4, ease: 'power2.out' }, 0);
   if (crumb) tl.fromTo(crumb, { y: -16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8 }, 0.5);
+  if (kicker) tl.fromTo(kicker, { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, 0.45);
   if (title && split) {
     tl.set(title, { autoAlpha: 1 }, 0.6);
     tl.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.14 }, 0.6);
   }
   if (desc) tl.fromTo(desc, { y: 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.9 }, 1.1);
+  if (cta) tl.fromTo(cta, { y: 20, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8 }, 1.3);
   if (count) {
     // Cuenta 0 → 13 sobre un proxy (no sobre textContent directo) y escribe
     // el entero en cada frame — evita decimales a mitad del tween.
@@ -505,8 +510,7 @@ function initHdpe(root: HTMLElement): void {
   const section = root.querySelector<HTMLElement>('[data-nos-hdpe]');
   if (!section) return;
 
-  const canvas = section.querySelector<HTMLCanvasElement>('[data-nos-pellets]');
-  if (canvas && canvas.parentElement) initPellets(canvas, canvas.parentElement, section);
+
 
   if (REDUCED) return;
 
@@ -540,276 +544,4 @@ function initHdpe(root: HTMLElement): void {
   }
 }
 
-/* ---------- Escena de pellets (canvas 2D) ----------
- * Pellets de HDPE (los granos con que se fabrican los contenedores) que
- * llueven desde arriba, rebotan contra un piso en perspectiva y se apilan
- * en un montículo. Cada uno vive un rato apilado, se apaga y vuelve a
- * caer: el ciclo de reciclaje en loop. El cursor los aparta (repulsión con
- * resorte de vuelta a su lugar). Corre en el ticker de GSAP solo mientras
- * la escena está en pantalla.
- */
 
-type Pellet = {
-  hx: number; // posición "hogar" en el piso
-  hy: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  r: number;
-  color: string;
-  depth: number; // 0 (lejos) → 1 (cerca): tamaño y orden de dibujo
-  state: 'fall' | 'rest' | 'fade';
-  bounces: number;
-  restAt: number; // segundos del reloj interno en que se apiló
-  ttl: number; // segundos apilado antes de reciclarse
-  alpha: number;
-  delay: number; // segundos antes de empezar a caer
-};
-
-const PELLET_COLORS = ['#0091d1', '#8eb952', '#e85d28', '#ffd27d', '#33a7da', '#b0ddf1', '#ffffff', '#8eb952', '#0091d1'];
-const PELLET_COUNT = 300;
-const GRAVITY = 1400; // px/s²
-
-function initPellets(canvas: HTMLCanvasElement, scene: HTMLElement, section: HTMLElement): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  let w = 0;
-  let h = 0;
-  let floor = { cx: 0, cy: 0, rx: 0, ry: 0 };
-  const pellets: Pellet[] = [];
-  const mouse = { x: -9999, y: -9999, active: false };
-  let running = false;
-  let lastTime = 0;
-  // Reloj propio (segundos) que solo avanza mientras el loop corre: si se
-  // usara performance.now(), al llegar a la sección después de un rato toda
-  // la pila habría "vencido" a la vez y se reciclaría de golpe.
-  let clock = 0;
-
-  const rand = (min: number, max: number): number => min + Math.random() * (max - min);
-
-  const spawn = (p: Pellet | null, immediate: boolean): Pellet => {
-    // Punto de aterrizaje: dentro de la elipse del piso, más denso al centro
-    const a = Math.random() * Math.PI * 2;
-    const d = Math.sqrt(Math.random()) * 0.92;
-    const hx = floor.cx + Math.cos(a) * floor.rx * d;
-    const hy = floor.cy + Math.sin(a) * floor.ry * d;
-    const depth = (hy - (floor.cy - floor.ry)) / (floor.ry * 2); // 0 arriba (lejos) → 1 abajo (cerca)
-    const next: Pellet = {
-      hx,
-      hy,
-      x: hx + rand(-10, 10),
-      y: immediate ? hy : -rand(20, h * 0.5),
-      vx: 0,
-      vy: 0,
-      r: rand(2.2, 3.6) * (0.65 + depth * 0.6),
-      color: PELLET_COLORS[Math.floor(Math.random() * PELLET_COLORS.length)],
-      depth,
-      state: immediate ? 'rest' : 'fall',
-      bounces: 0,
-      // Los de la pila inicial nacen con parte de su vida ya consumida, así
-      // se reciclan repartidos en el tiempo y no todos juntos.
-      restAt: immediate ? clock - rand(0, 10) : clock,
-      ttl: rand(9, 20),
-      alpha: 1,
-      delay: immediate ? 0 : rand(0, 6),
-    };
-    if (p) Object.assign(p, next);
-    return p ?? next;
-  };
-
-  const resize = (): void => {
-    const rect = scene.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    w = rect.width;
-    h = rect.height;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    floor = { cx: w * 0.5, cy: h * 0.74, rx: w * 0.3, ry: h * 0.12 };
-    // Reposiciona los apilados relativo al nuevo piso
-    pellets.forEach((p) => {
-      if (p.state !== 'fall') spawn(p, true);
-    });
-  };
-
-  const drawFloor = (): void => {
-    // Rejilla en perspectiva: verticales que convergen a un punto de fuga y
-    // horizontales que se comprimen hacia el horizonte.
-    const horizon = h * 0.5;
-    const vpX = w * 0.5;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx.lineWidth = 1;
-    for (let i = -8; i <= 8; i++) {
-      ctx.beginPath();
-      ctx.moveTo(vpX + i * 6, horizon);
-      ctx.lineTo(vpX + i * (w * 0.16), h + 2);
-      ctx.stroke();
-    }
-    for (let k = 1; k <= 9; k++) {
-      const t = (k / 9) ** 2.2;
-      const y = horizon + (h - horizon) * t;
-      ctx.globalAlpha = 0.25 + t * 0.75;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Brillo bajo el montículo
-    const g = ctx.createRadialGradient(floor.cx, floor.cy, 0, floor.cx, floor.cy, floor.rx * 1.2);
-    g.addColorStop(0, 'rgba(0,145,209,0.16)');
-    g.addColorStop(1, 'rgba(0,145,209,0)');
-    ctx.save();
-    ctx.translate(floor.cx, floor.cy);
-    ctx.scale(1, floor.ry / floor.rx);
-    ctx.translate(-floor.cx, -floor.cy);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, floor.cy - floor.rx * 1.5, w, floor.rx * 3);
-    ctx.restore();
-  };
-
-  const step = (dt: number): void => {
-    const rx = floor.rx;
-    for (const p of pellets) {
-      if (p.state === 'fall') {
-        if (p.delay > 0) {
-          p.delay -= dt;
-          continue;
-        }
-        p.vy += GRAVITY * dt;
-        p.y += p.vy * dt;
-        p.x += p.vx * dt;
-        if (p.y >= p.hy) {
-          p.y = p.hy;
-          if (p.bounces < 2 && p.vy > 120) {
-            p.vy = -p.vy * rand(0.25, 0.4);
-            p.vx = rand(-30, 30);
-            p.bounces++;
-          } else {
-            p.vy = 0;
-            p.vx = 0;
-            p.state = 'rest';
-            p.restAt = clock;
-            p.x = p.hx;
-          }
-        }
-      } else if (p.state === 'rest') {
-        // Repulsión del cursor + resorte de vuelta al hogar
-        if (mouse.active) {
-          const dx = p.x - mouse.x;
-          const dy = (p.y - mouse.y) * (rx / floor.ry) * 0.5; // compensa la elipse
-          const dist = Math.hypot(dx, dy) || 1;
-          const radius = 70;
-          if (dist < radius) {
-            const f = (1 - dist / radius) * 900;
-            p.vx += (dx / dist) * f * dt;
-            p.vy += (dy / dist) * f * dt * (floor.ry / rx);
-          }
-        }
-        p.vx += (p.hx - p.x) * 18 * dt;
-        p.vy += (p.hy - p.y) * 18 * dt;
-        p.vx *= 0.86;
-        p.vy *= 0.86;
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        if (clock - p.restAt > p.ttl) p.state = 'fade';
-      } else {
-        p.alpha -= dt * 1.4;
-        if (p.alpha <= 0) spawn(p, false);
-      }
-    }
-  };
-
-  const draw = (): void => {
-    ctx.clearRect(0, 0, w, h);
-    drawFloor();
-    // Los más lejanos (depth bajo) primero para que los cercanos queden encima
-    const sorted = pellets.slice().sort((a, b) => a.depth - b.depth);
-    for (const p of sorted) {
-      if (p.state === 'fall' && p.delay > 0) continue;
-      ctx.globalAlpha = p.alpha * (0.7 + p.depth * 0.3);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.ellipse(p.x, p.y, p.r, p.r * 0.85, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Brillo especular
-      ctx.globalAlpha = p.alpha * 0.35;
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(p.x - p.r * 0.3, p.y - p.r * 0.35, p.r * 0.3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  };
-
-  const tick = (): void => {
-    const now = performance.now();
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
-    lastTime = now;
-    clock += dt;
-    step(dt);
-    draw();
-  };
-
-  const start = (): void => {
-    if (running) return;
-    running = true;
-    lastTime = performance.now();
-    gsap.ticker.add(tick);
-  };
-  const stop = (): void => {
-    if (!running) return;
-    running = false;
-    gsap.ticker.remove(tick);
-  };
-
-  resize();
-  // Escena inicial: dos tercios ya apilados (así no arranca vacía), el resto
-  // llueve escalonado durante los primeros segundos.
-  for (let i = 0; i < PELLET_COUNT; i++) {
-    pellets.push(spawn(null, i < PELLET_COUNT * 0.66));
-  }
-  draw();
-
-  if (REDUCED) return; // cuadro estático, sin loop
-
-  if (typeof ResizeObserver === 'function') {
-    new ResizeObserver(() => {
-      resize();
-      draw();
-    }).observe(scene);
-  } else {
-    window.addEventListener('resize', resize);
-  }
-
-  if (FINE_POINTER) {
-    scene.addEventListener('mousemove', (event) => {
-      const r = scene.getBoundingClientRect();
-      mouse.x = event.clientX - r.left;
-      mouse.y = event.clientY - r.top;
-      mouse.active = true;
-    });
-    scene.addEventListener('mouseleave', () => {
-      mouse.active = false;
-    });
-  }
-
-  ScrollTrigger.create({
-    trigger: section,
-    start: 'top bottom',
-    end: 'bottom top',
-    onToggle: (self) => {
-      if (self.isActive && !document.hidden) start();
-      else stop();
-    },
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-    else if (ScrollTrigger.isInViewport(scene)) start();
-  });
-}

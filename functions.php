@@ -26,5 +26,6 @@ require_once ESE_LATAM_DIR . '/inc/enqueue.php';
 require_once ESE_LATAM_DIR . '/inc/template-tags.php';
 require_once ESE_LATAM_DIR . '/inc/cpt-productos.php';
 require_once ESE_LATAM_DIR . '/inc/acf-productos.php';
+require_once ESE_LATAM_DIR . '/inc/paginas.php';
 require_once ESE_LATAM_DIR . '/inc/contacto.php';
 add_filter( 'show_admin_bar', '__return_false' );

@@ -11,6 +11,9 @@ import { initSmoothScroll } from './modules/smooth-scroll';
 import { initScrollReveals } from './modules/scroll-reveals';
 import { initSectionHeaders } from './modules/section-headers';
 import { initHeader } from './modules/header';
+import { initNavSubmenu } from './modules/nav-submenu';
+import { initSearchOverlay } from './modules/search-overlay';
+import { initMobileSearch } from './modules/mobile-search';
 import { initSliders } from './modules/slider';
 import { initMarquees } from './modules/marquee';
 import { initParallax } from './modules/parallax';
@@ -19,11 +22,17 @@ import { initFloat } from './modules/float';
 import { initHeroCta } from './modules/hero-cta';
 import { initContactoReveal } from './modules/contacto-reveal';
 import { initResiduosSelector } from './modules/residuos-selector';
+import { initDistribuidoresIntro } from './modules/distribuidores-intro';
+import { initTabPanels } from './modules/tab-panels';
+import { initCountUp } from './modules/count-up';
 
 function bootstrap(): void {
   initGsap();
   initSmoothScroll();
   initHeader();
+  initNavSubmenu();
+  initSearchOverlay();
+  initMobileSearch();
   initScrollReveals();
   initSectionHeaders();
   initSliders();
@@ -36,6 +45,11 @@ function bootstrap(): void {
   initHeroCta();
   initContactoReveal();
   initResiduosSelector();
+  initDistribuidoresIntro();
+  // Tabs genéricas (desafíos, certificaciones en detalle, valida, economía
+  // circular) y contadores (impacto)
+  initTabPanels();
+  initCountUp();
 
   // Hero con scroll-animación (solo front-page)
   const hero = document.querySelector<HTMLElement>('[data-hero]');
@@ -61,6 +75,15 @@ function bootstrap(): void {
     });
   }
 
+  // Entrada coreografiada del hero de la ficha (arriba del fold: se importa
+  // ya, sin esperar a ningún observer)
+  const productoHero = document.querySelector<HTMLElement>('[data-producto-hero]');
+  if (productoHero) {
+    void import('./modules/producto-hero-intro').then(({ initProductoHeroIntro }) => {
+      initProductoHeroIntro(productoHero);
+    });
+  }
+
   // Selector de "Pruebas de rigurosidad" (single-producto.php)
   if (document.querySelector('[data-pruebas]')) {
     void import('./modules/pruebas-selector').then(({ initPruebasSelector }) => {
@@ -83,6 +106,14 @@ function bootstrap(): void {
   if (contactoPage) {
     void import('./modules/contacto-page').then(({ initContactoPage }) => {
       initContactoPage(contactoPage);
+    });
+  }
+
+  // Pasos de "Entendemos tu operación" (page-sectores.php)
+  const proceso = document.querySelector<HTMLElement>('[data-proceso]');
+  if (proceso) {
+    void import('./modules/proceso-steps').then(({ initProcesoSteps }) => {
+      initProcesoSteps(proceso);
     });
   }
 

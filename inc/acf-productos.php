@@ -125,7 +125,10 @@ add_action('acf/init', static function (): void {
                 'type'         => 'repeater',
                 'label'        => __('Selección de color', 'ese-latam'),
                 'instructions' => __('Un renglón por cada color disponible. La foto es opcional — si no se sube, se usa la imagen principal del producto.', 'ese-latam'),
-                'layout'       => 'table',
+                // 'block' y no 'table': cada color lleva adentro su propio
+                // repeater de fotos por litraje, y una tabla no da ancho
+                // para anidar otra tabla dentro de una celda.
+                'layout'       => 'block',
                 'button_label' => __('Añadir color', 'ese-latam'),
                 'sub_fields'   => [
                     [
@@ -149,10 +152,48 @@ add_action('acf/init', static function (): void {
                         'key'   => 'field_color_imagen',
                         'name'  => 'imagen',
                         'type'  => 'image',
-                        'label' => __('Foto en este color (opcional)', 'ese-latam'),
+                        'label' => __('Foto en este color', 'ese-latam'),
+                        'instructions' => __('La foto que se usa cuando no hay una específica para el litraje elegido.', 'ese-latam'),
                         'return_format' => 'array',
                         'preview_size' => 'thumbnail',
                         'wrapper' => ['width' => '50'],
+                    ],
+                    // El panel de configuración de la ficha deja elegir
+                    // litraje Y color a la vez, así que la foto depende de
+                    // los dos: un 80L y un 360L del mismo color no son la
+                    // misma pieza. Acá va esa matriz, opcional — cada
+                    // renglón que falte cae a la "Foto en este color" de
+                    // arriba, así un producto que solo tenga una foto por
+                    // color sigue funcionando igual que antes.
+                    [
+                        'key'          => 'field_color_imagenes',
+                        'name'         => 'imagenes',
+                        'type'         => 'repeater',
+                        'label'        => __('Fotos por litraje (opcional)', 'ese-latam'),
+                        'instructions' => __('Solo si el producto se ve distinto en cada tamaño. El litraje debe escribirse igual que en la pestaña "1. Litraje" (ej. 120L).', 'ese-latam'),
+                        'layout'       => 'table',
+                        'button_label' => __('Añadir foto por litraje', 'ese-latam'),
+                        'sub_fields'   => [
+                            [
+                                'key'      => 'field_color_imagen_litraje',
+                                'name'     => 'litraje',
+                                'type'     => 'text',
+                                'label'    => __('Litraje', 'ese-latam'),
+                                'placeholder' => __('Ej. 120L', 'ese-latam'),
+                                'required' => 1,
+                                'wrapper'  => ['width' => '30'],
+                            ],
+                            [
+                                'key'   => 'field_color_imagen_foto',
+                                'name'  => 'imagen',
+                                'type'  => 'image',
+                                'label' => __('Foto', 'ese-latam'),
+                                'return_format' => 'array',
+                                'preview_size'  => 'thumbnail',
+                                'required' => 1,
+                                'wrapper'  => ['width' => '70'],
+                            ],
+                        ],
                     ],
                 ],
             ],

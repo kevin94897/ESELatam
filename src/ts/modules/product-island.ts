@@ -3,30 +3,35 @@
  *
  * La flotación continua la resuelve `initFloat()` (mismo `[data-float]`/
  * `[data-float-shadow]` que usan las cards del home) — este módulo se ocupa
- * solo de tres cosas propias de la escena:
+ * solo de lo propio de la escena:
  *
  *  1. Entrada al cargar (pedestal → producto activo).
  *  2. Parallax de mouse sobre el WRAPPER del producto — no sobre el <img>,
  *     que ya trae su propio transform de la flotación; son dos tweens de
  *     GSAP en elementos distintos para que no se pisen (mismo criterio que
  *     las hojas de #productos en el home).
- *  3. Product switching: el slider de cards (debajo del crumb, un producto
- *     real por card) salta al producto tocado o deslizado, con una
- *     transición de salida/entrada del producto activo y su texto asociado.
- *     Este módulo crea y controla su PROPIO Embla para ese slider — no pasa
- *     por el initSliders() genérico de slider.ts (la card no lleva
- *     data-embla) porque necesita enganchar su evento `select` al swap real
- *     de contenido, no solo al estado visual `is-active`.
+ *  3. Product switching: goTo(i) es la ÚNICA puerta de entrada — cards,
+ *     dots, flechas, autoplay y swipe táctil la llaman directo con un
+ *     índice de producto. El Embla del strip de cards solo "sigue" al
+ *     producto activo (syncEmbla) y aporta el deslizar con el dedo/mouse
+ *     sobre el strip; nunca es la fuente de verdad. Antes las flechas
+ *     movían Embla y esperaban su `select`: con containScroll trimSnaps
+ *     hay menos snaps que cards (el último agrupa varias), así que el
+ *     último producto era inalcanzable con las flechas y en mobile —donde
+ *     el strip está display:none— Embla ni siquiera tiene medidas.
+ *     Un goTo() durante la transición no se descarta: queda pendiente y se
+ *     ejecuta al terminar (clicks rápidos en la flecha ya no se pierden).
  */
 
 import { gsap } from '../lib/gsap';
-import EmblaCarousel from 'embla-carousel';
+import EmblaCarousel, { type EmblaCarouselType } from 'embla-carousel';
 
 interface CatalogoSlide {
   title: string;
   desc: string;
   eyebrow: string;
   img: string;
+  thumb?: string;
   href: string;
 }
 
@@ -123,37 +128,86 @@ export function initProductIsland(root: HTMLElement): void {
 
   if (slides.length <= 1 || !mainWrap || !mainImg) return;
 
+  const dotEls = Array.from(root.querySelectorAll<HTMLElement>('[data-catalogo-dot]'));
+  const progressBarEl = root.querySelector<HTMLElement>('[data-catalogo-progress-bar]');
+  const prevBtn = root.querySelector<HTMLButtonElement>('[data-catalogo-slider-prev]');
+  const nextBtn = root.querySelector<HTMLButtonElement>('[data-catalogo-slider-next]');
+  const textEls = [eyebrowEl, titleEl, descEl].filter((el): el is HTMLElement => el !== null);
+
   let activeIndex = 0;
   let switching = false;
+  let pendingIndex: number | null = null;
+
+  const wrap = (index: number): number => ((index % slides.length) + slides.length) % slides.length;
+
+  // Las fotos 'large' de los otros productos se pedían recién al cambiar:
+  // el fade-in arrancaba con el <img> todavía vacío. Se precalientan en
+  // idle (después del LCP), así el swap ya las tiene en caché.
+  const preload = (): void => {
+    slides.forEach((slide) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = slide.img;
+    });
+  };
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(preload, { timeout: 3000 });
+  } else {
+    window.setTimeout(preload, 1500);
+  }
+
+  // Embla del strip de cards. En mobile el strip está display:none (sus
+  // slides miden 0) y con trimSnaps un snap puede agrupar varias cards:
+  // por eso se traduce índice de producto → snap que lo contiene, y se
+  // marca `emblaSyncing` para que el `select` que dispara scrollTo() no
+  // vuelva a entrar en goTo().
+  let embla: EmblaCarouselType | null = null;
+  let emblaSyncing = false;
+
+  const syncEmbla = (index: number): void => {
+    if (!embla) return;
+    const registry = embla.internalEngine().slideRegistry;
+    const snap = registry.findIndex((group) => group.includes(index));
+    if (snap < 0 || snap === embla.selectedScrollSnap()) return;
+    emblaSyncing = true;
+    embla.scrollTo(snap);
+    emblaSyncing = false;
+  };
+
+  const speed = prefersReducedMotion ? 0 : 1;
 
   const goTo = (nextIndex: number): void => {
-    if (switching) return;
-    const resolvedIndex = ((nextIndex % slides.length) + slides.length) % slides.length;
+    const resolvedIndex = wrap(nextIndex);
+    if (switching) {
+      pendingIndex = resolvedIndex;
+      return;
+    }
     if (resolvedIndex === activeIndex) return;
     switching = true;
     activeIndex = resolvedIndex;
     const slide = slides[activeIndex];
-
-    const dotEls = Array.from(root.querySelectorAll<HTMLElement>('[data-catalogo-dot]'));
-    const progressBarEl = root.querySelector<HTMLElement>('[data-catalogo-progress-bar]');
 
     slideEls.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
     dotEls.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
     if (progressBarEl) {
       progressBarEl.style.width = `${((activeIndex + 1) / slides.length) * 100}%`;
     }
-
-    const textEls = [eyebrowEl, titleEl, descEl].filter((el): el is HTMLElement => el !== null);
+    syncEmbla(activeIndex);
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.inOut' },
       onComplete: () => {
         switching = false;
+        if (pendingIndex !== null) {
+          const next = pendingIndex;
+          pendingIndex = null;
+          goTo(next);
+        }
       },
     });
 
-    tl.to(mainWrap, { autoAlpha: 0, scale: 0.85, y: 30, duration: 0.35, ease: 'power2.in' }, 0);
-    if (textEls.length) tl.to(textEls, { autoAlpha: 0, y: -10, duration: 0.25, ease: 'power2.in' }, 0);
+    tl.to(mainWrap, { autoAlpha: 0, scale: 0.85, y: 30, duration: 0.35 * speed, ease: 'power2.in' }, 0);
+    if (textEls.length) tl.to(textEls, { autoAlpha: 0, y: -10, duration: 0.25 * speed, ease: 'power2.in' }, 0);
 
     tl.call(() => {
       mainImg.src = slide.img;
@@ -166,97 +220,134 @@ export function initProductIsland(root: HTMLElement): void {
       if (counterEl) counterEl.textContent = String(activeIndex + 1).padStart(2, '0');
     });
 
-    tl.to(mainWrap, { autoAlpha: 1, scale: 1, y: 0, duration: 0.6, ease: 'back.out(1.6)' });
-    if (textEls.length) tl.to(textEls, { autoAlpha: 1, y: 0, duration: 0.4 }, '<');
+    tl.to(mainWrap, { autoAlpha: 1, scale: 1, y: 0, duration: 0.6 * speed, ease: 'back.out(1.6)' });
+    if (textEls.length) tl.to(textEls, { autoAlpha: 1, y: 0, duration: 0.4 * speed }, '<');
   };
 
-  // Slider de productos: Embla propio (no data-embla — ver comentario del
-  // header) para poder enganchar `select` (deslizar) al mismo goTo() que
-  // usa el click directo sobre una card.
   if (sliderViewport && slideEls.length > 1) {
-    const embla = EmblaCarousel(sliderViewport, { align: 'start', containScroll: 'trimSnaps', loop: true });
-    embla.on('select', () => goTo(embla.selectedScrollSnap()));
-    slideEls.forEach((el, i) => {
-      // scrollTo() por si la card no está del todo visible (la trae a
-      // vista); goTo() directo porque, con pocas cards, todas caben en el
-      // viewport del slider y Embla no tiene ningún punto de scroll real
-      // que alcanzar — su propio evento `select` nunca llegaría a disparar
-      // para ese índice. goTo() ya ignora llamadas redundantes (mismo
-      // índice ya activo), así que no hay riesgo de duplicar el swap si
-      // ambos (scrollTo → select, y este goTo directo) terminan coincidiendo.
-      el.addEventListener('click', () => {
-        embla.scrollTo(i);
-        goTo(i);
-      });
+    const instance = EmblaCarousel(sliderViewport, { align: 'start', containScroll: 'trimSnaps', loop: true });
+    embla = instance;
+    // Deslizar el strip con el dedo/mouse: primera card del snap alcanzado.
+    instance.on('select', () => {
+      if (emblaSyncing) return;
+      const group = instance.internalEngine().slideRegistry[instance.selectedScrollSnap()];
+      if (group?.length) goTo(group[0]);
+    });
+  }
+
+  slideEls.forEach((el, i) => el.addEventListener('click', () => goTo(i)));
+  dotEls.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+  // Circular: con 2+ productos nunca hay extremo muerto, así que las
+  // flechas no se deshabilitan.
+  prevBtn?.addEventListener('click', () => goTo(activeIndex - 1));
+  nextBtn?.addEventListener('click', () => goTo(activeIndex + 1));
+
+  // ---------- Swipe táctil sobre la escena (mobile) ----------
+  // En desktop la escena tiene pointer-events:none (no tapa el texto); en
+  // mobile el CSS la habilita con touch-action:pan-y, así el scroll vertical
+  // sigue siendo del navegador y solo el gesto horizontal cambia de producto.
+
+  if (scene) {
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    scene.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      tracking = true;
+      startX = e.clientX;
+      startY = e.clientY;
+    }, { passive: true });
+
+    scene.addEventListener('pointerup', (e) => {
+      if (!tracking) return;
+      tracking = false;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      goTo(activeIndex + (dx < 0 ? 1 : -1));
     });
 
-    const dotEls = Array.from(root.querySelectorAll<HTMLElement>('[data-catalogo-dot]'));
-    dotEls.forEach((dot, i) => {
-      dot.addEventListener('click', () => {
-        embla.scrollTo(i);
-        goTo(i);
-      });
+    scene.addEventListener('pointercancel', () => {
+      tracking = false;
     });
+  }
 
-    // Mismas flechas que .sectores__controls (embla__arrow--solid), acá
-    // debajo del slider — mismo patrón de habilitar/deshabilitar en los
-    // extremos que setupButtons() en slider.ts, pero sobre este Embla propio.
-    const prevBtn = root.querySelector<HTMLButtonElement>('[data-catalogo-slider-prev]');
-    const nextBtn = root.querySelector<HTMLButtonElement>('[data-catalogo-slider-next]');
-    prevBtn?.addEventListener('click', () => embla.scrollPrev());
-    nextBtn?.addEventListener('click', () => embla.scrollNext());
+  // ---------- Autoplay ----------
+  // Avanza cada AUTOPLAY_MS. Se detiene mientras el mouse está sobre el
+  // banner, mientras hay un dedo apoyado, con la pestaña oculta o con el
+  // banner fuera de viewport (si no, seguía cargando fotos 'large' mientras
+  // el usuario ya estaba abajo en la grilla). Va por pointer events con
+  // pointerType: con mouseenter/mouseleave, un tap en móvil disparaba el
+  // mouseenter sintético (sin mouseleave después) y el autoplay moría en
+  // el primer toque. Respeta prefers-reduced-motion: no arranca.
 
-    const updateArrows = (): void => {
-      if (prevBtn) prevBtn.disabled = !embla.canScrollPrev();
-      if (nextBtn) nextBtn.disabled = !embla.canScrollNext();
+  if (!prefersReducedMotion) {
+    const AUTOPLAY_MS = 4000;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let hovering = false;
+    let pressing = false;
+    let inView = true;
+
+    const stop = (): void => {
+      if (timer === null) return;
+      clearInterval(timer);
+      timer = null;
     };
-    embla.on('select', updateArrows).on('reInit', updateArrows);
-    updateArrows();
 
-    // ---------- Autoplay ----------
-    // Avanza al siguiente producto cada AUTOPLAY_MS ms.
-    // Se pausa en cualquier interacción sobre la sección completa
-    // (hover de mouse o inicio de touch) y se reanuda al salir.
-    // Respeta prefers-reduced-motion: no arranca si está activo.
+    const update = (): void => {
+      const shouldRun = inView && !document.hidden && !hovering && !pressing;
+      if (shouldRun && timer === null) {
+        timer = setInterval(() => goTo(activeIndex + 1), AUTOPLAY_MS);
+      } else if (!shouldRun) {
+        stop();
+      }
+    };
 
-    if (!prefersReducedMotion) {
-      const AUTOPLAY_MS = 4000;
-      let timer: ReturnType<typeof setInterval> | null = null;
+    // Tras elegir a mano, el siguiente tick vuelve a contar desde cero
+    // ("recién elegiste — espera un poco").
+    const restart = (): void => {
+      stop();
+      update();
+    };
 
-      const advance = (): void => {
-        const next = ((activeIndex + 1) % slides.length);
-        embla.scrollTo(next);
-        goTo(next);
-      };
+    root.addEventListener('pointerenter', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      hovering = true;
+      update();
+    });
+    root.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      hovering = false;
+      update();
+    });
+    root.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') return;
+      pressing = true;
+      update();
+    }, { passive: true });
+    const release = (e: PointerEvent): void => {
+      if (e.pointerType === 'mouse') return;
+      pressing = false;
+      restart();
+    };
+    root.addEventListener('pointerup', release);
+    root.addEventListener('pointercancel', release);
 
-      const start = (): void => {
-        if (timer !== null) return;
-        timer = setInterval(advance, AUTOPLAY_MS);
-      };
+    document.addEventListener('visibilitychange', update);
 
-      const stop = (): void => {
-        if (timer === null) return;
-        clearInterval(timer);
-        timer = null;
-      };
-
-      // Pausa al interactuar con el banner completo.
-      root.addEventListener('mouseenter', stop);
-      root.addEventListener('touchstart', stop, { passive: true });
-
-      // Reanuda al dejar el banner.
-      root.addEventListener('mouseleave', start);
-      root.addEventListener('touchend', start, { passive: true });
-
-      // Pausa también cuando el usuario hace click en una flecha o card
-      // (stop + restart da sensación de "recién elegiste — espera un poco").
-      const restartOnInteraction = (): void => { stop(); start(); };
-      prevBtn?.addEventListener('click', restartOnInteraction);
-      nextBtn?.addEventListener('click', restartOnInteraction);
-      slideEls.forEach((el) => el.addEventListener('click', restartOnInteraction));
-
-      // Arranca.
-      start();
+    if (typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(
+        (entries) => {
+          inView = entries.some((entry) => entry.isIntersecting);
+          update();
+        },
+        { threshold: 0.2 }
+      ).observe(root);
     }
+
+    [prevBtn, nextBtn, ...slideEls, ...dotEls].forEach((el) => el?.addEventListener('click', restart));
+
+    update();
   }
 }

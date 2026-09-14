@@ -160,3 +160,64 @@ function ese_latam_productos_placeholder(): array {
         ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 3 ruedas', 'ese-latam'), 'litraje' => '770 Litros',  'material' => 'HDPE Reciclado', 'img' => $img('bin-2.png'), 'href' => $href],
     ];
 }
+
+/**
+ * Sectores / áreas de impacto (Figma 3266-2331). Los usan el slider de la
+ * home (front-page.php) y el submenú "Sectores" del nav (inc/setup.php).
+ * Sin CPT propio todavía: desde el menú todos enlazan a la sección de la
+ * home. `img` es relativo a assets/imgs/sectores/.
+ *
+ * @return list<array{title: string, desc: string, img: string}>
+ */
+function ese_latam_sectores(): array {
+    return [
+        ['slug' => 'municipalidades', 'title' => __('Municipalidades y gobiernos locales', 'ese-latam'), 'desc' => __('Contenerización certificada para recolección urbana a gran escala.', 'ese-latam'), 'img' => 'municipalidades.webp'],
+        ['slug' => 'recoleccion',     'title' => __('Empresas de recolección', 'ese-latam'),             'desc' => __('Flotas de contenedores compatibles con sistemas de carga mecanizada.', 'ese-latam'), 'img' => 'recoleccion.webp'],
+        ['slug' => 'inmobiliarias',   'title' => __('Inmobiliarias', 'ese-latam'),                       'desc' => __('Soluciones de contención para edificios y condominios.', 'ese-latam'), 'img' => 'municipalidades.webp'],
+        ['slug' => 'hospitalarios',   'title' => __('Hospitalarios', 'ese-latam'),                       'desc' => __('Contenedores certificados para residuos biocontaminados.', 'ese-latam'), 'img' => 'recoleccion.webp'],
+        ['slug' => 'domestico',       'title' => __('Uso doméstico', 'ese-latam'),                       'desc' => __('Contenedores durables para la gestión de residuos en el hogar.', 'ese-latam'), 'img' => 'municipalidades.webp'],
+        ['slug' => 'comercial',       'title' => __('Supermercados y aeropuertos', 'ese-latam'),         'desc' => __('Gestión de alto tránsito para espacios comerciales y terminales.', 'ese-latam'), 'img' => 'recoleccion.webp'],
+        ['slug' => 'hosteleria',      'title' => __('Restaurantes y hostelería', 'ese-latam'),           'desc' => __('Contención higiénica para operaciones gastronómicas.', 'ese-latam'), 'img' => 'municipalidades.webp'],
+        ['slug' => 'industria',       'title' => __('Industria y manufactura', 'ese-latam'),             'desc' => __('Operaciones de largo plazo en entornos industriales exigentes.', 'ese-latam'), 'img' => 'recoleccion.webp'],
+    ];
+}
+
+/**
+ * URL de la "single" de un sector. Cada sector tiene (o tendrá) una página
+ * con su slug y la plantilla page-sector.php; mientras esa página no exista
+ * (hoy solo hay `municipalidades`, creada por inc/paginas.php), el enlace
+ * cae al catálogo, que es donde el sector puede ver productos.
+ *
+ * @param array{slug?: string} $sector Un ítem de ese_latam_sectores().
+ */
+function ese_latam_sector_url(array $sector): string {
+    $catalogo = (string) get_post_type_archive_link('producto');
+    $slug     = isset($sector['slug']) && is_string($sector['slug']) ? $sector['slug'] : '';
+
+    return '' === $slug ? $catalogo : ese_latam_pagina_url($slug, $catalogo);
+}
+
+/**
+ * Chips de sugerencia del buscador global (header.php). Si ya hay líneas de
+ * producto (taxonomía producto_categoria con productos), cada chip filtra
+ * el catálogo por esa línea (`?linea=`, que catalogo-grid.php entiende);
+ * mientras no las haya, cae a búsquedas frecuentes por texto (`?s=`).
+ *
+ * @return list<array{label: string, url: string}>
+ */
+function ese_latam_buscador_chips(): array {
+    $catalogo = (string) get_post_type_archive_link('producto');
+
+    $terms = get_terms(['taxonomy' => 'producto_categoria', 'hide_empty' => true, 'number' => 6]);
+    if (is_array($terms) && ! empty($terms)) {
+        return array_map(
+            static fn (WP_Term $t): array => ['label' => $t->name, 'url' => add_query_arg('linea', $t->slug, $catalogo)],
+            $terms
+        );
+    }
+
+    return array_map(
+        static fn (string $q): array => ['label' => $q, 'url' => add_query_arg('s', $q, $catalogo)],
+        [__('Contenedor', 'ese-latam'), __('Papelera', 'ese-latam'), __('Soterrado', 'ese-latam'), '120L', __('HDPE', 'ese-latam')]
+    );
+}

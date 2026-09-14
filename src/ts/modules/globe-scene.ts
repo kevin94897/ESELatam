@@ -42,6 +42,12 @@ const RADIUS = 1.6;
 const CAMERA_Z = 5.2;
 const NAV_DURATION = 1.8;
 
+// Giro continuo del globo en reposo (rad/s): ~0.05 rad/s es una vuelta
+// completa cada ~2 minutos — se nota que gira, no marea. Se pausa mientras
+// el usuario arrastra y mientras corre la navegación hacia un país (que
+// controla el quaternion cuadro a cuadro); la inercia tras soltar sí se
+// suma al giro.
+const AUTO_SPIN_SPEED = 0.05;
 const DRAG_SENSITIVITY = 0.006; // rad por px arrastrado
 const INERTIA_DAMPING_PER_SEC = 0.06; // fracción de velocidad que sobrevive cada segundo
 const INERTIA_MIN_SPEED = 0.001; // rad/s por debajo del cual se detiene la inercia
@@ -198,6 +204,12 @@ export function initGlobeScene(
 
   const navProxy = { t: 0 };
   let startQuat = group.quaternion.clone();
+  // true mientras el tween de focusCountry manda sobre el quaternion: en ese
+  // lapso el giro automático se detiene (si no, el slerp lo pisaría cada
+  // cuadro y el país quedaría "temblando").
+  let navigating = false;
+  const autoSpin = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const spinQuat = new Quaternion();
 
   // Velocidad angular (rad/s) de la inercia tras soltar el arrastre —
   // consultada y decaída cuadro a cuadro en el loop de render.
@@ -219,11 +231,15 @@ export function initGlobeScene(
     navProxy.t = 0;
 
     gsap.killTweensOf(navProxy);
+    navigating = true;
     gsap.to(navProxy, {
       t: 1,
       duration: NAV_DURATION,
       ease: 'power2.inOut',
       onUpdate: () => group.quaternion.slerpQuaternions(startQuat, targetQuat, navProxy.t),
+      // onInterrupt cubre el killTweensOf de un arrastre o de otra selección.
+      onComplete: () => { navigating = false; },
+      onInterrupt: () => { navigating = false; },
     });
   };
 
@@ -388,6 +404,13 @@ export function initGlobeScene(
       const decay = Math.pow(INERTIA_DAMPING_PER_SEC, dt);
       inertia.x *= decay;
       inertia.y *= decay;
+    }
+
+    // Giro lento permanente sobre el eje Y de MUNDO (mismo eje que el yaw
+    // del arrastre), así el globo rota "derecho" sin importar su inclinación.
+    if (autoSpin && !dragging && !navigating) {
+      spinQuat.setFromAxisAngle(Y_AXIS, AUTO_SPIN_SPEED * dt);
+      group.quaternion.premultiply(spinQuat);
     }
 
     renderer.render(scene, camera);

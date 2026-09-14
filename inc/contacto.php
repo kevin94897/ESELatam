@@ -39,72 +39,13 @@ function ese_latam_contacto_datos(): array {
 }
 
 /**
- * URL de la página de contacto. Si todavía no existe (p. ej. una instalación
- * nueva antes de que corra `ese_latam_crear_pagina_contacto`), cae al ancla
- * `#contacto` de la home — el CTA de cierre que sí está en todas las páginas.
+ * URL de la página de contacto (ver inc/paginas.php). Si todavía no existe,
+ * cae al ancla `#contacto` de la home — el CTA de cierre que sí está en
+ * todas las páginas.
  */
 function ese_latam_contacto_url(): string {
-    $page = get_page_by_path('contacto');
-
-    return $page instanceof WP_Post
-        ? (string) get_permalink($page)
-        : home_url('/#contacto');
+    return ese_latam_pagina_url('contacto', home_url('/#contacto'));
 }
-
-/**
- * Crea la página "Contacto" (slug `contacto`) una sola vez, para que
- * page-contacto.php tenga una URL real sin depender de que alguien la cree a
- * mano en wp-admin. Es idempotente: si la página existe —aunque esté en la
- * papelera o la hayan renombrado— no vuelve a crearla, y la marca en una
- * opción para no volver a consultarlo en cada carga.
- */
-function ese_latam_crear_pagina_contacto(): void {
-    if (get_option('ese_latam_pagina_contacto')) {
-        return;
-    }
-
-    $existente = get_page_by_path('contacto');
-    if ($existente instanceof WP_Post) {
-        update_option('ese_latam_pagina_contacto', $existente->ID);
-        return;
-    }
-
-    $id = wp_insert_post([
-        'post_title'   => __('Contacto', 'ese-latam'),
-        'post_name'    => 'contacto',
-        'post_status'  => 'publish',
-        'post_type'    => 'page',
-        'post_content' => '',
-    ]);
-
-    if (! is_wp_error($id)) {
-        update_option('ese_latam_pagina_contacto', $id);
-    }
-}
-// En `init` y no solo en `after_switch_theme`: el theme ya está activo en
-// los entornos donde se desarrolla, así que engancharlo solo a la
-// activación no crearía la página nunca. El guard de arriba lo vuelve una
-// sola lectura de una opción autoload en el resto de las cargas.
-add_action('init', 'ese_latam_crear_pagina_contacto');
-add_action('after_switch_theme', 'ese_latam_crear_pagina_contacto');
-
-/**
- * El header del sitio está pensado para heros OSCUROS: el logo va en blanco
- * (filtro brightness/invert en main.css) y el nav-pill sin borde. La página
- * de contacto abre con fondo claro, así que necesita la variante inversa —
- * la marca esta clase en el <body> y el CSS hace el resto.
- *
- * @param list<string> $classes
- * @return list<string>
- */
-function ese_latam_body_class_hero_claro(array $classes): array {
-    if (is_page_template('page-contacto.php') || is_page('contacto')) {
-        $classes[] = 'has-light-hero';
-    }
-
-    return $classes;
-}
-add_filter('body_class', 'ese_latam_body_class_hero_claro');
 
 /**
  * Endpoint AJAX del formulario de contacto.

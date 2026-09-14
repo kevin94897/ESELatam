@@ -24,10 +24,15 @@ ese-latam/
 ├── front-page.php         # Home: hero animado + sección Sectores (slider)
 ├── page-nosotros.php      # Página Nosotros (Figma 3441-370), ver abajo
 ├── page-contacto.php      # Página Contacto (Figma 3941-8369), ver abajo
+├── page-sectores.php      # Página Soluciones por sector (Figma 3510-6982), ver abajo
+├── page-sector.php        # Plantilla "Solución por sector" (Figma 3551-5049), ver abajo
+├── page-certificaciones.php # Página Certificaciones (Figma 3785-4089), ver abajo
+├── page-impacto.php       # Página Impacto / Residuos inteligentes (Figma 3824-3688), ver abajo
 ├── header.php / footer.php
 ├── inc/
 │   ├── setup.php          # Supports, menús (+ fallback del menú), sidebars
-│   ├── contacto.php       # Datos de contacto, página /contacto y envío del form
+│   ├── paginas.php        # Crea las páginas base (/contacto, /sectores, /certificaciones, /impacto, /municipalidades) y resuelve sus URLs
+│   ├── contacto.php       # Datos de contacto y envío del formulario
 │   └── enqueue.php        # Integración con manifest de Vite
 ├── assets/
 │   ├── icons/             # SVGs exportados del Figma (CTA, chevron, search)
@@ -46,6 +51,8 @@ ese-latam/
 │           ├── scroll-reveals.ts # Reveals genéricos por data-attributes
 │           ├── nosotros.ts       # Coreografía de la página Nosotros (lazy)
 │           ├── contacto-page.ts  # FAQ + envío del formulario (lazy)
+│           ├── tab-panels.ts     # Tabs genéricas [data-tabs] (autoplay, prev/next)
+│           ├── count-up.ts       # Contadores [data-count-to]
 │           └── three-scene.ts
 ├── vite.config.ts
 ├── tsconfig.json
@@ -180,6 +187,82 @@ vuelve con `?contacto=ok|error`.
 
 Los datos de contacto (teléfono, correo, dirección, horario) salen de
 `ese_latam_contacto_datos()`, filtrable con `ese_latam_contacto_datos`.
+
+---
+
+## 🏭 Página Soluciones por sector
+
+`page-sectores.php` — la página `sectores` la crea `inc/paginas.php` (mismo
+mecanismo que Contacto; el menú y el footer apuntan a ella vía
+`ese_latam_pagina_url('sectores')`). Reutiliza todo lo que ya existía:
+
+- **Hero claro** (`sectores-hero.php`): breadcrumb `.nos-crumb` de Nosotros +
+  titular centrado. Estilos `.sec-hero*`.
+- **Grilla bento** (`sectores-grid.php`): los 8 sectores salen de
+  `ese_latam_sectores()` (misma lista que el slider de la home y el submenú);
+  la página solo aporta bajadas propias, el tamaño de cada tarjeta
+  (`grid-template-areas`, ver `.sec-grid__list`) y una foto por tarjeta.
+  Cada tarjeta enlaza a la single del sector si existe su página
+  (`ese_latam_sector_url()`, hoy solo `/municipalidades/`) y al catálogo si no.
+- **"Entendemos tu operación"** (`sectores-proceso.php` +
+  `src/ts/modules/proceso-steps.ts`): tres pasos con autoplay y crossfade de
+  texto y foto de fondo. Mismo vidrio que `.contacto__card`.
+- **Certificaciones**: `template-parts/certificaciones.php` tal cual.
+- **Contactemos**: `template-parts/contacto.php` con copy propio y la
+  variante `contacto--upper`.
+
+---
+
+## 🧩 Páginas internas: Sector, Certificaciones e Impacto
+
+Las tres comparten esqueleto: van dentro del wrapper `.nosotros[data-nosotros]`
+(gutters, hero oscuro y `nosotros.ts` de la página Nosotros) y se arman con
+partes reutilizables; lo nuevo del Figma vive en partes propias. Las páginas
+`certificaciones`, `impacto` y `municipalidades` las crea `inc/paginas.php`
+(esta última con la plantilla `page-sector.php` asignada); menú y footer ya
+apuntan a ellas.
+
+Partes compartidas (todas aceptan `$args` para el copy):
+
+- `hero-interno.php`: el `.nos-hero` de Nosotros + kicker + CTA + breadcrumb
+  con ruta. Lo anima `initHero` de `nosotros.ts`.
+- `casos-reales.php`: 4 tarjetas de proyecto. Datos de ejemplo hasta que
+  exista un CPT de casos.
+- `aliados.php`, `objetivos-sticky.php`, `metodo-tabs.php`: extraídas de
+  `page-nosotros.php` (que ahora las llama) para reutilizarlas con otro copy.
+- `residuos.php`: la sección "Ingeniería de alto desempeño" extraída de la home.
+- `certificaciones.php`: ahora acepta `title`, `title_accent` y `centered`.
+
+Tabs genéricas: `src/ts/modules/tab-panels.ts` mueve cualquier
+`[data-tabs]` con `[data-tab]` × N y `[data-tab-panel]` × N (más
+`data-tabs-autoplay="ms"`, `[data-tabs-prev]`/`[data-tabs-next]`). Pone
+`.is-active` en tab y panel, `.is-next` en el panel siguiente y anima
+`--tab-progress` (0→1) en la tab activa durante el autoplay.
+
+**Solución por sector** (`page-sector.php`, plantilla para N sectores; el
+sector sale del slug de la página y el copy de `$ese_contenido`, hoy solo
+Municipalidades): hero → **Desafíos** (`sector-desafios.php`: pills
+Dolores/Alivio + bento de 6 tarjetas, `data-tabs`) → **Criterio de
+adaptabilidad** (`sector-criterio.php`: cita + contenedor con callouts) →
+marquee → **Recomendados** (`producto-recomendados.php`) → Certificaciones
+centradas → **Economía circular** (`economia-circular.php`: anillo SVG del
+Figma con 4 nodos-tab y leyenda, prev/next) → Casos → Contactemos.
+
+**Certificaciones** (`page-certificaciones.php`): hero → **Certificaciones en
+detalle** (`certificaciones-detalle.php`: 9 sellos-tab + ficha; solo Blue
+Angel trae copy del Figma) → marquee → **Marcando la diferencia**
+(`metodo-tabs.php` con 4 tabs) → **Pruebas** (`producto-pruebas.php`) →
+**Calidad superior desde el origen** (`objetivos-sticky.php`) → **Blue Angel**
+(`blue-angel.php`, ilustración exportada) → **Valida certificados**
+(`valida-certificados.php`: mazo de tarjetas con autoplay, `data-tabs`) →
+Casos → Contactemos.
+
+**Impacto** (`page-impacto.php`): hero → **Decisión humana**
+(`impacto-stats.php`: mosaico de tiles con contadores `data-count-to`) →
+franja de frases (`impacto-ticker.php`, `data-marquee`) → `residuos.php` →
+`aliados.php` → Casos → Contactemos.
+
+Assets nuevos en `assets/imgs/{sectores,certificaciones,economia,impacto,casos}/`.
 
 ---
 

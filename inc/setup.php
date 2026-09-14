@@ -43,20 +43,50 @@ add_action('after_setup_theme', static function (): void {
  * @param array<string, mixed> $args Argumentos de wp_nav_menu.
  */
 function ese_latam_nav_fallback(array $args): void {
+    // URLs absolutas (home_url) y no anclas sueltas: el header se comparte en
+    // todas las páginas y un `#sectores` desde una ficha de producto no lleva
+    // a ningún lado. "Productos" ya tiene página propia: el catálogo.
     $items = [
-        ['label' => __('Productos', 'ese-latam'),        'url' => '#productos',       'children' => false],
-        ['label' => __('Sectores', 'ese-latam'),         'url' => '#sectores',        'children' => true],
-        ['label' => __('Certificaciones', 'ese-latam'),  'url' => '#certificaciones', 'children' => false],
-        ['label' => __('Impacto', 'ese-latam'),          'url' => '#impacto',         'children' => false],
+        ['label' => __('Productos', 'ese-latam'),        'url' => get_post_type_archive_link('producto'), 'children' => []],
+        ['label' => __('Sectores', 'ese-latam'),         'url' => ese_latam_pagina_url('sectores', home_url('/#sectores')), 'children' => ese_latam_sectores()],
+        ['label' => __('Certificaciones', 'ese-latam'),  'url' => ese_latam_pagina_url('certificaciones', home_url('/#certificaciones')), 'children' => []],
+        ['label' => __('Impacto', 'ese-latam'),          'url' => ese_latam_pagina_url('impacto', home_url('/#impacto')), 'children' => []],
     ];
 
     $class = isset($args['menu_class']) && is_string($args['menu_class']) ? $args['menu_class'] : '';
 
+    // Mismo contrato que wp_nav_menu: con depth 1 (menú móvil) no hay
+    // submenús; con 0 o >= 2 (nav-pill) sí. El submenú usa las mismas clases
+    // que emite el walker de WP (.sub-menu, .menu-item-has-children), así el
+    // CSS/JS del desplegable sirve igual cuando se asigne un menú real.
+    $depth         = isset($args['depth']) ? (int) $args['depth'] : 0;
+    $with_children = 0 === $depth || $depth >= 2;
+
     echo '<ul class="' . esc_attr($class) . '">';
     foreach ($items as $item) {
-        $li_class = 'menu-item' . ($item['children'] ? ' menu-item-has-children' : '');
+        $has_children = $with_children && ! empty($item['children']);
+        $li_class     = 'menu-item' . ($has_children ? ' menu-item-has-children' : '');
+
         echo '<li class="' . esc_attr($li_class) . '">';
-        echo '<a href="' . esc_url($item['url']) . '">' . esc_html($item['label']) . '</a>';
+        echo '<a href="' . esc_url((string) $item['url']) . '"'
+            . ($has_children ? ' aria-haspopup="true" aria-expanded="false"' : '')
+            . '>' . esc_html($item['label']) . '</a>';
+
+        if ($has_children) {
+            echo '<ul class="sub-menu nav-mega">';
+            foreach ($item['children'] as $child) {
+                echo '<li class="menu-item">';
+                echo '<a class="nav-mega__item" href="' . esc_url(ese_latam_sector_url($child)) . '">';
+                echo '<img class="nav-mega__thumb" src="' . esc_url(ESE_LATAM_URI . '/assets/imgs/sectores/' . $child['img']) . '"'
+                    . ' alt="" width="48" height="48" loading="lazy" decoding="async">';
+                echo '<span class="nav-mega__text">';
+                echo '<span class="nav-mega__title">' . esc_html($child['title']) . '</span>';
+                echo '<span class="nav-mega__desc">' . esc_html($child['desc']) . '</span>';
+                echo '</span></a></li>';
+            }
+            echo '</ul>';
+        }
+
         echo '</li>';
     }
     echo '</ul>';

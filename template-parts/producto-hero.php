@@ -70,19 +70,49 @@ $ese_ficha      = get_field('ficha_tecnica');
 $ese_img_default = get_the_post_thumbnail_url($ese_producto_id, 'large')
     ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png');
 
-// Cada color con su foto (si no tiene una propia, la principal del producto).
-// Este mismo array viaja a product-config.ts por `data-colors`.
+// Cada color con su foto (si no tiene una propia, la principal del producto)
+// y, cuando existen, las fotos por litraje: el panel deja elegir capacidad Y
+// color, así que la foto depende de los dos (un 80L y un 360L del mismo
+// color no son la misma pieza). `imgs` es un mapa litraje → URL; lo que no
+// esté ahí cae a `img`. Este mismo array viaja a product-config.ts por
+// `data-colors`.
 $ese_colores_data = array_map(
     static function (array $c) use ($ese_img_default): array {
         $img = is_array($c['imagen'] ?? null) ? ($c['imagen']['url'] ?? '') : '';
+
+        $imgs = [];
+        if (is_array($c['imagenes'] ?? null)) {
+            foreach ($c['imagenes'] as $ese_variante) {
+                $ese_v_litraje = trim((string) ($ese_variante['litraje'] ?? ''));
+                $ese_v_img     = is_array($ese_variante['imagen'] ?? null)
+                    ? (string) ($ese_variante['imagen']['url'] ?? '')
+                    : '';
+                if ('' !== $ese_v_litraje && '' !== $ese_v_img) {
+                    $imgs[$ese_v_litraje] = $ese_v_img;
+                }
+            }
+        }
+
         return [
             'nombre' => (string) ($c['nombre'] ?? ''),
             'color'  => (string) ($c['color'] ?? '#ffffff'),
             'img'    => $img ?: $ese_img_default,
+            'imgs'   => (object) $imgs,
         ];
     },
     $ese_colores
 );
+
+// Foto inicial: la del primer color en el litraje por defecto — si no, la
+// del color, y recién al final la destacada del producto. Sin esto el hero
+// pintaba la destacada (un litraje cualquiera) y recién cambiaba al primer
+// clic, con un salto visible.
+$ese_img_inicial = $ese_img_default;
+if (isset($ese_colores_data[0])) {
+    $ese_primer_color = $ese_colores_data[0];
+    $ese_variantes    = (array) $ese_primer_color['imgs'];
+    $ese_img_inicial  = $ese_variantes[$ese_litraje_default] ?? $ese_primer_color['img'];
+}
 
 // Kicker: la categoría real del producto (taxonomía producto_categoria).
 $ese_terms  = get_the_terms($ese_producto_id, 'producto_categoria');
@@ -129,17 +159,20 @@ if (count($ese_stats) < 4) {
 }
 ?>
 
-<section class="producto-hero" data-product-config
+<section class="producto-hero" data-product-config data-producto-hero
     data-colors="<?php echo esc_attr(wp_json_encode($ese_colores_data)); ?>">
     <?php // Fondo propio de la ficha: degradado radial de marca, no la foto de
     // montaña del banner de catálogo. Al no cargar imagen, el hero pinta en
     // el primer frame y el LCP pasa a ser el título. ?>
+    <?php // Marca "hay JS": solo entonces el CSS esconde las partes del hero
+    // hasta que producto-hero-intro.ts las anime (sin JS quedan visibles). ?>
+    <script>document.currentScript.parentElement.classList.add('is-js');</script>
     <div class="producto-hero__bg" aria-hidden="true"></div>
     <div class="producto-hero__dots" aria-hidden="true"></div>
     <div class="catalogo-banner__grid" aria-hidden="true"></div>
 
     <div class="producto-hero__inner">
-        <p class="producto-hero__crumb catalogo-banner__crumb" data-reveal="fade">
+        <p class="producto-hero__crumb catalogo-banner__crumb">
             <a href="<?php echo esc_url(home_url('/')); ?>">
                 <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg"
                     aria-hidden="true">
@@ -157,9 +190,10 @@ if (count($ese_stats) < 4) {
             <span class="producto-hero__crumb-current"><?php echo esc_html($ese_titulo); ?></span>
         </p>
 
-        <?php // data-reveal-stagger: cada bloque del panel entra en cascada al cargar
-        // (scroll-reveals.ts dispara enseguida lo que ya está en viewport). ?>
-        <div class="producto-hero__panel" data-reveal-stagger>
+        <?php // La entrada de TODO el hero (panel, escena, atributos) la coreografía
+        // producto-hero-intro.ts en un solo timeline — por eso acá no hay
+        // data-reveal como en el resto del sitio. ?>
+        <div class="producto-hero__panel">
             <div class="producto-hero__kicker">
                 <span><?php echo esc_html($ese_kicker); ?></span>
             </div>
@@ -177,7 +211,7 @@ if (count($ese_stats) < 4) {
 
             <div class="producto-hero__group">
                 <p class="producto-hero__group-label">
-                    <span class="producto-hero__group-num">01</span>
+                    <span class="producto-hero__group-num"></span>
                     <span class="producto-hero__group-text"><?php esc_html_e('Elige la capacidad', 'ese-latam'); ?></span>
                 </p>
                 <div class="producto-hero__pills">
@@ -200,7 +234,7 @@ if (count($ese_stats) < 4) {
 
             <div class="producto-hero__group">
                 <p class="producto-hero__group-label">
-                    <span class="producto-hero__group-num">02</span>
+                    <span class="producto-hero__group-num"></span>
                     <span class="producto-hero__group-text"><?php esc_html_e('Selecciona el color', 'ese-latam'); ?></span>
                     <span class="producto-hero__group-value" data-producto-color-name><?php echo esc_html($ese_colores_data[0]['nombre'] ?? ''); ?></span>
                 </p>
@@ -241,7 +275,7 @@ if (count($ese_stats) < 4) {
         // debe ser HERMANA del <img data-float> dentro del mismo wrapper (float.ts la
         // busca en el parentElement del elemento que flota). El foco de luz y los
         // anillos son solo CSS, dan profundidad detrás del producto. ?>
-        <div class="producto-hero__scene" data-reveal="fade" data-reveal-delay="0.15">
+        <div class="producto-hero__scene">
             <div class="producto-hero__spot" aria-hidden="true"></div>
             <div class="producto-hero__ring" aria-hidden="true"></div>
 
@@ -252,7 +286,7 @@ if (count($ese_stats) < 4) {
 
             <div class="producto-hero__product" data-product>
                 <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
-                <img data-producto-img src="<?php echo esc_url($ese_img_default); ?>"
+                <img data-producto-img src="<?php echo esc_url($ese_img_inicial); ?>"
                     alt="<?php echo esc_attr($ese_titulo); ?>" decoding="async" fetchpriority="high" data-float
                     data-float-distance="12" data-float-duration="3.4">
             </div>

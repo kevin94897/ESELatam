@@ -63,9 +63,20 @@ $ese_catalogo_current = $ese_catalogo_slides[0];
 
 <section class="catalogo-banner" data-product-island
     data-slides="<?php echo esc_attr(wp_json_encode($ese_catalogo_slides)); ?>">
+    <?php
+    // Foto de fondo: es el LCP de la página, así que va en WebP (el PNG de
+    // 2.3 MB queda solo de fallback), con una versión de 900px para móvil
+    // y fetchpriority alto para que no compita con el resto de assets.
+    ?>
     <div class="catalogo-banner__bg" aria-hidden="true">
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/catalogo/banner-bg-mountain.png'); ?>" alt=""
-            decoding="async">
+        <picture>
+            <source type="image/webp" media="(max-width: 63.9375rem)"
+                srcset="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/catalogo/banner-bg-mountain-900.webp'); ?>">
+            <source type="image/webp"
+                srcset="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/catalogo/banner-bg-mountain.webp'); ?>">
+            <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/catalogo/banner-bg-mountain.png'); ?>" alt=""
+                width="1536" height="796" decoding="async" fetchpriority="high">
+        </picture>
     </div>
     <div class="catalogo-banner__shade" aria-hidden="true"></div>
     <div class="catalogo-banner__noise" aria-hidden="true"></div>

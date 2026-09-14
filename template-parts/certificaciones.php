@@ -5,8 +5,10 @@
  * clara, la del diseño original) y single-producto.php (variante oscura,
  * arriba de template-parts/contacto.php).
  *
- * @param array{dark?: bool} $args 'dark' => true pinta la variante oscura
- *   (fondo navy, texto blanco, logos sobre chip blanco). Por defecto false.
+ * @param array{dark?: bool, title?: string, title_accent?: string, centered?: bool} $args
+ *   'dark' => true pinta la variante oscura (fondo navy, texto blanco, logos
+ *   sobre chip blanco); 'title'/'title_accent' cambian el titular ("calidad
+ *   certificada" en la single de sector); 'centered' centra el header.
  *
  * @package EseLatam
  */
@@ -16,7 +18,13 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-$ese_dark = ! empty($args['dark']);
+$ese_cert_args = wp_parse_args($args ?? [], [
+    'dark'         => false,
+    'title'        => __('nuestras', 'ese-latam'),
+    'title_accent' => __('certificaciones', 'ese-latam'),
+    'centered'     => false,
+]);
+$ese_dark = ! empty($ese_cert_args['dark']);
 
 $ese_certificaciones = [
     ['name' => 'Blue Angel', 'desc' => __('Bajo impacto ambiental', 'ese-latam'), 'img' => 'blue-angel.png'],
@@ -26,7 +34,7 @@ $ese_certificaciones = [
     ['name' => 'TÜV SÜD', 'desc' => __('Inspección técnica y resistencia', 'ese-latam'), 'img' => 'tuv-sud.png'],
 ];
 ?>
-<section id="certificaciones" class="certificaciones<?php echo $ese_dark ? ' certificaciones--dark' : ''; ?> relative z-10">
+<section id="certificaciones" class="certificaciones<?php echo $ese_dark ? ' certificaciones--dark' : ''; ?><?php echo $ese_cert_args['centered'] ? ' certificaciones--centered' : ''; ?> relative z-10">
     <header class="certificaciones__header" data-reveal-header>
         <div class="certificaciones__heading-group">
             <p class="type-kicker text-secondary">/ <?php esc_html_e('Estándar global', 'ese-latam'); ?></p>
@@ -37,8 +45,8 @@ $ese_certificaciones = [
             // Mismo criterio que .producto-hero__title/.contacto__heading, que por
             // la misma razón tampoco reutilizan .type-h2. ?>
             <h2 class="certificaciones__title">
-                <?php esc_html_e('nuestras', 'ese-latam'); ?>
-                <span class="certificaciones__title-accent"><?php esc_html_e('certificaciones', 'ese-latam'); ?></span>
+                <?php echo esc_html($ese_cert_args['title']); ?>
+                <span class="certificaciones__title-accent"><?php echo esc_html($ese_cert_args['title_accent']); ?></span>
             </h2>
             <p class="certificaciones__desc">
                 <?php esc_html_e('Dependiendo de la exigencia del entorno y las líneas de producto, nuestras certificaciones respaldan nuestra', 'ese-latam'); ?>
@@ -49,7 +57,7 @@ $ese_certificaciones = [
         </div>
 
         <?php // Cierra la cascada del header (título → bajada → kicker) ?>
-        <a href="#" class="link-arrow<?php echo $ese_dark ? ' link-arrow--light' : ''; ?>" data-reveal="up"
+        <a href="<?php echo esc_url(ese_latam_pagina_url('certificaciones', '#certificaciones')); ?>" class="link-arrow<?php echo $ese_dark ? ' link-arrow--light' : ''; ?>" data-reveal="up"
             data-reveal-delay="0.5">
             <span
                 class="link-arrow__text"><?php esc_html_e('Explora todas nuestras certificaciones', 'ese-latam'); ?></span>

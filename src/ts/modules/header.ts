@@ -111,7 +111,10 @@ const DOCK_MAX_SCALE = 1.1;
  * 1 = pico bajo el cursor); el `scale` se aplica en el onUpdate del proxy.
  */
 function initDockMagnify(navPill: HTMLElement): void {
-  const items = Array.from(navPill.querySelectorAll<HTMLElement>('.nav-pill__list a'));
+  // Solo los links de primer nivel: los del submenú desplegable (.sub-menu,
+  // ver nav-submenu.ts) también son `.nav-pill__list a`, y escalarlos según
+  // la distancia horizontal al cursor no tiene sentido en un panel vertical.
+  const items = Array.from(navPill.querySelectorAll<HTMLElement>(':scope > .nav-pill__list > li > a'));
   if (!items.length) return;
 
   const proxies = items.map(() => ({ t: 0 }));
@@ -125,7 +128,21 @@ function initDockMagnify(navPill: HTMLElement): void {
     },
   }));
 
+  const onLeave = (): void => {
+    setters.forEach((set) => set(0));
+  };
+
   const onMove = (event: MouseEvent): void => {
+    // Con el cursor dentro del submenú desplegable (descendiente del pill,
+    // así que sus mousemove también llegan acá) la fila de arriba NO debe
+    // reaccionar: la distancia se mide solo en X, y sin este corte los
+    // ítems justo encima del panel seguían creciendo mientras se recorría
+    // el submenú.
+    if ((event.target as HTMLElement).closest('.sub-menu')) {
+      onLeave();
+      return;
+    }
+
     items.forEach((item, i) => {
       const rect = item.getBoundingClientRect();
       const distance = Math.abs(event.clientX - (rect.left + rect.width / 2));
@@ -133,10 +150,6 @@ function initDockMagnify(navPill: HTMLElement): void {
       const falloff = Math.cos((t * Math.PI) / 2); // 1 bajo el cursor, 0 en el borde del radio
       setters[i](falloff);
     });
-  };
-
-  const onLeave = (): void => {
-    setters.forEach((set) => set(0));
   };
 
   navPill.addEventListener('mousemove', onMove);
