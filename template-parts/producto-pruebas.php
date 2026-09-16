@@ -42,8 +42,7 @@ $ese_pruebas_arrow = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
     <header class="pruebas__header" data-reveal-header>
         <p class="type-kicker text-secondary">/ <?php esc_html_e('Pruebas de rigurosidad', 'ese-latam'); ?></p>
         <h2 class="type-h2 uppercase text-center">
-            <?php esc_html_e('¿qué hace que', 'ese-latam'); ?><br>
-            <span class="hl"><?php esc_html_e('sea excelente?', 'ese-latam'); ?></span>
+            <?php echo ese_latam_titulo(__('¿qué hace que', 'ese-latam') . "\n" . __('|sea excelente?|', 'ese-latam'), 'span', 'hl'); ?>
         </h2>
         <p class="pruebas__desc">
             <?php esc_html_e('Antes de llegar a tu ciudad o industria, cada contenedor ESE pasa por', 'ese-latam'); ?>

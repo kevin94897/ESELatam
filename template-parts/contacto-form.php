@@ -173,8 +173,7 @@ $ese_campo = static function (array $args): void {
     <header class="ctc-intro__header" data-reveal-header>
         <p class="type-kicker text-secondary">/ <?php esc_html_e('Contacto', 'ese-latam'); ?></p>
         <h1 class="ctc-intro__title">
-            <?php esc_html_e('Cuéntanos tu', 'ese-latam'); ?><br>
-            <span class="hl"><?php esc_html_e('operación', 'ese-latam'); ?></span>
+            <?php echo ese_latam_titulo(__('Cuéntanos tu', 'ese-latam') . "\n" . __('|operación|', 'ese-latam'), 'span', 'hl'); ?>
         </h1>
         <p class="ctc-intro__lede" data-reveal-desc>
             <?php esc_html_e('Te responderemos en menos de', 'ese-latam'); ?>

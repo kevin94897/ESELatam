@@ -5,7 +5,7 @@
  * flotante con tilt al mouse (animación en nosotros.ts, initAliados).
  * Antes vivía inline en page-nosotros.php; se extrajo para reutilizarla.
  *
- * @param array{kicker?: string, title?: string, title_strong?: string, desc?: string} $args
+ * @param array{kicker?: string, title?: string, desc?: string} $args
  *
  * @package EseLatam
  */
@@ -17,12 +17,16 @@ if (! defined('ABSPATH')) {
 
 $ese_aliados = wp_parse_args($args ?? [], [
     'kicker'       => __('Nuestros aliados', 'ese-latam'),
-    'title'        => __('Trabajamos con', 'ese-latam'),
-    'title_strong' => __('los mejores aliados', 'ese-latam'),
+    'title'        => __('Trabajamos con', 'ese-latam') . "\n" . __('|los mejores aliados|', 'ese-latam'),
     'desc'         => '',
 ]);
 
-$ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' . $file;
+$ese_lista = ese_latam_modulo_entradas('aliado');
+
+// Sin aliados cargados no se pinta la franja: el theme no inventa logos.
+if ([] === $ese_lista) {
+    return;
+}
 ?>
 
 <section id="aliados" class="nos-aliados" data-nos-aliados>
@@ -35,8 +39,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
         <header class="nos-aliados__header" data-reveal-header>
             <p class="type-kicker text-white">/ <?php echo esc_html($ese_aliados['kicker']); ?></p>
             <h2 class="nos-aliados__title">
-                <?php echo esc_html($ese_aliados['title']); ?><br>
-                <strong><?php echo esc_html($ese_aliados['title_strong']); ?></strong>
+                <?php echo ese_latam_titulo($ese_aliados['title']); ?>
             </h2>
             <?php if ('' !== $ese_aliados['desc']) : ?>
                 <p class="nos-aliados__desc" data-reveal-desc><?php echo esc_html($ese_aliados['desc']); ?></p>
@@ -44,11 +47,19 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
         </header>
 
         <ul class="nos-aliados__grid" data-nos-logos>
-            <?php for ($ese_l = 0; $ese_l < 10; $ese_l++): ?>
+            <?php foreach ($ese_lista as $ese_aliado) :
+                $ese_logo = (string) (get_the_post_thumbnail_url($ese_aliado->ID, 'medium') ?: '');
+                $ese_web  = trim((string) ese_latam_campo('web', $ese_aliado->ID, ''));
+                if ('' === $ese_logo) {
+                    continue;
+                }
+                ?>
                 <li class="nos-aliados__card" data-nos-logo>
-                    <img src="<?php echo esc_url($ese_img('nosotros/aliado-logo.svg')); ?>" alt="Logoipsum" width="149" height="30" loading="lazy" decoding="async">
+                    <?php if ('' !== $ese_web) : ?><a href="<?php echo esc_url($ese_web); ?>" target="_blank" rel="noopener"><?php endif; ?>
+                    <img src="<?php echo esc_url($ese_logo); ?>" alt="<?php echo esc_attr(get_the_title($ese_aliado->ID)); ?>" loading="lazy" decoding="async">
+                    <?php if ('' !== $ese_web) : ?></a><?php endif; ?>
                 </li>
-            <?php endfor; ?>
+            <?php endforeach; ?>
         </ul>
 
         <div class="nos-aliados__island" data-nos-aliados-island>

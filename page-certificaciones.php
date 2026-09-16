@@ -88,8 +88,7 @@ $ese_calidad = [
     <?php
     get_template_part('template-parts/hero-interno', null, [
         'kicker'       => __('Respaldo comprobado', 'ese-latam'),
-        'title'        => __('calidad y estándar certificado', 'ese-latam'),
-        'title_strong' => __('que nos respaldan', 'ese-latam'),
+        'title'        => __('calidad y estándar certificado |que nos respaldan|', 'ese-latam'),
         'desc'         => __('Garantizamos los ensayos de laboratorio, la trazabilidad del material y el cumplimiento de cada norma internacional que exige tu operación.', 'ese-latam'),
         'cta_label'    => __('Explorar productos', 'ese-latam'),
         'cta_href'     => (string) get_post_type_archive_link('producto'),
@@ -111,8 +110,7 @@ $ese_calidad = [
     get_template_part('template-parts/metodo-tabs', null, [
         'id'           => 'diferencia',
         'kicker'       => __('Certificaciones', 'ese-latam'),
-        'title'        => __('Marcando la', 'ese-latam'),
-        'title_strong' => __('diferencia', 'ese-latam'),
+        'title'        => __('Marcando la', 'ese-latam') . "\n" . __('|diferencia|', 'ese-latam'),
         'desc'         => __('Un sello no es un logo en la ficha técnica: es la garantía de que el contenedor fue', 'ese-latam') . ' <span class="hl-accent">' . __('ensayado, auditado y trazado', 'ese-latam') . '</span> ' . __('antes de llegar a tu ciudad.', 'ese-latam'),
         'tabs'         => $ese_diferencia,
     ]);
@@ -122,8 +120,7 @@ $ese_calidad = [
     get_template_part('template-parts/objetivos-sticky', null, [
         'id'           => 'calidad-superior',
         'kicker'       => __('Sobre nosotros', 'ese-latam'),
-        'title'        => __('Calidad superior', 'ese-latam'),
-        'title_strong' => __('desde el origen', 'ese-latam'),
+        'title'        => __('Calidad superior', 'ese-latam') . "\n" . __('|desde el origen|', 'ese-latam'),
         'desc'         => __('Metas claras que', 'ese-latam') . ' <span class="hl-accent">' . __('transforman', 'ese-latam') . '</span> ' . __('y', 'ese-latam') . ' <span class="hl-accent">' . __('mejoran', 'ese-latam') . '</span> ' . __('la gestión de residuos a nivel global.', 'ese-latam'),
         'items'        => $ese_calidad,
         'skip_label'   => __('Saltar sección', 'ese-latam'),
@@ -138,10 +135,7 @@ $ese_calidad = [
     ]);
 
     get_template_part('template-parts/contacto', null, [
-        'class'          => 'contacto--upper',
-        'heading'        => __('¿Necesitas validar un certificado o una', 'ese-latam'),
-        'heading_strong' => __('ficha técnica', 'ese-latam'),
-        'desc'           => __('Nuestro equipo técnico revisa sellos, informes de ensayo y documentación de origen sin costo para compras públicas.', 'ese-latam'),
+        'class' => 'contacto--upper',
     ]);
     ?>
 </div>

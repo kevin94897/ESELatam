@@ -2,7 +2,8 @@
  * Hero con animación de scroll (front-page):
  *  - Intro al cargar (sin scroll): el titular aparece centrado con máscara por
  *    línea, viaja a su posición de layout (a la izquierda), entran menú y
- *    lede/CTA/card, y recién al final emerge la isla — no está desde la carga.
+ *    lede/CTA, y al final emergen la isla y la hero-card (el mensaje del
+ *    hero: entra junto con la isla, no está desde la carga).
  *  - Con el scroll: el video se reproduce scrubbed (suavizado con lerp) y el
  *    titular y la isla derivan hacia abajo con parallax (velocidades
  *    distintas) hasta disolverse entre las nubes de la sección siguiente.
@@ -16,12 +17,13 @@ import { gsap, ScrollTrigger } from '../lib/gsap';
 // la altura del hero) entra deslizándose durante el ÚLTIMO viewport de scroll
 // del pin: su frente son las nubes que la coronan, y llega al top justo al
 // liberarse el pin. SWEEP_START = 1 - 1/PIN_VIEWPORTS.
-const PIN_VIEWPORTS = 3.5;
+// En móvil el pin es más corto (2.4 viewports): 3.5 pantallas de scroll
+// sobre un hero que además scrubea video se sentía interminable con el
+// pulgar, y en pantallas bajas el usuario no veía avance. La coreografía
+// (isla, barrido de la sección siguiente) se reparte igual, en proporción.
+const PIN_VIEWPORTS_DESKTOP = 3.5;
+const PIN_VIEWPORTS_MOBILE = 2.4;
 const VIDEO_LERP = 0.12;
-
-// Coreografía del pin (fracciones del progreso total)
-const SWEEP_START = 1 - 1 / PIN_VIEWPORTS;      // ~0.71 — la sección empieza a barrer
-const VIDEO_END = SWEEP_START + 0.15;           // el video muere durante el barrido
 
 export function initHeroScroll(section: HTMLElement): void {
   const video = section.querySelector<HTMLVideoElement>('[data-hero-video]');
@@ -41,7 +43,9 @@ export function initHeroScroll(section: HTMLElement): void {
   const titleWrap = section.querySelector<HTMLElement>('[data-hero-title-wrap]');
   const bottom = section.querySelector<HTMLElement>('[data-hero-bottom]');
   const title = section.querySelector<HTMLElement>('.hero__title');
-  const card = section.querySelector<HTMLElement>('.hero-card');
+  // Wrapper de la hero-card (front-page.php): la entrada va acá; la card de
+  // adentro flota con float.ts — elementos distintos, transforms que no chocan.
+  const cardWrap = section.querySelector<HTMLElement>('[data-hero-card]');
   const titleLines = section.querySelectorAll<HTMLElement>('[data-hero-line]');
   const revealEls = section.querySelectorAll<HTMLElement>('[data-hero-reveal]');
   const header = document.querySelector<HTMLElement>('[data-header]');
@@ -64,12 +68,17 @@ export function initHeroScroll(section: HTMLElement): void {
   // caja), y solo durante la intro — el layout asentado usa .hero__title-settled.
   const isMobile = window.matchMedia('(width < 48rem)').matches;
 
+  // Coreografía del pin (fracciones del progreso total), según breakpoint
+  const PIN_VIEWPORTS = isMobile ? PIN_VIEWPORTS_MOBILE : PIN_VIEWPORTS_DESKTOP;
+  const SWEEP_START = 1 - 1 / PIN_VIEWPORTS;      // ~0.71 desktop — la sección empieza a barrer
+  const VIDEO_END = SWEEP_START + 0.15;           // el video muere durante el barrido
+
   if (prefersReducedMotion) {
     // Sin animación: estado final legible, todo visible, video en su primer frame.
     // En mobile el titular real es .hero__title-settled (ya incluido en
     // revealEls) — el de arriba (.hero__title) se queda oculto en vez de
     // mostrarse duplicado.
-    const staticEls = [island, card, ...revealEls].filter((el): el is HTMLElement => el !== null);
+    const staticEls = [island, cardWrap, ...revealEls].filter((el): el is HTMLElement => el !== null);
     gsap.set(staticEls, { autoAlpha: 1 });
     if (title) gsap.set(title, { autoAlpha: isMobile ? 0 : 1 });
     video?.pause();
@@ -85,6 +94,7 @@ export function initHeroScroll(section: HTMLElement): void {
   const finishIntroState = (): void => {
     if (title) gsap.set(title, isMobile ? { autoAlpha: 0 } : { x: 0, y: 0, scale: 1, autoAlpha: 1 });
     if (island) gsap.set(island, { autoAlpha: 1 });
+    if (cardWrap) gsap.set(cardWrap, { autoAlpha: 1, clearProps: 'transform' });
     if (header) gsap.set(header, { yPercent: 0, autoAlpha: 1 });
     if (revealEls.length) gsap.set(revealEls, { autoAlpha: 1, clearProps: 'transform' });
   };
@@ -138,7 +148,7 @@ export function initHeroScroll(section: HTMLElement): void {
     // 4) El menú baja y entra
     intro.to(header ?? [], { yPercent: 0, autoAlpha: 1, duration: 0.8 }, 2.15);
 
-    // 5) Lede, CTA y card entran escalonados (clearProps: sin transform
+    // 5) Lede y CTA entran escalonados (clearProps: sin transform
     // inline residual que bloquee los hovers CSS, como el settle del CTA)
     intro.fromTo(
       revealEls,
@@ -177,6 +187,18 @@ export function initHeroScroll(section: HTMLElement): void {
       { rotation: -5 },
       { rotation: 0, duration: 2.4, ease: 'power2.out' },
       ISLAND_IN
+    );
+
+    // 7) La hero-card llega con la isla, apenas después de que esta arranca
+    // a subir: es el mensaje del hero y merece su propio momento en vez de
+    // colarse en la cascada del lede/CTA. Sube y "asienta" desde un leve
+    // encogimiento; clearProps al final para que el transform de la intro
+    // no se quede debajo del que anima float.ts en la card de adentro.
+    intro.fromTo(
+      cardWrap ?? [],
+      { y: 56, scale: 0.94, autoAlpha: 0 },
+      { y: 0, scale: 1, autoAlpha: 1, duration: 1.3, ease: 'expo.out', clearProps: 'transform' },
+      ISLAND_IN + 0.25
     );
 
     // Si el navegador restaura el scroll tarde, o el usuario sale del hero
@@ -287,17 +309,9 @@ export function initHeroScroll(section: HTMLElement): void {
     );
   }
 
-  // La hero-card no entra con la intro de carga: aparece scrubbed en el
-  // primer tramo del pin (y se re-oculta al volver arriba). Sus props no
-  // chocan con el wrapper hero__bottom, que anima en otro elemento.
-  if (card) {
-    tl.fromTo(
-      card,
-      { y: 64, autoAlpha: 0 },
-      { y: 0, autoAlpha: 1, duration: 0.14, ease: 'power1.out' },
-      0.05
-    );
-  }
+  // La hero-card ya entró con la intro (paso 7) y vive dentro de
+  // hero__bottom, así que retrocede con el scroll junto al lede y el CTA —
+  // no necesita tween propio acá.
 
   // La isla (visible desde la carga) deriva hacia abajo con parallax — más
   // lenta que el titular, para dar profundidad — y se disuelve entre las

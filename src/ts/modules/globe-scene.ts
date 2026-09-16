@@ -11,6 +11,13 @@
  *  - `focusCountry(slug)`, disparado desde la lista de países: gira el
  *    grupo con GSAP hasta que el país señalado queda de frente a cámara.
  * Cualquiera de las dos interrumpe a la otra.
+ *
+ * En reposo el globo no da la vuelta completa: hace un BARRIDO pendular
+ * sobre la franja de longitudes donde están los países conectados (de
+ * México a Uruguay, con margen), así el frente nunca se queda mostrando
+ * océano o continentes sin marcadores. El barrido arranca unos segundos
+ * después de la última interacción y se funde suavemente desde la
+ * orientación en la que quedó el globo.
  */
 
 import {
@@ -39,15 +46,21 @@ import { gsap } from '../lib/gsap';
 // (asin(RADIUS / CAMERA_Z)) debe quedar por debajo del semi-FOV de cámara,
 // si no la esfera se recorta contra los bordes del canvas.
 const RADIUS = 1.6;
-const CAMERA_Z = 5.2;
+// 4.9 → semi-ángulo aparente 19.1° frente al semi-FOV de 21°: la esfera
+// llena ~91% del canvas (con 5.2 llenaba ~85%). Más cerca y se recorta.
+const CAMERA_Z = 4.9;
 const NAV_DURATION = 1.8;
 
-// Giro continuo del globo en reposo (rad/s): ~0.05 rad/s es una vuelta
-// completa cada ~2 minutos — se nota que gira, no marea. Se pausa mientras
-// el usuario arrastra y mientras corre la navegación hacia un país (que
-// controla el quaternion cuadro a cuadro); la inercia tras soltar sí se
-// suma al giro.
-const AUTO_SPIN_SPEED = 0.05;
+// Barrido en reposo: la longitud de frente oscila (seno) entre los extremos
+// de los países conectados ± margen. Con 22 s por ida y vuelta sobre ~60°
+// la velocidad pico ronda 0.15 rad/s — el triple del giro continuo anterior
+// (0.05 rad/s), que se sentía detenido. La latitud también respira un poco.
+const IDLE_PERIOD = 22; // s por ciclo completo (ida y vuelta)
+const IDLE_LNG_MARGIN = 2; // grados de aire más allá del país más al oeste / este
+const IDLE_LAT_AMPLITUDE = 5; // grados de vaivén vertical
+const IDLE_LAT_PERIOD = 9; // s
+const IDLE_BLEND = 2.2; // 1/s — cuánto "persigue" el globo al barrido tras una interacción
+const IDLE_RESUME_DELAY = 2.5; // s de espera tras soltar / tras llegar a un país
 const DRAG_SENSITIVITY = 0.006; // rad por px arrastrado
 const INERTIA_DAMPING_PER_SEC = 0.06; // fracción de velocidad que sobrevive cada segundo
 const INERTIA_MIN_SPEED = 0.001; // rad/s por debajo del cual se detiene la inercia
@@ -96,6 +109,15 @@ function quaternionFacingCamera(local: Vector3): Quaternion {
   return qX.multiply(qY); // aplica qY primero, luego qX
 }
 
+/** Lat/lng (grados) del punto del globo que hoy mira a cámara (+Z de mundo). */
+function facingLatLng(groupQuat: Quaternion): { lat: number; lng: number } {
+  const local = new Vector3(0, 0, 1).applyQuaternion(groupQuat.clone().invert()).normalize();
+  const lat = 90 - (Math.acos(Math.max(-1, Math.min(1, local.y))) * 180) / Math.PI;
+  let lng = (Math.atan2(local.z, -local.x) * 180) / Math.PI - 180;
+  if (lng < -180) lng += 360;
+  return { lat, lng };
+}
+
 export function initGlobeScene(
   container: HTMLElement,
   countries: GlobeCountry[],
@@ -114,7 +136,10 @@ export function initGlobeScene(
   camera.position.set(0, 0, CAMERA_Z);
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Táctil: DPR 1.5 y esfera de 48 segmentos — mitad de píxeles a sombrear
+  // en pantallas de DPR 3 sin diferencia visible en un globo de ~460px.
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.5 : 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   container.appendChild(renderer.domElement);
 
@@ -126,11 +151,14 @@ export function initGlobeScene(
   const group = new Group();
   scene.add(group);
 
-  const geometry = new SphereGeometry(RADIUS, 64, 64);
+  const geometry = new SphereGeometry(RADIUS, coarse ? 48 : 64, coarse ? 48 : 64);
   const material = new MeshPhongMaterial({
     map: dayMap,
     specularMap,
     normalMap,
+    // Relieve suave: la textura cartoon (tools/globo-cartoon.py) ya trae
+    // el color plano; el normal map solo insinúa las cordilleras.
+    normalScale: new Vector2(0.45, 0.45),
     specular: new Color(0x2a6a94),
     shininess: 16,
   });
@@ -142,8 +170,10 @@ export function initGlobeScene(
   // como base pareja en vez de un ambient plano y oscuro, más un key light
   // frontal blanco-celeste que da brillo sin generar un punto especular
   // duro (shininess bajo = reflejo amplio y suave, no un "glare").
-  scene.add(new HemisphereLight(0xe4f4ff, 0x3a72c4, 2.6));
-  const keyLight = new DirectionalLight(0xffffff, 2.1);
+  // Hemisferio casi neutro: con la textura cartoon, el navy de abajo que
+  // usaba la textura realista teñía los verdes de turquesa.
+  scene.add(new HemisphereLight(0xf4fbff, 0x7fb6e6, 1.7));
+  const keyLight = new DirectionalLight(0xffffff, 1.5);
   keyLight.position.set(2.5, 2, 5);
   scene.add(keyLight);
   const rimLight = new DirectionalLight(0x8eb952, 0.5);
@@ -209,7 +239,38 @@ export function initGlobeScene(
   // cuadro y el país quedaría "temblando").
   let navigating = false;
   const autoSpin = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const spinQuat = new Quaternion();
+
+  // ---------- Barrido en reposo ----------
+  // Franja de longitudes/latitudes que cubre a todos los países conectados.
+  const lngs = countries.map((c) => c.lng);
+  const lats = countries.map((c) => c.lat);
+  const idleLngMin = Math.min(...lngs) - IDLE_LNG_MARGIN;
+  const idleLngMax = Math.max(...lngs) + IDLE_LNG_MARGIN;
+  const idleLngCenter = (idleLngMin + idleLngMax) / 2;
+  const idleLngHalf = (idleLngMax - idleLngMin) / 2;
+  const idleLatCenter = (Math.min(...lats) + Math.max(...lats)) / 2;
+  let idleTime = 0; // s dentro del ciclo del seno
+  let idlePhase = 0; // fase inicial, alineada con la orientación al retomar
+  let idleWait = 0; // s que faltan para retomar el barrido
+  let idleArmed = false; // true una vez alineada la fase tras la última interacción
+  const idleTarget = new Quaternion();
+
+  // Pausa el barrido y deja programada su vuelta, alineada con donde quede el globo.
+  const pauseIdle = (delay = IDLE_RESUME_DELAY): void => {
+    idleWait = delay;
+    idleArmed = false;
+  };
+
+  // Elige la fase del seno para que lng(t) arranque en la longitud que hoy
+  // mira a cámara (acotada a la franja) y avance hacia el extremo más lejano
+  // — así la retoma es continua, sin salto.
+  const armIdle = (): void => {
+    const { lng } = facingLatLng(group.quaternion);
+    const u = Math.max(-1, Math.min(1, (lng - idleLngCenter) / idleLngHalf));
+    idlePhase = u > 0 ? Math.PI - Math.asin(u) : Math.asin(u);
+    idleTime = 0;
+    idleArmed = true;
+  };
 
   // Velocidad angular (rad/s) de la inercia tras soltar el arrastre —
   // consultada y decaída cuadro a cuadro en el loop de render.
@@ -238,9 +299,10 @@ export function initGlobeScene(
       ease: 'power2.inOut',
       onUpdate: () => group.quaternion.slerpQuaternions(startQuat, targetQuat, navProxy.t),
       // onInterrupt cubre el killTweensOf de un arrastre o de otra selección.
-      onComplete: () => { navigating = false; },
+      onComplete: () => { navigating = false; pauseIdle(); },
       onInterrupt: () => { navigating = false; },
     });
+    pauseIdle(NAV_DURATION + IDLE_RESUME_DELAY);
   };
 
   // Orientación inicial: sin animación, ya mirando al país activo por defecto.
@@ -340,6 +402,7 @@ export function initGlobeScene(
     inertia.x = 0;
     inertia.y = 0;
     gsap.killTweensOf(navProxy); // el arrastre interrumpe una navegación en curso
+    pauseIdle();
     canvasEl.style.cursor = 'grabbing';
     canvasEl.setPointerCapture(event.pointerId);
     clearTooltip(); // arrastrando no tiene sentido mostrar el hint de hover
@@ -370,6 +433,7 @@ export function initGlobeScene(
   const endDrag = (event: PointerEvent): void => {
     if (!dragging) return;
     dragging = false;
+    pauseIdle();
     canvasEl.style.cursor = 'grab';
     if (canvasEl.hasPointerCapture(event.pointerId)) {
       canvasEl.releasePointerCapture(event.pointerId);
@@ -394,6 +458,20 @@ export function initGlobeScene(
   canvasEl.addEventListener('pointercancel', endDrag);
   canvasEl.addEventListener('pointerleave', clearTooltip);
 
+  // Sin dibujar mientras la sección está fuera de pantalla (o la pestaña
+  // oculta): el loop sigue barato (solo actualiza el quaternion) y el GPU
+  // descansa — en móvil es lo que más batería consumía de toda la página.
+  let isVisible = true;
+  let inViewport = true;
+  const syncVisible = (): void => { isVisible = inViewport && document.visibilityState === 'visible'; };
+  if (typeof IntersectionObserver === 'function') {
+    new IntersectionObserver((entries) => {
+      inViewport = entries.some((e) => e.isIntersecting);
+      syncVisible();
+    }, { rootMargin: '120px' }).observe(container);
+  }
+  document.addEventListener('visibilitychange', syncVisible);
+
   let rafId = 0;
   const clock = new Clock();
   const render = (): void => {
@@ -406,14 +484,25 @@ export function initGlobeScene(
       inertia.y *= decay;
     }
 
-    // Giro lento permanente sobre el eje Y de MUNDO (mismo eje que el yaw
-    // del arrastre), así el globo rota "derecho" sin importar su inclinación.
-    if (autoSpin && !dragging && !navigating) {
-      spinQuat.setFromAxisAngle(Y_AXIS, AUTO_SPIN_SPEED * dt);
-      group.quaternion.premultiply(spinQuat);
+    // Barrido pendular en reposo sobre la franja de países conectados. Tras
+    // una interacción espera IDLE_RESUME_DELAY (y a que muera la inercia),
+    // alinea la fase con la orientación actual y desde ahí "persigue" el
+    // objetivo con un slerp suavizado — sin saltos ni tirones.
+    const inertiaAlive = Math.abs(inertia.x) > INERTIA_MIN_SPEED || Math.abs(inertia.y) > INERTIA_MIN_SPEED;
+    if (autoSpin && !dragging && !navigating && !inertiaAlive) {
+      if (idleWait > 0) {
+        idleWait -= dt;
+      } else {
+        if (!idleArmed) armIdle();
+        idleTime += dt;
+        const lng = idleLngCenter + idleLngHalf * Math.sin(idlePhase + (idleTime * 2 * Math.PI) / IDLE_PERIOD);
+        const lat = idleLatCenter + IDLE_LAT_AMPLITUDE * Math.sin((idleTime * 2 * Math.PI) / IDLE_LAT_PERIOD);
+        idleTarget.copy(quaternionFacingCamera(latLngToVector3(lat, lng, 1)));
+        group.quaternion.slerp(idleTarget, 1 - Math.exp(-dt * IDLE_BLEND));
+      }
     }
 
-    renderer.render(scene, camera);
+    if (isVisible) renderer.render(scene, camera);
     rafId = requestAnimationFrame(render);
   };
   render();

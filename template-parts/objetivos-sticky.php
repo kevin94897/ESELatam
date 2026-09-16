@@ -8,7 +8,7 @@
  * wrapper `.nosotros[data-nosotros]`.
  *
  * @param array{
- *     id?: string, kicker?: string, title?: string, title_strong?: string,
+ *     id?: string, kicker?: string, title?: string,
  *     desc?: string (HTML mínimo: span.hl-accent / strong),
  *     items?: list<array{id: string, title: string, img: string, text: array{0: string, 1: string, 2: string}}>,
  *     metas_title?: string, metas?: list<string>, skip_label?: string, skip_href?: string
@@ -25,8 +25,7 @@ if (! defined('ABSPATH')) {
 $ese_os = wp_parse_args($args ?? [], [
     'id'           => 'objetivos',
     'kicker'       => __('Sobre nosotros', 'ese-latam'),
-    'title'        => __('Objetivos con', 'ese-latam'),
-    'title_strong' => __('propósito', 'ese-latam'),
+    'title'        => __('Objetivos con', 'ese-latam') . "\n" . __('|propósito|', 'ese-latam'),
     'desc'         => '',
     'items'        => [],
     'metas_title'  => __('Algunas de nuestras metas y objetivos del programa:', 'ese-latam'),
@@ -50,8 +49,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
         <div>
             <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_os['kicker']); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php echo esc_html($ese_os['title']); ?><br>
-                <span class="hl"><?php echo esc_html($ese_os['title_strong']); ?></span>
+                <?php echo ese_latam_titulo($ese_os['title'], 'span', 'hl'); ?>
             </h2>
         </div>
         <p class="nos-desc" data-reveal-desc>
@@ -62,7 +60,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
     <div class="nos-objetivos__layout">
         <aside class="nos-objetivos__aside">
             <div class="nos-objetivos__sticky">
-                <nav class="nos-objetivos__nav" aria-label="<?php echo esc_attr($ese_os['title'] . ' ' . $ese_os['title_strong']); ?>" data-nos-obj-nav>
+                <nav class="nos-objetivos__nav" aria-label="<?php echo esc_attr(ese_latam_titulo_plano($ese_os['title'])); ?>" data-nos-obj-nav>
                     <span class="nos-objetivos__chevron" aria-hidden="true" data-nos-obj-chevron>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M23.1249 12.4163L18.8442 18.8325C18.7075 19.0375 18.5224 19.2056 18.3052 19.322C18.0881 19.4384 17.8456 19.4995 17.5992 19.5H3.00049C2.86467 19.5001 2.73138 19.4633 2.61485 19.3935C2.49831 19.3238 2.4029 19.2237 2.3388 19.104C2.27469 18.9843 2.24431 18.8494 2.25088 18.7137C2.25745 18.5781 2.30074 18.4467 2.37611 18.3337L6.59955 12L2.3808 5.66625C2.30564 5.5536 2.26238 5.42271 2.25562 5.28746C2.24885 5.15221 2.27883 5.01765 2.34237 4.89807C2.40591 4.77849 2.50065 4.67834 2.61652 4.60825C2.73239 4.53816 2.86507 4.50076 3.00049 4.5H17.5992C17.8456 4.50046 18.0881 4.5616 18.3052 4.67801C18.5224 4.79443 18.7075 4.96255 18.8442 5.1675L23.122 11.5837C23.2047 11.7067 23.2491 11.8514 23.2496 11.9996C23.2501 12.1477 23.2067 12.2927 23.1249 12.4163Z" fill="currentColor"/>

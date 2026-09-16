@@ -29,15 +29,21 @@ if (! defined('ABSPATH')) {
         <span aria-current="page"><?php esc_html_e('Soluciones', 'ese-latam'); ?></span>
     </nav>
 
-    <header class="sec-hero__header" data-reveal-header>
-        <h1 class="sec-hero__title">
-            <?php esc_html_e('Soluciones por', 'ese-latam'); ?><br>
-            <span class="hl"><?php esc_html_e('sector', 'ese-latam'); ?></span>
-        </h1>
-        <p class="sec-hero__desc" data-reveal-desc>
-            <?php esc_html_e('Explore los', 'ese-latam'); ?>
-            <span class="hl-accent"><?php esc_html_e('8 sectores estratégicos', 'ese-latam'); ?></span>
-            <?php esc_html_e('impulsados por soluciones de alto estándar logístico y resiliencia.', 'ese-latam'); ?>
-        </p>
-    </header>
+    <?php
+    $ese_sh_id     = (int) get_queried_object_id();
+    $ese_sh_titulo = trim((string) ese_latam_campo('sectores_hero_titulo', $ese_sh_id, ''));
+    $ese_sh_desc   = ese_latam_texto_rico((string) ese_latam_campo('sectores_hero_desc', $ese_sh_id, ''));
+    ?>
+    <?php if ('' !== $ese_sh_titulo || '' !== $ese_sh_desc) : ?>
+        <header class="sec-hero__header" data-reveal-header>
+            <?php if ('' !== $ese_sh_titulo) : ?>
+                <h1 class="sec-hero__title">
+                    <?php echo ese_latam_titulo($ese_sh_titulo, 'span', 'hl'); ?>
+                </h1>
+            <?php endif; ?>
+            <?php if ('' !== $ese_sh_desc) : ?>
+                <p class="sec-hero__desc" data-reveal-desc><?php echo $ese_sh_desc; ?></p>
+            <?php endif; ?>
+        </header>
+    <?php endif; ?>
 </section>

@@ -10,7 +10,7 @@ declare(strict_types=1);
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="profile" href="https://gmpg.org/xfn/11">
     <?php wp_head(); ?>
 </head>
@@ -22,14 +22,27 @@ declare(strict_types=1);
     <?php esc_html_e('Saltar al contenido', 'ese-latam'); ?>
 </a>
 
+<?php
+// El botón del menú se edita en ESE Latam → Cabecera (inc/pcf-globales.php).
+$ese_hdr_cta = ese_latam_enlace(
+    ese_latam_opcion('cabecera_cta', null),
+    __('Contacto', 'ese-latam'),
+    ese_latam_contacto_url()
+);
+?>
 <header class="site-header" data-header>
     <div class="site-header__inner">
         <a href="<?php echo esc_url(home_url('/')); ?>" class="site-logo" aria-label="<?php echo esc_attr(get_bloginfo('name')); ?>">
-            <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/logo-ese.png'); ?>"
+            <?php // Dos capas del mismo logo (blanca y a color) que se funden según el scroll — ver .site-logo en main.css. ?>
+            <img class="site-logo__light" src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/logo-ese.png'); ?>"
                  alt="<?php echo esc_attr(get_bloginfo('name')); ?>" width="142" height="43">
+            <img class="site-logo__color" src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/logo-ese.png'); ?>"
+                 alt="" aria-hidden="true" width="142" height="43">
         </a>
 
         <nav class="nav-pill" aria-label="<?php esc_attr_e('Menú principal', 'ese-latam'); ?>">
+            <?php // Pastilla que se desliza bajo el link con hover/foco (header.ts). ?>
+            <span class="nav-pill__indicator" aria-hidden="true"></span>
             <?php
             wp_nav_menu([
                 'theme_location' => 'primary',
@@ -49,8 +62,11 @@ declare(strict_types=1);
                     </svg>
                 </button>
 
-                <a href="<?php echo esc_url(ese_latam_contacto_url()); ?>" class="nav-pill__cta">
-                    <?php esc_html_e('Contacto', 'ese-latam'); ?>
+                <a href="<?php echo esc_url($ese_hdr_cta['href']); ?>" class="nav-pill__cta"<?php echo ese_latam_target_attr($ese_hdr_cta['target']); ?>>
+                    <?php echo esc_html($ese_hdr_cta['label']); ?>
+                    <span class="nav-pill__cta-icon" aria-hidden="true">
+                        <svg width="14" height="12" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z" fill="currentColor"/></svg>
+                    </span>
                 </a>
             </div>
         </nav>
@@ -107,8 +123,8 @@ declare(strict_types=1);
             'depth'          => 1,
         ]);
         ?>
-        <a href="<?php echo esc_url(ese_latam_contacto_url()); ?>" class="nav-pill__cta mobile-nav__cta">
-            <?php esc_html_e('Contacto', 'ese-latam'); ?>
+        <a href="<?php echo esc_url($ese_hdr_cta['href']); ?>" class="nav-pill__cta mobile-nav__cta"<?php echo ese_latam_target_attr($ese_hdr_cta['target']); ?>>
+            <?php echo esc_html($ese_hdr_cta['label']); ?>
         </a>
         <a class="mobile-nav__mail" href="mailto:hola@eselatam.com">hola@eselatam.com</a>
     </div>

@@ -18,8 +18,7 @@ if (! defined('ABSPATH')) {
 
 $ese_c = wp_parse_args($args ?? [], [
     'kicker'   => __('ESE Latam', 'ese-latam'),
-    'title'    => __('Nuestro criterio', 'ese-latam'),
-    'title_strong' => __('de adaptabilidad', 'ese-latam'),
+    'title'    => __('Nuestro criterio', 'ese-latam') . "\n" . __('|de adaptabilidad|', 'ese-latam'),
     'quote'    => '',
     'desc'     => '',
     'product'  => 'productos/contenedores-2-ruedas/120L_FC020.png',
@@ -38,8 +37,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
         <header data-reveal-header>
             <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_c['kicker']); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php echo esc_html($ese_c['title']); ?><br>
-                <span class="hl"><?php echo esc_html($ese_c['title_strong']); ?></span>
+                <?php echo ese_latam_titulo($ese_c['title'], 'span', 'hl'); ?>
             </h2>
         </header>
 

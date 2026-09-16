@@ -50,8 +50,7 @@ $ese_pasos = [
         <header data-reveal-header>
             <p class="type-kicker text-secondary">/ <?php esc_html_e('Sobre nosotros', 'ese-latam'); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php esc_html_e('Valida certificados', 'ese-latam'); ?><br>
-                <span class="hl"><?php esc_html_e('originales', 'ese-latam'); ?></span>
+                <?php echo ese_latam_titulo(__('Valida certificados', 'ese-latam') . "\n" . __('|originales|', 'ese-latam'), 'span', 'hl'); ?>
             </h2>
             <p class="nos-desc" data-reveal-desc>
                 <?php esc_html_e('Detectar marcas falsificadas y validar sellos legítimos de calidad', 'ese-latam'); ?>

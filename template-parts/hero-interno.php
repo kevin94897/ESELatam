@@ -11,8 +11,8 @@
  * que el JS las anima, y el módulo que las anima.
  *
  * @param array{
- *     kicker?: string, title?: string, title_strong?: string, desc?: string,
- *     cta_label?: string, cta_href?: string,
+ *     kicker?: string, title?: string, desc?: string,
+ *     cta_label?: string, cta_href?: string, cta_target?: string,
  *     crumb?: list<array{label: string, url: string}>, current?: string, bg?: string
  * } $args
  *
@@ -27,10 +27,10 @@ if (! defined('ABSPATH')) {
 $ese_hero = wp_parse_args($args ?? [], [
     'kicker'       => '',
     'title'        => '',
-    'title_strong' => '',
     'desc'         => '',
     'cta_label'    => '',
     'cta_href'     => '',
+    'cta_target'   => '',
     'crumb'        => [],
     'current'      => '',
     'bg'           => ESE_LATAM_URI . '/assets/imgs/hero-poster.webp',
@@ -72,10 +72,7 @@ $ese_hero = wp_parse_args($args ?? [], [
                     <p class="nos-hero__kicker" data-nos-hero-kicker><?php echo esc_html($ese_hero['kicker']); ?></p>
                 <?php endif; ?>
                 <h1 class="nos-hero__title" data-nos-hero-title>
-                    <?php echo esc_html($ese_hero['title']); ?>
-                    <?php if ('' !== $ese_hero['title_strong']) : ?>
-                        <strong><?php echo esc_html($ese_hero['title_strong']); ?></strong>
-                    <?php endif; ?>
+                    <?php echo ese_latam_titulo($ese_hero['title']); ?>
                 </h1>
             </div>
 
@@ -87,8 +84,9 @@ $ese_hero = wp_parse_args($args ?? [], [
                     <div class="nos-hero__cta" data-nos-hero-cta>
                         <?php
                         ese_latam_cta_button([
-                            'href'  => $ese_hero['cta_href'] ?: (string) get_post_type_archive_link('producto'),
-                            'label' => $ese_hero['cta_label'],
+                            'href'   => $ese_hero['cta_href'] ?: (string) get_post_type_archive_link('producto'),
+                            'label'  => $ese_hero['cta_label'],
+                            'target' => $ese_hero['cta_target'],
                         ]);
                         ?>
                     </div>

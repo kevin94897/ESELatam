@@ -6,10 +6,10 @@
  * foto). El cambio lo maneja tab-panels.ts (data-tabs).
  *
  * @param array{
- *     kicker?: string, title?: string, title_strong?: string, desc?: string,
+ *     kicker?: string, title?: string, desc?: string,
  *     dolores?: list<array<string, string>>, alivios?: list<array<string, string>>
- * } $args Cada tarjeta: title, sub, desc y opcionalmente img (relativa a
- *   assets/imgs/). El orden de las 6 define su lugar en la grilla (a…f).
+ * } $args Cada tarjeta: title, sub, desc y opcionalmente img (URL absoluta).
+ *   El orden de las 6 define su lugar en la grilla (a…f).
  *
  * @package EseLatam
  */
@@ -21,8 +21,7 @@ if (! defined('ABSPATH')) {
 
 $ese_d = wp_parse_args($args ?? [], [
     'kicker'       => __('Desafíos', 'ese-latam'),
-    'title'        => __('Desafíos en la', 'ese-latam'),
-    'title_strong' => __('gestión urbana', 'ese-latam'),
+    'title'        => __('Desafíos en la', 'ese-latam') . "\n" . __('|gestión urbana|', 'ese-latam'),
     'desc'         => '',
     'dolores'      => [],
     'alivios'      => [],
@@ -47,8 +46,7 @@ $ese_paneles = array_values(array_filter($ese_paneles, static fn (array $p): boo
         <div>
             <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_d['kicker']); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php echo esc_html($ese_d['title']); ?><br>
-                <span class="hl"><?php echo esc_html($ese_d['title_strong']); ?></span>
+                <?php echo ese_latam_titulo($ese_d['title'], 'span', 'hl'); ?>
             </h2>
         </div>
         <?php if ('' !== $ese_d['desc']) : ?>
@@ -82,7 +80,7 @@ $ese_paneles = array_values(array_filter($ese_paneles, static fn (array $p): boo
                         ?>
                         <li class="<?php echo esc_attr($ese_class); ?>">
                             <?php if ($ese_photo) : ?>
-                                <img class="desafio__img" src="<?php echo esc_url($ese_img($ese_card['img'])); ?>" alt="" loading="lazy" decoding="async">
+                                <img class="desafio__img" src="<?php echo esc_url($ese_card['img']); ?>" alt="" loading="lazy" decoding="async">
                                 <span class="desafio__shade" aria-hidden="true"></span>
                             <?php endif; ?>
                             <h3 class="desafio__title"><?php echo esc_html($ese_card['title']); ?></h3>

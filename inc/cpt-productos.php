@@ -57,20 +57,8 @@ add_action('init', static function (): void {
         'rewrite'           => ['slug' => 'categoria-producto'],
     ]);
 
-    // Igual de simple: checkbox de certificaciones (Blue Angel, PKN, DIN,
-    // TÜV SÜD, Seconda Vita...) — reutiliza el mismo patrón de taxonomía en
-    // vez de un campo de texto libre, así queda una lista controlada y
-    // consistente con la sección "Certificaciones" del home.
-    register_taxonomy('producto_certificacion', 'producto', [
-        'labels' => [
-            'name'          => __('Certificaciones', 'ese-latam'),
-            'singular_name' => __('Certificación', 'ese-latam'),
-            'menu_name'     => __('Certificaciones', 'ese-latam'),
-        ],
-        'hierarchical'      => true,
-        'public'            => true,
-        'show_admin_column' => true,
-        'show_in_rest'      => true,
-        'rewrite'           => ['slug' => 'certificacion'],
-    ]);
+    // Las certificaciones ya no son una taxonomía: son el módulo
+    // "Certificaciones" (inc/modulos.php) y cada producto apunta a los suyos
+    // con el campo de relación de inc/pcf-productos.php. Así el sello se
+    // edita una vez y su logo y su texto salen iguales en todas las vistas.
 });

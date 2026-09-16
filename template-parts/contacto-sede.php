@@ -22,8 +22,7 @@ $ese_datos = ese_latam_contacto_datos();
     <header class="ctc-sede__header" data-reveal-header>
         <p class="type-kicker text-secondary">/ <?php esc_html_e('Arquitectura del proyecto', 'ese-latam'); ?></p>
         <h2 class="type-h2 uppercase">
-            <?php esc_html_e('Sede central', 'ese-latam'); ?><br>
-            <span class="hl"><?php esc_html_e('ESE Latam', 'ese-latam'); ?></span>
+            <?php echo ese_latam_titulo(__('Sede central', 'ese-latam') . "\n" . __('|ESE Latam|', 'ese-latam'), 'span', 'hl'); ?>
         </h2>
     </header>
 

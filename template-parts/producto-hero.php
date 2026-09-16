@@ -64,7 +64,11 @@ if (! is_array($ese_colores) || empty($ese_colores)) {
     ];
 }
 
-$ese_compra_url = get_field('enlace_compra');
+$ese_compra = ese_latam_enlace(
+    ese_latam_campo('enlace_compra', $ese_producto_id, null),
+    __('Comprar', 'ese-latam'),
+    ese_latam_contacto_url()
+);
 $ese_ficha      = get_field('ficha_tecnica');
 
 $ese_img_default = get_the_post_thumbnail_url($ese_producto_id, 'large')
@@ -74,24 +78,25 @@ $ese_img_default = get_the_post_thumbnail_url($ese_producto_id, 'large')
 // y, cuando existen, las fotos por litraje: el panel deja elegir capacidad Y
 // color, así que la foto depende de los dos (un 80L y un 360L del mismo
 // color no son la misma pieza). `imgs` es un mapa litraje → URL; lo que no
-// esté ahí cae a `img`. Este mismo array viaja a product-config.ts por
-// `data-colors`.
-$ese_colores_data = array_map(
-    static function (array $c) use ($ese_img_default): array {
-        $img = is_array($c['imagen'] ?? null) ? ($c['imagen']['url'] ?? '') : '';
+// esté ahí cae a `img` (la "foto por defecto" del color). Este mismo array
+// viaja a product-config.ts por `data-colors`.
+// Fotos por color y capacidad (pestaña "3. Fotos" de la ficha): se agrupan
+// por nombre de color para que cada uno lleve su mapa capacidad => foto.
+$ese_fotos_por_color = [];
+foreach ((array) ese_latam_campo('fotos', $ese_producto_id, []) as $ese_foto) {
+    $ese_f_color   = trim((string) ($ese_foto['color'] ?? ''));
+    $ese_f_litraje = trim((string) ($ese_foto['litraje'] ?? ''));
+    $ese_f_img     = ese_latam_img_url($ese_foto['imagen'] ?? '');
 
-        $imgs = [];
-        if (is_array($c['imagenes'] ?? null)) {
-            foreach ($c['imagenes'] as $ese_variante) {
-                $ese_v_litraje = trim((string) ($ese_variante['litraje'] ?? ''));
-                $ese_v_img     = is_array($ese_variante['imagen'] ?? null)
-                    ? (string) ($ese_variante['imagen']['url'] ?? '')
-                    : '';
-                if ('' !== $ese_v_litraje && '' !== $ese_v_img) {
-                    $imgs[$ese_v_litraje] = $ese_v_img;
-                }
-            }
-        }
+    if ('' !== $ese_f_color && '' !== $ese_f_litraje && '' !== $ese_f_img) {
+        $ese_fotos_por_color[$ese_f_color][$ese_f_litraje] = $ese_f_img;
+    }
+}
+
+$ese_colores_data = array_map(
+    static function (array $c) use ($ese_img_default, $ese_fotos_por_color): array {
+        $img  = ese_latam_img_url($c['imagen'] ?? '');
+        $imgs = $ese_fotos_por_color[trim((string) ($c['nombre'] ?? ''))] ?? [];
 
         return [
             'nombre' => (string) ($c['nombre'] ?? ''),
@@ -130,6 +135,25 @@ $ese_titulo_l2    = $ese_titulo_parts[1] ?? '';
 // Barra de datos clave (pie del hero): capacidad activa (se sincroniza con
 // las píldoras vía data-producto-volumen), cantidad de colores y hasta dos
 // características ACF que no sean el volumen (ya está en "Capacidad").
+// Sellos del producto: se eligen con el campo de relación "Certificaciones"
+// de la ficha (inc/pcf-productos.php) y salen del módulo, así que el nombre y
+// el logo son los mismos que en la franja y en la página de Certificaciones.
+$ese_certs = [];
+
+foreach ((array) ese_latam_campo('certificaciones', $ese_producto_id, []) as $ese_cert_id) {
+    $ese_cert_id = (int) $ese_cert_id;
+    if ($ese_cert_id <= 0 || 'publish' !== get_post_status($ese_cert_id)) {
+        continue;
+    }
+
+    $ese_certs[] = [
+        'name' => get_the_title($ese_cert_id),
+        'img'  => (string) (get_the_post_thumbnail_url($ese_cert_id, 'medium') ?: ''),
+    ];
+}
+
+$ese_certs_url = ese_latam_pagina_url('certificaciones', home_url('/#certificaciones'));
+
 $ese_stats = [
     ['label' => __('Capacidad', 'ese-latam'), 'value' => $ese_litraje_default, 'sync' => true],
     ['label' => __('Colores', 'ese-latam'), 'value' => sprintf(
@@ -253,9 +277,10 @@ if (count($ese_stats) < 4) {
             <div class="producto-hero__actions">
                 <?php
                 ese_latam_cta_button([
-                    'href'  => $ese_compra_url ?: '#',
-                    'label' => __('Comprar', 'ese-latam'),
-                    'class' => 'hero-cta--light',
+                    'href'   => $ese_compra['href'],
+                    'label'  => $ese_compra['label'],
+                    'target' => $ese_compra['target'],
+                    'class'  => 'hero-cta--light',
                 ]);
                 ?>
 
@@ -293,16 +318,42 @@ if (count($ese_stats) < 4) {
         </div>
 
 
-        <?php // Sin data-reveal: en pantallas de 1080px queda por debajo del umbral
-        // (top 85%) de scroll-reveals.ts y no llegaría a mostrarse sin scrollear. ?>
-        <dl class="producto-hero__stats">
-            <?php foreach ($ese_stats as $ese_stat) : ?>
-                <div class="producto-hero__stat">
-                    <dt class="producto-hero__stat-label"><?php echo esc_html($ese_stat['label']); ?></dt>
-                    <dd class="producto-hero__stat-value" <?php echo $ese_stat['sync'] ? 'data-producto-volumen' : ''; ?>><?php echo esc_html($ese_stat['value']); ?></dd>
-                </div>
-            <?php endforeach; ?>
-        </dl>
+        <?php // Fila inferior: barra de atributos a la izquierda y sellos de
+        // certificación a la derecha (Figma 3682-5745). Sin data-reveal: en
+        // pantallas de 1080px queda por debajo del umbral (top 85%) de
+        // scroll-reveals.ts y no llegaría a mostrarse sin scrollear; la anima
+        // la intro (producto-hero-intro.ts) junto con el resto del hero. ?>
+        <div class="producto-hero__bottom">
+            <dl class="producto-hero__stats">
+                <?php foreach ($ese_stats as $ese_stat) : ?>
+                    <div class="producto-hero__stat">
+                        <dt class="producto-hero__stat-label"><?php echo esc_html($ese_stat['label']); ?></dt>
+                        <dd class="producto-hero__stat-value" <?php echo $ese_stat['sync'] ? 'data-producto-volumen' : ''; ?>><?php echo esc_html($ese_stat['value']); ?></dd>
+                    </div>
+                <?php endforeach; ?>
+            </dl>
+
+            <div class="producto-hero__certs">
+                <p class="producto-hero__certs-label"><?php esc_html_e('Certificaciones', 'ese-latam'); ?></p>
+                <ul class="producto-hero__certs-list">
+                    <?php foreach ($ese_certs as $ese_cert) : ?>
+                        <li>
+                            <a class="producto-hero__cert" href="<?php echo esc_url($ese_certs_url); ?>"
+                                title="<?php echo esc_attr(sprintf(__('Certificación %s', 'ese-latam'), $ese_cert['name'])); ?>">
+                                <span class="producto-hero__cert-tile" aria-hidden="true">
+                                    <?php if ('' !== $ese_cert['img']) : ?>
+                                        <img src="<?php echo esc_url($ese_cert['img']); ?>" alt="" loading="lazy" decoding="async">
+                                    <?php else : ?>
+                                        <span class="producto-hero__cert-initials"><?php echo esc_html(mb_strtoupper(mb_substr($ese_cert['name'], 0, 3))); ?></span>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="producto-hero__cert-name"><?php echo esc_html($ese_cert['name']); ?></span>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <?php // Mismo cue que el hero de Nosotros (.nos-hero__scroll): línea vertical

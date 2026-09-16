@@ -30,10 +30,7 @@ get_header();
     get_template_part('template-parts/sectores-proceso');
     get_template_part('template-parts/certificaciones');
     get_template_part('template-parts/contacto', null, [
-        'class'          => 'contacto--upper',
-        'heading'        => __('¿Listo para llevar tu gestión de residuos al', 'ese-latam'),
-        'heading_strong' => __('siguiente nivel', 'ese-latam'),
-        'desc'           => __('Trabajamos directamente con tu equipo para entender la operación, diseñar la solución correcta e implementarla. Con soporte técnico desde Alemania.', 'ese-latam'),
+        'class' => 'contacto--upper',
     ]);
     ?>
 </div>

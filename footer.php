@@ -26,8 +26,8 @@ $ese_footer_cols = [
             ['label' => __('Nosotros', 'ese-latam'),       'url' => home_url('/nosotros/')],
             ['label' => __('Contacto', 'ese-latam'),       'url' => ese_latam_contacto_url()],
             ['label' => __('Blog', 'ese-latam'),           'url' => '#'],
-            ['label' => __('Casos de éxito', 'ese-latam'), 'url' => '#'],
-            ['label' => __('Distribuidores', 'ese-latam'), 'url' => '#'],
+            ['label' => __('Casos de éxito', 'ese-latam'), 'url' => ese_latam_casos_url()],
+            ['label' => __('Distribuidores', 'ese-latam'), 'url' => ese_latam_distribuidores_url()],
         ],
     ],
     [

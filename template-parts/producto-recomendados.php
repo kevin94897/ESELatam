@@ -37,13 +37,15 @@ $ese_recomendados = array_map(
 // Con menos de 3 "otros" productos vuelve a entrar el actual: así el
 // coverflow tiene al menos una vecina distinta a cada lado del activo
 // (product-carousel.ts cierra el anillo duplicando el set cuando hay pocos
-// slides, pero no inventa productos). Si ni así llega a 2, cae al set de
-// ejemplo — mismo criterio que el slider de la home.
+// slides, pero no inventa productos).
 if (count($ese_recomendados) < 3) {
     $ese_recomendados[] = ese_latam_producto_card_data($ese_actual_id);
 }
-if (count($ese_recomendados) < 2) {
-    $ese_recomendados = ese_latam_productos_placeholder();
+
+// Sin productos publicados no hay nada que recomendar: el theme no inventa
+// fichas de ejemplo, así que la sección entera no se pinta.
+if ([] === $ese_recomendados) {
+    return;
 }
 ?>
 
@@ -57,8 +59,7 @@ if (count($ese_recomendados) < 2) {
         // su color no se puede pisar desde @layer components (ver
         // .certificaciones__title). ?>
         <h2 class="recomendados__title">
-            <?php esc_html_e('Soluciones', 'ese-latam'); ?>
-            <span class="recomendados__title-accent"><?php esc_html_e('recomendadas', 'ese-latam'); ?></span>
+            <?php echo ese_latam_titulo(__('Soluciones', 'ese-latam') .' '. __('|recomendadas|', 'ese-latam'), 'span', 'recomendados__title-accent'); ?>
         </h2>
         <p class="recomendados__desc">
             <?php esc_html_e('Otras configuraciones de la misma familia, pensadas para distintos volúmenes y necesidades de recolección', 'ese-latam'); ?>
@@ -78,18 +79,20 @@ if (count($ese_recomendados) < 2) {
 
         <?php // rotate 44 / depth 200 / modifier 1: cada vecina gira 44° y retrocede
         // 200px (≈ 0.6 del ancho de la card, como el componente de referencia);
-        // la home mantiene sus valores por defecto (cards planas). ?>
+        // la home usa las mismas cards pero mantiene su coverflow plano por defecto. ?>
         <div class="swiper" data-product-carousel data-carousel-visible="5" data-carousel-rotate="44"
             data-carousel-depth="200" data-carousel-modifier="1">
             <div class="swiper-wrapper">
                 <?php foreach ($ese_recomendados as $ese_producto) : ?>
                     <article class="swiper-slide product-card product-card--glass">
-                        <div class="product-card__media">
-                            <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
-                            <img class="product-card__img" src="<?php echo esc_url($ese_producto['img']); ?>"
-                                alt="<?php echo esc_attr($ese_producto['name']); ?>" loading="lazy" decoding="async"
-                                data-float data-float-distance="14" data-float-duration="3.2">
-                        </div>
+                        <?php if ('' !== $ese_producto['img']) : ?>
+                            <div class="product-card__media">
+                                <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                                <img class="product-card__img" src="<?php echo esc_url($ese_producto['img']); ?>"
+                                    alt="<?php echo esc_attr($ese_producto['name']); ?>" loading="lazy" decoding="async"
+                                    data-float data-float-distance="14" data-float-duration="3.2">
+                            </div>
+                        <?php endif; ?>
                         <div class="product-card__body">
                             <p class="product-card__cat"><?php echo esc_html($ese_producto['cat']); ?></p>
                             <h3 class="product-card__name"><?php echo esc_html($ese_producto['name']); ?></h3>

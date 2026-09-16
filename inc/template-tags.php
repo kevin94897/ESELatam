@@ -23,6 +23,7 @@ if (! defined('ABSPATH')) {
  *     label?: string,
  *     reveal?: bool,
  *     class?: string,
+ *     target?: string,  '_blank' si el campo pidió abrir en otra pestaña
  * } $args
  */
 function ese_latam_cta_button(array $args = []): void {
@@ -31,12 +32,13 @@ function ese_latam_cta_button(array $args = []): void {
         'label'  => __('Explorar productos', 'ese-latam'),
         'reveal' => false,
         'class'  => '',
+        'target' => '',
     ]);
 
     $classes = trim('hero-cta ' . $args['class']);
     ?>
     <a href="<?php echo esc_url($args['href']); ?>"
-       class="<?php echo esc_attr($classes); ?>"
+       class="<?php echo esc_attr($classes); ?>"<?php echo ese_latam_target_attr((string) $args['target']); ?>
         <?php echo $args['reveal'] ? 'data-hero-reveal' : ''; ?>>
         <span class="hero-cta__label">
             <?php echo esc_html($args['label']); ?>
@@ -131,70 +133,100 @@ function ese_latam_producto_card_data(int $post_id): array {
         'name'     => get_the_title($post_id),
         'litraje'  => $litraje,
         'material' => $material,
-        'img'      => get_the_post_thumbnail_url($post_id, 'large')
-            ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png'),
+        'img'      => (string) (get_the_post_thumbnail_url($post_id, 'large') ?: ''),
         'href'     => (string) get_permalink($post_id),
     ];
 }
 
-/**
- * Set estático de cards de ejemplo (mismo formato que
- * ese_latam_producto_card_data()) para cuando el cliente todavía no publicó
- * productos: así los sliders se ven completos desde el día uno. Como no hay
- * ficha real detrás, todas enlazan al catálogo.
- *
- * @return list<array{cat: string, name: string, litraje: string, material: string, img: string, href: string}>
- */
-function ese_latam_productos_placeholder(): array {
-    $href = (string) get_post_type_archive_link('producto');
-    $img  = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/productos/' . $file;
-
-    return [
-        ['cat' => __('Soterrados', 'ese-latam'),   'name' => __('Contenedor de 2 ruedas', 'ese-latam'), 'litraje' => '5000 Litros', 'material' => 'HDPE Virgen',    'img' => $img('bin-3.png'), 'href' => $href],
-        ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 4 ruedas', 'ese-latam'), 'litraje' => '1100 Litros', 'material' => 'HDPE Reciclado', 'img' => $img('bin-1.png'), 'href' => $href],
-        ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 2 ruedas', 'ese-latam'), 'litraje' => '240 Litros',  'material' => 'HDPE Virgen',    'img' => $img('bin-2.png'), 'href' => $href],
-        ['cat' => __('Papeleras', 'ese-latam'),    'name' => __('Papelera urbana', 'ese-latam'),        'litraje' => '120 Litros',  'material' => 'HDPE Reciclado', 'img' => $img('bin-1.png'), 'href' => $href],
-        ['cat' => __('Biológicos', 'ese-latam'),   'name' => __('Contenedor sanitario', 'ese-latam'),   'litraje' => '360 Litros',  'material' => 'HDPE Virgen',    'img' => $img('bin-2.png'), 'href' => $href],
-        ['cat' => __('Domésticos', 'ese-latam'),   'name' => __('Contenedor doméstico', 'ese-latam'),   'litraje' => '120 Litros',  'material' => 'HDPE Reciclado', 'img' => $img('bin-3.png'), 'href' => $href],
-        ['cat' => __('Soterrados', 'ese-latam'),   'name' => __('Contenedor soterrado', 'ese-latam'),   'litraje' => '3000 Litros', 'material' => 'HDPE Virgen',    'img' => $img('bin-1.png'), 'href' => $href],
-        ['cat' => __('Contenedores', 'ese-latam'), 'name' => __('Contenedor de 3 ruedas', 'ese-latam'), 'litraje' => '770 Litros',  'material' => 'HDPE Reciclado', 'img' => $img('bin-2.png'), 'href' => $href],
-    ];
-}
 
 /**
- * Sectores / áreas de impacto (Figma 3266-2331). Los usan el slider de la
- * home (front-page.php) y el submenú "Sectores" del nav (inc/setup.php).
- * Sin CPT propio todavía: desde el menú todos enlazan a la sección de la
- * home. `img` es relativo a assets/imgs/sectores/.
+ * Sectores / áreas de impacto (Figma 3266-2331), leídos del módulo "Sectores"
+ * (CPT `sector`, ver inc/cpt-sectores.php). Una sola lista para el slider de
+ * la portada, el submenú del nav (inc/setup.php), la grilla de "Soluciones por
+ * sector" y las etiquetas de los casos de éxito.
  *
- * @return list<array{title: string, desc: string, img: string}>
+ * El orden es el del campo "Orden" de cada entrada. Sin sectores publicados
+ * devuelve una lista vacía y cada plantilla oculta su sección.
+ *
+ * `img`/`grid_img` son URLs absolutas (o cadena vacía); `grid_desc` cae al
+ * resumen cuando el sector no trae una bajada propia para la grilla.
+ *
+ * @return list<array{id: int, slug: string, title: string, desc: string, img: string, url: string, grid_desc: string, grid_img: string}>
  */
 function ese_latam_sectores(): array {
-    return [
-        ['slug' => 'municipalidades', 'title' => __('Municipalidades y gobiernos locales', 'ese-latam'), 'desc' => __('Contenerización certificada para recolección urbana a gran escala.', 'ese-latam'), 'img' => 'municipalidades.webp'],
-        ['slug' => 'recoleccion',     'title' => __('Empresas de recolección', 'ese-latam'),             'desc' => __('Flotas de contenedores compatibles con sistemas de carga mecanizada.', 'ese-latam'), 'img' => 'recoleccion.webp'],
-        ['slug' => 'inmobiliarias',   'title' => __('Inmobiliarias', 'ese-latam'),                       'desc' => __('Soluciones de contención para edificios y condominios.', 'ese-latam'), 'img' => 'municipalidades.webp'],
-        ['slug' => 'hospitalarios',   'title' => __('Hospitalarios', 'ese-latam'),                       'desc' => __('Contenedores certificados para residuos biocontaminados.', 'ese-latam'), 'img' => 'recoleccion.webp'],
-        ['slug' => 'domestico',       'title' => __('Uso doméstico', 'ese-latam'),                       'desc' => __('Contenedores durables para la gestión de residuos en el hogar.', 'ese-latam'), 'img' => 'municipalidades.webp'],
-        ['slug' => 'comercial',       'title' => __('Supermercados y aeropuertos', 'ese-latam'),         'desc' => __('Gestión de alto tránsito para espacios comerciales y terminales.', 'ese-latam'), 'img' => 'recoleccion.webp'],
-        ['slug' => 'hosteleria',      'title' => __('Restaurantes y hostelería', 'ese-latam'),           'desc' => __('Contención higiénica para operaciones gastronómicas.', 'ese-latam'), 'img' => 'municipalidades.webp'],
-        ['slug' => 'industria',       'title' => __('Industria y manufactura', 'ese-latam'),             'desc' => __('Operaciones de largo plazo en entornos industriales exigentes.', 'ese-latam'), 'img' => 'recoleccion.webp'],
-    ];
+    static $cache = null;
+    if (null !== $cache) {
+        return $cache;
+    }
+
+    $entradas = get_posts([
+        'post_type'        => 'sector',
+        'post_status'      => 'publish',
+        'posts_per_page'   => -1,
+        'orderby'          => 'menu_order title',
+        'order'            => 'ASC',
+        'suppress_filters' => false,
+    ]);
+
+    $lista = [];
+
+    foreach ($entradas as $entrada) {
+        $foto    = (string) (get_the_post_thumbnail_url($entrada->ID, 'large') ?: '');
+        $resumen = trim((string) ese_latam_campo('resumen', $entrada->ID, ''));
+
+        $lista[] = [
+            'id'        => $entrada->ID,
+            'slug'      => $entrada->post_name,
+            'title'     => get_the_title($entrada->ID),
+            'desc'      => $resumen,
+            'img'       => $foto,
+            'url'       => (string) get_permalink($entrada->ID),
+            'grid_desc' => trim((string) ese_latam_campo('grilla_desc', $entrada->ID, '')) ?: $resumen,
+            'grid_img'  => ese_latam_img_url(ese_latam_campo('grilla_imagen', $entrada->ID, ''), $foto),
+        ];
+    }
+
+    return $cache = $lista;
 }
 
 /**
- * URL de la "single" de un sector. Cada sector tiene (o tendrá) una página
- * con su slug y la plantilla page-sector.php; mientras esa página no exista
- * (hoy solo hay `municipalidades`, creada por inc/paginas.php), el enlace
- * cae al catálogo, que es donde el sector puede ver productos.
+ * Traduce las filas de "Dolores"/"Alivios" (ficha del sector) al contrato que
+ * espera template-parts/sector-desafios.php. Descarta las filas sin título.
+ *
+ * @param mixed $filas
+ * @return list<array{title: string, sub: string, desc: string, img: string}>
+ */
+function ese_latam_sector_tarjetas($filas): array {
+    $out = [];
+
+    foreach ((array) $filas as $fila) {
+        $titulo = trim((string) ($fila['titulo'] ?? ''));
+        if ('' === $titulo) {
+            continue;
+        }
+
+        $out[] = [
+            'title' => $titulo,
+            'sub'   => (string) ($fila['sub'] ?? ''),
+            'desc'  => (string) ($fila['descripcion'] ?? ''),
+            'img'   => ese_latam_img_url($fila['imagen'] ?? ''),
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * URL de la página de un sector (`/sectores/{slug}/`). La trae ya resuelta
+ * ese_latam_sectores(); si por lo que sea faltara, cae al catálogo, que es
+ * donde el sector puede ver productos.
  *
  * @param array{slug?: string} $sector Un ítem de ese_latam_sectores().
  */
 function ese_latam_sector_url(array $sector): string {
-    $catalogo = (string) get_post_type_archive_link('producto');
-    $slug     = isset($sector['slug']) && is_string($sector['slug']) ? $sector['slug'] : '';
+    $url = isset($sector['url']) && is_string($sector['url']) ? $sector['url'] : '';
 
-    return '' === $slug ? $catalogo : ese_latam_pagina_url($slug, $catalogo);
+    return '' !== $url ? $url : (string) get_post_type_archive_link('producto');
 }
 
 /**

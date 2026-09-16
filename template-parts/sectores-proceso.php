@@ -22,37 +22,34 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-$ese_pasos = [
-    [
-        'num'    => '01',
-        'tab'    => __('Entendemos tu operación', 'ese-latam'),
-        'light'  => __('Entendemos tu', 'ese-latam'),
-        'bold'   => __('operación', 'ese-latam'),
-        'desc'   => __('Analizamos tus flujos operativos, normativas y puntos críticos para diseñar una estrategia de contención alineada con tus objetivos.', 'ese-latam'),
-        'img'    => 'sectores/proceso.webp',
-    ],
-    [
-        'num'    => '02',
-        'tab'    => __('Diseñamos la solución', 'ese-latam'),
-        'light'  => __('Diseñamos la', 'ese-latam'),
-        'bold'   => __('solución', 'ese-latam'),
-        'desc'   => __('Dimensionamos capacidades, elegimos la línea de contenedores certificada para tu sector y definimos puntos de acopio, señalética y frecuencias de recolección.', 'ese-latam'),
-        'img'    => 'terreno/en-terreno.webp',
-    ],
-    [
-        'num'    => '03',
-        'tab'    => __('Acompañamos la implementación', 'ese-latam'),
-        'light'  => __('Acompañamos la', 'ese-latam'),
-        'bold'   => __('implementación', 'ese-latam'),
-        'desc'   => __('Coordinamos la entrega, capacitamos a tu equipo operativo y damos soporte técnico continuo con repuestos originales desde Alemania.', 'ese-latam'),
-        'img'    => 'sectores/recoleccion.webp',
-    ],
-];
+// Los pasos se editan en la propia página (pestaña "Proceso", ver
+// inc/pcf-sectores.php). El número sale del orden, no de un campo.
+$ese_pasos = [];
+
+foreach ((array) ese_latam_campo('sectores_proceso', (int) get_queried_object_id(), []) as $ese_i => $ese_fila) {
+    $ese_tab = trim((string) ($ese_fila['tab'] ?? ''));
+    if ('' === $ese_tab) {
+        continue;
+    }
+
+    $ese_pasos[] = [
+        'num'   => str_pad((string) (count($ese_pasos) + 1), 2, '0', STR_PAD_LEFT),
+        'tab'   => $ese_tab,
+        'light' => (string) ($ese_fila['titulo'] ?? ''),
+        'bold'  => (string) ($ese_fila['titulo_destacado'] ?? ''),
+        'desc'  => (string) ($ese_fila['descripcion'] ?? ''),
+        'img'   => ese_latam_img_url($ese_fila['imagen'] ?? ''),
+    ];
+}
+
+if ([] === $ese_pasos) {
+    return;
+}
 ?>
 
 <section class="proceso" data-proceso data-proceso-autoplay="6000">
     <div class="proceso__bg" aria-hidden="true" data-proceso-bg>
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/' . $ese_pasos[0]['img']); ?>" alt=""
+        <img src="<?php echo esc_url($ese_pasos[0]['img']); ?>" alt=""
             loading="lazy" decoding="async" data-proceso-img>
     </div>
 
@@ -80,7 +77,7 @@ $ese_pasos = [
                     data-light="<?php echo esc_attr($ese_paso['light']); ?>"
                     data-bold="<?php echo esc_attr($ese_paso['bold']); ?>"
                     data-desc="<?php echo esc_attr($ese_paso['desc']); ?>"
-                    data-img="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/' . $ese_paso['img']); ?>">
+                    data-img="<?php echo esc_url($ese_paso['img']); ?>">
                     <span class="proceso__step-num" aria-hidden="true"><?php echo esc_html($ese_paso['num']); ?></span>
                     <span class="proceso__step-text"><?php echo esc_html($ese_paso['tab']); ?></span>
                     <span class="proceso__step-bar" aria-hidden="true"></span>

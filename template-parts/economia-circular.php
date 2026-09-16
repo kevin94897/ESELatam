@@ -74,8 +74,7 @@ $ese_etapas = [
         <header data-reveal-header>
             <p class="type-kicker text-secondary">/ <?php esc_html_e('Circulogic', 'ese-latam'); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php esc_html_e('ESE Latam en la', 'ese-latam'); ?><br>
-                <span class="hl"><?php esc_html_e('economía circular', 'ese-latam'); ?></span>
+                <?php echo ese_latam_titulo(__('ESE Latam en la', 'ese-latam') . "\n" . __('|economía circular|', 'ese-latam'), 'span', 'hl'); ?>
             </h2>
         </header>
         <div class="eco__desc" data-reveal="up" data-reveal-delay="0.15">

@@ -154,8 +154,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
 
             <div class="nos-hero__bottom">
                 <h1 class="nos-hero__title" data-nos-hero-title>
-                    <?php esc_html_e('reinventando el', 'ese-latam'); ?>
-                    <strong><?php esc_html_e('entorno en latam', 'ese-latam'); ?></strong>
+                    <?php echo ese_latam_titulo(__('reinventando el', 'ese-latam') .' '. __('|entorno en latam|', 'ese-latam')); ?>
                 </h1>
                 <p class="nos-hero__desc" data-nos-hero-desc>
                     <?php esc_html_e('Somos una empresa dedicada al diseño y fabricación de contenedores de residuos sólidos, con presencia en', 'ese-latam'); ?>
@@ -176,8 +175,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
         <header class="nos-construimos__header" data-reveal-header>
             <p class="type-kicker text-secondary">/ <?php esc_html_e('Sobre nosotros', 'ese-latam'); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php esc_html_e('Construimos', 'ese-latam'); ?><br>
-                <span class="hl"><?php esc_html_e('para el futuro', 'ese-latam'); ?></span>
+                <?php echo ese_latam_titulo(__('Construimos', 'ese-latam') . "\n" . __('|para el futuro|', 'ese-latam'), 'span', 'hl'); ?>
             </h2>
         </header>
 
@@ -251,8 +249,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
             <header class="nos-hdpe__header" data-reveal-header>
                 <p class="type-kicker text-secondary">/ <?php esc_html_e('Tecnología y sostenibilidad', 'ese-latam'); ?></p>
                 <h2 class="type-h2 uppercase">
-                    <?php esc_html_e('hdpe: el futuro es', 'ese-latam'); ?><br>
-                    <span class="hl"><?php esc_html_e('circular', 'ese-latam'); ?></span>
+                    <?php echo ese_latam_titulo(__('hdpe: el futuro es', 'ese-latam') . "\n" . __('|circular|', 'ese-latam'), 'span', 'hl'); ?>
                 </h2>
                 <p class="nos-desc" data-reveal-desc>
                     <?php esc_html_e('Transformamos residuos en recursos de alta resistencia, garantizando el cumplimiento estricto de los', 'ese-latam'); ?>
@@ -296,11 +293,7 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
     <?php // ---------- 8. CONTACTEMOS ---------- ?>
     <?php
     get_template_part('template-parts/contacto', null, [
-        'class'          => 'contacto--upper',
-        'heading'        => __('¿Quieres ser parte del cambio hacia una gestión de residuos', 'ese-latam'),
-        'heading_strong' => __('más responsable', 'ese-latam'),
-        'desc'           => __('Conversemos sobre cómo tu organización puede sumarse a nuestra red de impacto.', 'ese-latam'),
-        'bg'             => $ese_img('nosotros/cta-bg.webp'),
+        'class' => 'contacto--upper',
     ]);
     ?>
 

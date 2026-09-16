@@ -1,7 +1,7 @@
 <?php
 /**
- * Páginas que el theme necesita que existan (Contacto, Sectores, single de
- * sector, Certificaciones, Impacto…): se crean una sola vez y sus URLs se
+ * Páginas que el theme necesita que existan (Nosotros, Contacto, Sectores,
+ * single de sector, Certificaciones, Impacto…): se crean una sola vez y sus URLs se
  * resuelven desde un único helper.
  *
  * Antes cada plantilla nueva repetía este mismo bloque (ver el historial
@@ -20,22 +20,24 @@ if (! defined('ABSPATH')) {
  * Slug => datos de cada página que el theme trae "de fábrica".
  *
  * `template` vacío significa que WordPress aplica page-{slug}.php solo, por
- * convención. Las singles de sector comparten UNA plantilla (page-sector.php)
- * para N slugs, así que ahí sí se asigna explícitamente al crear la página
- * (es lo mismo que elegir "Solución por sector" en el editor).
+ * convención. Las páginas de cada sector ya no están acá: son entradas del
+ * módulo "Sectores" (inc/cpt-sectores.php) y se sirven con single-sector.php.
  *
  * @return array<string, array{title: string, template: string}>
  */
 function ese_latam_paginas_base(): array {
     return [
+        // La portada necesita existir como página para poder colgarle los
+        // campos de contenido (inc/pcf-home.php): sin ella, front-page.php
+        // renderiza el índice del blog y no hay nada que editar en el admin.
+        // ese_latam_asegurar_portada() la fija en Ajustes → Lectura.
+        'inicio'          => ['title' => __('Inicio', 'ese-latam'),                  'template' => ''],
+        'nosotros'        => ['title' => __('Nosotros', 'ese-latam'),                'template' => ''],
         'contacto'        => ['title' => __('Contacto', 'ese-latam'),                'template' => ''],
         'sectores'        => ['title' => __('Soluciones por sector', 'ese-latam'),   'template' => ''],
         'certificaciones' => ['title' => __('Certificaciones', 'ese-latam'),         'template' => ''],
         'impacto'         => ['title' => __('Residuos inteligentes', 'ese-latam'),   'template' => ''],
-        // Single de sector: por ahora solo Municipalidades tiene diseño en el
-        // Figma (04 – Solución). Para sumar otra basta agregar acá su slug
-        // (el mismo de ese_latam_sectores()) con la misma plantilla.
-        'municipalidades' => ['title' => __('Municipalidades y gobiernos locales', 'ese-latam'), 'template' => 'page-sector.php'],
+        'distribuidores'  => ['title' => __('Encuentra un distribuidor', 'ese-latam'), 'template' => ''],
     ];
 }
 
@@ -104,6 +106,39 @@ function ese_latam_asegurar_paginas(): void {
 }
 add_action('init', 'ese_latam_asegurar_paginas');
 add_action('after_switch_theme', 'ese_latam_asegurar_paginas');
+
+/**
+ * Fija la página "Inicio" como portada en Ajustes → Lectura.
+ *
+ * front-page.php ya se usaba con "Tus últimas entradas", pero entonces la
+ * home no era ninguna página y no había dónde guardar su contenido. Con la
+ * portada estática, el cliente la edita como cualquier otra página y los
+ * campos de inc/pcf-home.php aparecen ahí.
+ *
+ * Se hace UNA sola vez y nunca se revierte: si alguien elige otra portada (o
+ * vuelve a las entradas), la marca ya está puesta y esto no vuelve a tocar
+ * los ajustes. El índice del blog no se pierde: el listado editorial del
+ * sitio es el archivo de "Casos de éxito" (archive-caso.php).
+ */
+function ese_latam_asegurar_portada(): void {
+    if (get_option('ese_latam_portada_fijada')) {
+        return;
+    }
+
+    $inicio = get_page_by_path('inicio');
+    if (! $inicio instanceof WP_Post || 'publish' !== $inicio->post_status) {
+        return;
+    }
+
+    if ('page' !== get_option('show_on_front')) {
+        update_option('show_on_front', 'page');
+        update_option('page_on_front', $inicio->ID);
+    }
+
+    update_option('ese_latam_portada_fijada', 1);
+}
+add_action('init', 'ese_latam_asegurar_portada', 11);
+add_action('after_switch_theme', 'ese_latam_asegurar_portada');
 
 /**
  * El header del sitio está pensado para heros OSCUROS: el logo va en blanco

@@ -2,7 +2,7 @@
 /**
  * Página Sectores — grilla bento de los 8 sectores (Figma 3510-7023).
  *
- * Los sectores salen de ese_latam_sectores() (inc/template-tags.php): la
+ * Los sectores salen del módulo "Sectores" vía ese_latam_sectores(): la
  * misma lista que usa el slider de la home y el submenú del header, así
  * los tres no pueden divergir. Esta página solo aporta lo suyo:
  *   · la bajada de cada tarjeta (copy propio del Figma de esta página,
@@ -24,53 +24,37 @@ if (! defined('ABSPATH')) {
 
 $ese_sectores = ese_latam_sectores();
 
-// Orden de la grilla (índices de ese_latam_sectores) y área de cada uno:
-// a/h anchas (2 columnas), b/e altas (2 filas), el resto 1×1. Sigue la
-// composición del Figma: municipalidades arriba a lo ancho, recolección
-// alta a la derecha, industria alta a la izquierda, doméstico ancha al pie.
-$ese_layout = [
-    ['i' => 0, 'area' => 'a', 'img' => 'sectores/municipalidades.webp'],
-    ['i' => 1, 'area' => 'b', 'img' => 'sectores/recoleccion.webp'],
-    ['i' => 2, 'area' => 'c', 'img' => 'nosotros/parque.webp'],
-    ['i' => 3, 'area' => 'd', 'img' => 'terreno/en-terreno.webp'],
-    ['i' => 7, 'area' => 'e', 'img' => 'sectores/recoleccion.webp'],
-    ['i' => 5, 'area' => 'f', 'img' => 'sectores/municipalidades.webp'],
-    ['i' => 6, 'area' => 'g', 'img' => 'terreno/en-terreno.webp'],
-    ['i' => 4, 'area' => 'h', 'img' => 'nosotros/parque.webp'],
-];
+if ([] === $ese_sectores) {
+    return;
+}
 
-// Bajadas del Figma de ESTA página, por índice de ese_latam_sectores().
-$ese_bajadas = [
-    0 => __('Sistemas de contención para ciudades más limpias y ordenadas.', 'ese-latam'),
-    1 => __('Contenedores EN-840 para volteo mecánico, diseñados para uso logístico intensivo.', 'ese-latam'),
-    2 => __('Infraestructura de residuos integrada desde el diseño del proyecto.', 'ese-latam'),
-    3 => __('Hermeticidad y bioseguridad para entornos de alta exigencia sanitaria.', 'ese-latam'),
-    4 => __('Contenedores prácticos y duraderos para separar residuos en casa, ideales para el reciclaje diario.', 'ese-latam'),
-    5 => __('Soluciones de alto volumen para flujos continuos de residuos.', 'ese-latam'),
-    6 => __('Higiene, orden y cumplimiento normativo en espacios de alto tráfico.', 'ese-latam'),
-    7 => __('Contenedores resistentes para entornos de trabajo exigente.', 'ese-latam'),
-];
+// Composición bento del Figma: a/h anchas (2 columnas), b/e altas (2 filas),
+// el resto 1×1 (ver grid-template-areas en main.css). Las áreas se reparten
+// en el orden del módulo "Sectores", así que el orden de las tarjetas se
+// cambia desde el campo "Orden" de cada entrada, sin tocar la plantilla.
+// A partir de la novena, las tarjetas caen en filas nuevas por flujo normal.
+$ese_areas = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
 ?>
 
 <section class="sec-grid" id="sectores">
     <ul class="sec-grid__list" data-sec-grid>
-        <?php foreach ($ese_layout as $ese_item) :
-            $ese_sector = $ese_sectores[$ese_item['i']] ?? null;
-            if (null === $ese_sector) {
-                continue;
-            }
+        <?php foreach ($ese_sectores as $ese_i => $ese_sector) :
+            $ese_area = $ese_areas[$ese_i] ?? '';
             ?>
-            <li class="sec-card sec-card--<?php echo esc_attr($ese_item['area']); ?>" data-sec-card>
+            <li class="sec-card<?php echo '' !== $ese_area ? ' sec-card--' . esc_attr($ese_area) : ''; ?>" data-sec-card>
                 <a class="sec-card__link" href="<?php echo esc_url(ese_latam_sector_url($ese_sector)); ?>">
-                    <img class="sec-card__img"
-                        src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/' . $ese_item['img']); ?>"
-                        alt="" loading="lazy" decoding="async" data-sec-card-img>
+                    <?php if ('' !== $ese_sector['grid_img']) : ?>
+                        <img class="sec-card__img" src="<?php echo esc_url($ese_sector['grid_img']); ?>"
+                            alt="" loading="lazy" decoding="async" data-sec-card-img>
+                    <?php endif; ?>
                     <span class="sec-card__shade" aria-hidden="true"></span>
 
                     <span class="sec-card__body">
                         <span class="sec-card__title"><?php echo esc_html($ese_sector['title']); ?></span>
-                        <span class="sec-card__desc"><?php echo esc_html($ese_bajadas[$ese_item['i']] ?? $ese_sector['desc']); ?></span>
+                        <?php if ('' !== $ese_sector['grid_desc']) : ?>
+                            <span class="sec-card__desc"><?php echo esc_html($ese_sector['grid_desc']); ?></span>
+                        <?php endif; ?>
                     </span>
 
                     <span class="sec-card__arrow" aria-hidden="true">

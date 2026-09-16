@@ -36,7 +36,7 @@ export function initProductoHeroIntro(hero: HTMLElement): void {
   const pedestal = hero.querySelector<HTMLElement>('.producto-hero__pedestal');
   const product = hero.querySelector<HTMLElement>('.producto-hero__product');
   const shadow = hero.querySelector<HTMLElement>('.producto-hero__product .product-card__shadow');
-  const stats = hero.querySelector<HTMLElement>('.producto-hero__stats');
+  const stats = hero.querySelector<HTMLElement>('.producto-hero__bottom');
   const statItems = hero.querySelectorAll<HTMLElement>('.producto-hero__stat');
   const scrollHint = hero.querySelector<HTMLElement>('.producto-hero__scroll-hint');
 

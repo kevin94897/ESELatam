@@ -109,6 +109,23 @@ function bootstrap(): void {
     });
   }
 
+  // "Estándar Blue Angel" (template-parts/blue-angel.php): carrusel en arco.
+  const bangel = document.querySelector<HTMLElement>('[data-bangel]');
+  if (bangel) {
+    void import('./modules/blue-angel').then(({ initBlueAngel }) => {
+      initBlueAngel(bangel);
+    });
+  }
+
+  // Página "Encuentra un distribuidor" (page-distribuidores.php): filtro en
+  // vivo de la lista y mapa que sigue a la tarjeta activa.
+  const distribuidoresPage = document.querySelector<HTMLElement>('[data-distribuidores-page]');
+  if (distribuidoresPage) {
+    void import('./modules/distribuidores-page').then(({ initDistribuidoresPage }) => {
+      initDistribuidoresPage(distribuidoresPage);
+    });
+  }
+
   // Pasos de "Entendemos tu operación" (page-sectores.php)
   const proceso = document.querySelector<HTMLElement>('[data-proceso]');
   if (proceso) {

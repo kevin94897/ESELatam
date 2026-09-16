@@ -8,7 +8,7 @@
  * dentro del wrapper `.nosotros[data-nosotros]`.
  *
  * @param array{
- *     id?: string, kicker?: string, title?: string, title_strong?: string,
+ *     id?: string, kicker?: string, title?: string,
  *     desc?: string (HTML mínimo: span.hl-accent / strong), autoplay?: int,
  *     tabs?: list<array{title: string, desc: string, img: string}>  (img relativa a assets/imgs/)
  * } $args
@@ -24,8 +24,7 @@ if (! defined('ABSPATH')) {
 $ese_mt = wp_parse_args($args ?? [], [
     'id'           => 'metodo',
     'kicker'       => __('Sobre nosotros', 'ese-latam'),
-    'title'        => __('Método', 'ese-latam'),
-    'title_strong' => __('Circulogic', 'ese-latam'),
+    'title'        => __('Método', 'ese-latam') . "\n" . __('|Circulogic|', 'ese-latam'),
     'desc'         => '',
     'autoplay'     => 6000,
     'tabs'         => [],
@@ -43,8 +42,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
         <div>
             <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_mt['kicker']); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php echo esc_html($ese_mt['title']); ?><br>
-                <span class="hl"><?php echo esc_html($ese_mt['title_strong']); ?></span>
+                <?php echo ese_latam_titulo($ese_mt['title'], 'span', 'hl'); ?>
             </h2>
         </div>
         <p class="nos-desc" data-reveal-desc>

@@ -31,8 +31,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
     <?php
     get_template_part('template-parts/hero-interno', null, [
         'kicker'       => __('Impacto', 'ese-latam'),
-        'title'        => __('Residuos', 'ese-latam'),
-        'title_strong' => __('inteligentes', 'ese-latam'),
+        'title'        => __('Residuos |inteligentes|', 'ese-latam'),
         'desc'         => __('Trabajamos con gobiernos y comunidades para convertir la gestión de residuos en una decisión humana: medible, circular y con impacto real en cada ciudad.', 'ese-latam'),
         'cta_label'    => __('Conoce los casos', 'ese-latam'),
         'cta_href'     => '#casos-reales',
@@ -46,8 +45,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
 
     get_template_part('template-parts/aliados', null, [
         'kicker'       => __('Alianzas', 'ese-latam'),
-        'title'        => __('Unidos por', 'ese-latam'),
-        'title_strong' => __('las mejores alianzas', 'ese-latam'),
+        'title'        => __('Unidos por', 'ese-latam') . "\n" . __('|las mejores alianzas|', 'ese-latam'),
         'desc'         => __('Distribuidores, municipios y operadores que ya trabajan con contenedores ESE en toda Latinoamérica.', 'ese-latam'),
     ]);
 
@@ -56,11 +54,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
     ]);
 
     get_template_part('template-parts/contacto', null, [
-        'class'          => 'contacto--upper',
-        'heading'        => __('¿Quieres ser parte del cambio hacia una gestión de residuos', 'ese-latam'),
-        'heading_strong' => __('más responsable', 'ese-latam'),
-        'desc'           => __('Conversemos sobre cómo tu organización puede sumarse a nuestra red de impacto.', 'ese-latam'),
-        'bg'             => $ese_img('nosotros/cta-bg.webp'),
+        'class' => 'contacto--upper',
     ]);
     ?>
 </div>

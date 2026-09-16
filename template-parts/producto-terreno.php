@@ -39,8 +39,7 @@ $ese_terreno_features = [
         <header class="terreno__header" data-reveal-header>
             <p class="type-kicker text-secondary">/ <?php esc_html_e('En terreno', 'ese-latam'); ?></p>
             <h2 class="type-h2 uppercase">
-                <?php esc_html_e('Funcionando en la', 'ese-latam'); ?><br>
-                <span class="hl"><?php esc_html_e('práctica', 'ese-latam'); ?></span>
+                <?php echo ese_latam_titulo(__('Funcionando en la', 'ese-latam') . "\n" . __('|práctica|', 'ese-latam'), 'span', 'hl'); ?>
             </h2>
         </header>
 

@@ -29,8 +29,7 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
     <header class="imp-stats__header" data-reveal-header>
         <p class="imp-stats__kicker"><?php esc_html_e('Respaldo comprobado', 'ese-latam'); ?></p>
         <h2 class="imp-stats__title">
-            <?php esc_html_e('Gestionar residuos es una', 'ese-latam'); ?><br>
-            <strong><?php esc_html_e('decisión humana', 'ese-latam'); ?></strong>
+            <?php echo ese_latam_titulo(__('Gestionar residuos es una', 'ese-latam') . "\n" . __('|decisión humana|', 'ese-latam')); ?>
         </h2>
     </header>
 
