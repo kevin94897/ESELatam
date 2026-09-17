@@ -73,6 +73,75 @@ function ese_latam_redes_disponibles(): array {
 }
 
 /**
+ * Los textos del pie que no salen de ningún otro lado.
+ *
+ * Los links del footer son menús (Apariencia → Menús, ver inc/menus.php) y
+ * las redes tienen su propia sección; lo que queda —la bajada de marca, los
+ * rótulos del newsletter y la línea legal— vivía escrito en footer.php y
+ * ahora se edita en Personalizar → ESE Latam → Footer.
+ *
+ * El `default` de cada campo es el texto del diseño: el Personalizador lo
+ * muestra ya cargado en el campo, así el cliente ve qué está editando en vez
+ * de un input vacío. Si lo guarda en blanco, ese texto no se pinta.
+ *
+ * @return array<string, array{label: string, default: string, type?: string, description?: string, sanitize?: string}>
+ */
+function ese_latam_footer_campos(): array {
+    return [
+        'texto' => [
+            'label'   => __('Texto de marca', 'ese-latam'),
+            'default' => __('Distribuimos contenedores de residuos sólidos fabricados en Alemania y Francia.', 'ese-latam'),
+            'type'    => 'textarea',
+        ],
+        'texto_destacado' => [
+            'label'       => __('Texto de marca — remate', 'ese-latam'),
+            'description' => __('Va a continuación del anterior, en negrita.', 'ese-latam'),
+            'default'     => __('Calidad europea, transformando la recolección de residuos en Latinoamérica.', 'ese-latam'),
+            'type'        => 'textarea',
+        ],
+        'newsletter_titulo' => [
+            'label'   => __('Newsletter — título', 'ese-latam'),
+            'default' => __('Suscríbete al newsletter', 'ese-latam'),
+        ],
+        'newsletter_placeholder' => [
+            'label'   => __('Newsletter — texto del campo', 'ese-latam'),
+            'default' => __('Correo electrónico', 'ese-latam'),
+        ],
+        'newsletter_nota' => [
+            'label'   => __('Newsletter — nota', 'ese-latam'),
+            'default' => __('Recibe noticias y actualizaciones constantes.', 'ese-latam'),
+        ],
+        'redes_titulo' => [
+            'label'   => __('Redes — título', 'ese-latam'),
+            'default' => __('Síguenos', 'ese-latam'),
+        ],
+        'copyright' => [
+            'label'       => __('Línea legal', 'ese-latam'),
+            'description' => __('El “© ” y el año se agregan solos.', 'ese-latam'),
+            'default'     => __('ESE LATAM. Todos los derechos reservados.', 'ese-latam'),
+        ],
+        'tagline' => [
+            'label'   => __('Lema del pie', 'ese-latam'),
+            'default' => __('Contener para transformar.', 'ese-latam'),
+        ],
+    ];
+}
+
+/**
+ * Un texto del pie, ya resuelto: lo guardado en el Personalizador o, si nunca
+ * se tocó, el texto del diseño. Guardado en blanco devuelve '' y footer.php
+ * se saltea esa parte.
+ */
+function ese_latam_footer_texto(string $clave): string {
+    $campos = ese_latam_footer_campos();
+    if (! isset($campos[$clave])) {
+        return '';
+    }
+
+    return trim((string) get_theme_mod('ese_latam_footer_' . $clave, $campos[$clave]['default']));
+}
+
+/**
  * Las redes cargadas, en el orden en que se muestran.
  *
  * @return list<array{label: string, url: string, icon: string}>
@@ -205,6 +274,35 @@ add_action('customize_register', static function (WP_Customize_Manager $wp_custo
             'label'       => $red['label'],
             'type'        => 'text',
             'input_attrs' => ['placeholder' => 'https://…'],
+        ]);
+    }
+
+    /* -----------------------------------------------------------------
+     * Footer
+     * -------------------------------------------------------------- */
+    $wp_customize->add_section('ese_latam_footer', [
+        'title'       => __('Footer', 'ese-latam'),
+        'panel'       => 'ese_latam',
+        'description' => __('Los textos del pie. Las columnas de enlaces se editan en Apariencia → Menús, y los perfiles, en “Redes sociales”.', 'ese-latam'),
+    ]);
+
+    foreach (ese_latam_footer_campos() as $slug => $campo) {
+        $id   = 'ese_latam_footer_' . $slug;
+        $tipo = $campo['type'] ?? 'text';
+
+        $wp_customize->add_setting($id, [
+            'type'              => 'theme_mod',
+            'default'           => $campo['default'],
+            'capability'        => 'edit_theme_options',
+            'transport'         => 'refresh',
+            'sanitize_callback' => 'textarea' === $tipo ? 'sanitize_textarea_field' : 'sanitize_text_field',
+        ]);
+
+        $wp_customize->add_control($id, [
+            'section'     => 'ese_latam_footer',
+            'label'       => $campo['label'],
+            'description' => $campo['description'] ?? '',
+            'type'        => $tipo,
         ]);
     }
 });

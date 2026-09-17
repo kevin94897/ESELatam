@@ -67,7 +67,7 @@ $ese_catalogo_link = static function (int $page) use ($ese_catalogo_base_url, $e
 };
 ?>
 
-<section class="catalogo-productos">
+<section class="catalogo-productos" id="catalogo-productos">
     <form class="catalogo-filters" method="get" action="<?php echo esc_url($ese_catalogo_base_url); ?>">
         <div class="catalogo-filters__field catalogo-filters__field--search">
             <label class="catalogo-filters__label" for="catalogo-buscador"><?php esc_html_e('Buscador', 'ese-latam'); ?></label>
@@ -180,13 +180,13 @@ $ese_catalogo_link = static function (int $page) use ($ese_catalogo_base_url, $e
                 $ese_card_img = ese_latam_producto_foto(get_the_ID(), $ese_litraje_valor);
                 ?>
                 <article class="product-card product-card--grid">
-                    <?php if ('' !== $ese_card_img) : ?>
-                        <div class="product-card__media">
-                            <span class="product-card__shadow" aria-hidden="true"></span>
+                    <div class="product-card__media">
+                        <span class="product-card__shadow" aria-hidden="true"></span>
+                        <?php if ('' !== $ese_card_img) : ?>
                             <img class="product-card__img" src="<?php echo esc_url($ese_card_img); ?>"
                                 alt="<?php the_title_attribute(); ?>" loading="lazy" decoding="async">
-                        </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
                     <div class="product-card__body">
                         <p class="product-card__cat"><?php echo esc_html($ese_categoria_nombre); ?></p>
                         <h3 class="product-card__name"><?php the_title(); ?></h3>

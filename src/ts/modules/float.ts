@@ -17,11 +17,22 @@
 
 import { gsap } from '../lib/gsap';
 
-export function initFloat(): void {
+/**
+ * @param scope Dónde buscar `[data-float]`. Por defecto todo el documento; el
+ *   filtro de categorías de la portada (product-filter.ts) pasa el wrapper del
+ *   carrusel para animar solo los slides que acaba de montar.
+ */
+export function initFloat(scope: ParentNode = document): void {
   // Movimiento perpetuo es justo lo que reduce-motion pide evitar.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  document.querySelectorAll<HTMLElement>('[data-float]').forEach((el) => {
+  scope.querySelectorAll<HTMLElement>('[data-float]').forEach((el) => {
+    // Un slide que vuelve a entrar al carrusel al cambiar de filtro ya trae
+    // su timeline: un segundo tween sobre la misma `y` se pelearía con el
+    // primero y la flotación quedaría temblando.
+    if (el.dataset.floatReady !== undefined) return;
+    el.dataset.floatReady = '';
+
     const distance = Number(el.dataset.floatDistance ?? 12);
     const duration = Number(el.dataset.floatDuration ?? 3);
     const shadow = el.parentElement?.querySelector<HTMLElement>('[data-float-shadow]');

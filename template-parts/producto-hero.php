@@ -183,23 +183,16 @@ if (count($ese_stats) < 4) {
     <div class="catalogo-banner__grid" aria-hidden="true"></div>
 
     <div class="producto-hero__inner">
-        <p class="producto-hero__crumb catalogo-banner__crumb">
-            <a href="<?php echo esc_url(home_url('/')); ?>">
-                <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true">
-                    <path
-                        d="M10 5.27979V10.56C10 10.6767 9.9561 10.7886 9.87796 10.8711C9.79982 10.9536 9.69384 11 9.58333 11H6.66667C6.55616 11 6.45018 10.9536 6.37204 10.8711C6.2939 10.7886 6.25 10.6767 6.25 10.56V7.69988C6.25 7.64153 6.22805 7.58557 6.18898 7.54431C6.14991 7.50305 6.09692 7.47987 6.04167 7.47987H3.95833C3.90308 7.47987 3.85009 7.50305 3.81102 7.54431C3.77195 7.58557 3.75 7.64153 3.75 7.69988V10.56C3.75 10.6767 3.7061 10.7886 3.62796 10.8711C3.54982 10.9536 3.44384 11 3.33333 11H0.416667C0.30616 11 0.200179 10.9536 0.122039 10.8711C0.0438988 10.7886 0 10.6767 0 10.56V5.27979C0.000102442 5.04643 0.0879669 4.82267 0.244271 4.65772L4.41094 0.257552C4.5672 0.0926383 4.77908 0 5 0C5.22092 0 5.4328 0.0926383 5.58906 0.257552L9.75573 4.65772C9.91203 4.82267 9.9999 5.04643 10 5.27979Z"
-                        fill="currentColor" />
-                </svg>
-                <?php esc_html_e('Inicio', 'ese-latam'); ?>
-            </a>
-            <span class="catalogo-banner__crumb-sep" aria-hidden="true">/</span>
-            <a href="<?php echo esc_url(get_post_type_archive_link('producto')); ?>">
-                <?php esc_html_e('Productos', 'ese-latam'); ?>
-            </a>
-            <span class="catalogo-banner__crumb-sep" aria-hidden="true">/</span>
-            <span class="producto-hero__crumb-current"><?php echo esc_html($ese_titulo); ?></span>
-        </p>
+        <?php
+        get_template_part('template-parts/breadcrumbs', null, [
+            'items'   => [[
+                'label' => __('Productos', 'ese-latam'),
+                'url'   => get_post_type_archive_link('producto'),
+            ]],
+            'current' => $ese_titulo,
+            'class'   => 'producto-hero__crumb crumbs--light',
+        ]);
+        ?>
 
         <?php // La entrada de TODO el hero (panel, escena, atributos) la coreografía
         // producto-hero-intro.ts en un solo timeline — por eso acá no hay

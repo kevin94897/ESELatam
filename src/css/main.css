@@ -3665,16 +3665,16 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background-color: var(--color-neutral-100);
     transition: background-image .3s ease, background-color .3s ease;
   }
 
   .residuos__tab-icon img {
-    width: 28px;
-    height: 28px;
+    width: 45px;
+    height: 45px;
     transition: filter .3s ease;
   }
 
@@ -3834,8 +3834,7 @@
     .residuos__tab {
       flex: none;
       align-items: center;
-      gap: 10px;
-      padding: 8px 18px 8px 8px;
+      padding: 12px 20px;
       scroll-snap-align: start;
       margin-bottom: 10px;
     }
@@ -3844,14 +3843,12 @@
       scroll-margin-left: 4px;
     }
 
+    /* Solo texto en mobile: el círculo con ícono compite con las flechas
+       táctiles y no se lee bien a este tamaño — la tab queda como una
+       pill de texto simple (mismo criterio que .residuos__tab-sub/-arrow,
+       ya ocultos acá). */
     .residuos__tab-icon {
-      width: 36px;
-      height: 36px;
-    }
-
-    .residuos__tab-icon img {
-      width: 18px;
-      height: 18px;
+      display: none;
     }
 
     .residuos__tab-text {
@@ -4357,39 +4354,6 @@
     padding: clamp(6rem, 16vh, 9.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2.5rem, 6vh, 4.5rem);
   }
 
-  .catalogo-banner__crumb {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--color-white);
-  }
-
-  .catalogo-banner__crumb-sep {
-    display: inline-flex;
-    align-items: center;
-    color: rgb(255 255 255 / 0.32);
-    flex-shrink: 0;
-  }
-
-  .catalogo-banner__crumb a {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: rgb(255 255 255 / 0.32);
-    text-decoration: none;
-    transition: color .2s ease;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .catalogo-banner__crumb a:hover {
-      color: rgb(255 255 255 / 0.6);
-    }
-  }
-
   .catalogo-banner__body {
     display: flex;
     flex-direction: column;
@@ -4442,13 +4406,13 @@
      acá (no pasa por el genérico .embla__container/__slide de layout
      completo, por eso se pisan sus valores de flex-basis y gap con estos,
      más chicos). */
-  /* max-width exacto para 2 cards enteras (200px x2 + 1rem de gap) — nunca
-     una tercera a medio cortar en el borde: la navegación la dan las
+  /* max-width exacto para 3 cards enteras (200px x3 + 2rem de gap) — nunca
+     una cuarta a medio cortar en el borde: la navegación la dan las
      flechas de .catalogo-banner__shop-controls, no un peek de la próxima
      card (mismo criterio que .sectores, que tampoco asoma la que sigue). */
   .catalogo-banner__shop-cards {
     width: 100%;
-    max-width: 26rem;
+    max-width: 39.5rem;
     margin-top: 1.5rem;
   }
 
@@ -4762,10 +4726,10 @@
        el producto apoya a 36% del alto + 18px, así que alto total =
        (imagen + 18px) / 0.64 — nunca sobresale por arriba hacia el texto. */
     .catalogo-banner__scene {
-      --scene-img: clamp(160px, 26vh, 240px);
+      --scene-img: clamp(190px, 32vh, 280px);
       position: relative;
       inset: auto;
-      width: min(85vw, 340px);
+      width: min(92vw, 400px);
       height: calc((var(--scene-img) + 18px) / 0.64);
       margin: clamp(1rem, 3vh, 2rem) auto 0;
       transform: none;
@@ -4832,6 +4796,7 @@
    visible (.product-card--grid) en vez de aparecer con el hover del swiper.
    ========================================================= */
 @layer components {
+
   /* La sección ocupa TODO el ancho y el tope de 1920px se lo queda su
      contenido, no ella.
      Antes iba al revés (max-width + margin-inline:auto): por encima de
@@ -4847,10 +4812,8 @@
 
     background: white;
     padding-block: clamp(2.5rem, 6vh, 4.5rem) clamp(4rem, 10vh, 7rem);
-    padding-inline: max(
-      var(--cat-gutter),
-      (100% - (1920px - 2 * var(--cat-gutter))) / 2
-    );
+    padding-inline: max(var(--cat-gutter),
+        (100% - (1920px - 2 * var(--cat-gutter))) / 2);
   }
 
   .catalogo-filters {
@@ -4935,7 +4898,7 @@
     justify-content: space-between;
     gap: 1rem;
     margin-top: 1.5rem;
-    padding-bottom: 7rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid var(--color-neutral-100);
     font-size: 16px;
     color: var(--color-text-mid);
@@ -5001,7 +4964,7 @@
        36px + 316px de alto sobre un media de 220px): con 3.5rem de separación
        entre filas se montaba sobre las specs de la fila de arriba. */
     row-gap: 9rem;
-    margin-top: 2rem;
+    margin-top: 10rem;
   }
 
   /* Card del catálogo en la grilla: hover moderno con zoom al producto y elevación de chip */
@@ -5437,10 +5400,6 @@
   .producto-hero.is-js .producto-hero__bottom,
   .producto-hero.is-js .producto-hero__scroll-hint {
     visibility: hidden;
-  }
-
-  .producto-hero__crumb-current {
-    color: var(--color-white);
   }
 
   .producto-hero__panel {
@@ -7006,18 +6965,67 @@
     color: var(--color-white);
   }
 
-  /* Flecha como botón circular de vidrio arriba a la derecha, visible en
-     todas las cards (las vecinas ya van atenuadas por el carrusel). En hover
-     de la activa se rellena de celeste. */
+  /* Selector de color de la tarjeta (product-card-colors.ts): cada slide es
+     una capacidad y acá se elige el color. Mismo lenguaje que
+     .producto-hero__swatch —aro con box-shadow para que el círculo no cambie
+     de tamaño entre estados— en la escala de la tarjeta. Va entre el nombre
+     y las especificaciones, con la separación que ya da el gap del body. */
+  .product-card__colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .product-card__color {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--swatch, #fff);
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.25);
+    cursor: pointer;
+    transition: box-shadow .25s ease, transform .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .product-card__color:not(.is-active):hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  .product-card__color.is-active {
+    box-shadow:
+      0 0 0 2px #001545,
+      0 0 0 4px var(--color-secondary);
+  }
+
+  /* En táctil, 22px es un blanco chico para el dedo: 26px con 10px de
+     separación sigue entrando en los 6 colores sin desbordar la card de
+     76vw. Va acá (no en el bloque mobile de .product-card de arriba) porque
+     las reglas base de estos swatches se declaran recién ahora: si el
+     override fuera antes, el orden del archivo lo pisaría. */
+  @media (width < 48rem) {
+    .product-card__colors {
+      gap: 10px;
+    }
+
+    .product-card__color {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  /* Flecha como botón arriba a la derecha, visible en todas las cards (las
+     vecinas ya van atenuadas por el carrusel). Va en el celeste de marca
+     —no en el vidrio translúcido de antes, que sobre el navy de la card se
+     perdía—: sin transparencia el backdrop-filter ya no aporta nada. */
   .product-card--glass .product-card__chip {
     top: 16px;
     right: 16px;
     width: 44px;
     height: 44px;
     border: 1px solid rgb(255 255 255 / 0.2);
-    border-radius: 50%;
-    background-color: rgb(255 255 255 / 0.1);
-    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    background-color: var(--color-secondary);
     color: var(--color-white);
     opacity: 1;
     transform: none;
@@ -7027,7 +7035,7 @@
     .swiper-slide-active.product-card--glass:hover .product-card__chip {
       transform: translateY(-2px);
       border-color: transparent;
-      background-color: var(--color-secondary);
+      background-color: var(--color-secondary-600);
       box-shadow: 0 10px 22px rgb(0 145 209 / 0.35);
     }
   }
@@ -7112,7 +7120,7 @@
   flex: 1;
   min-width: 0;
   /* espacio para que la foto del producto sobresalga por encima de la card */
-  padding-top: 120px;
+  padding-top: 150px;
   /* …y por debajo, para la sombra proyectada de la card (0 24px 48px → 72px):
      .swiper recorta (overflow hidden) y la sombra salía cortada en seco. El
      margen negativo de .productos__slider compensa el alto extra para que la
@@ -7371,7 +7379,7 @@
      Sin JS (no hay .is-js) queda visible desde el HTML. */
   .nosotros.is-js .nos-hero__title,
   .nosotros.is-js .nos-hero__desc,
-  .nosotros.is-js .nos-crumb,
+  .nosotros.is-js .crumbs,
   .nosotros.is-js .nos-hero__scroll {
     visibility: hidden;
   }
@@ -7409,8 +7417,10 @@
     }
   }
 
-  /* Breadcrumb (Figma: componente Breadcrumb, 12/ExtraBold, tracking 0.2em) */
-  .nos-crumb {
+  /* Breadcrumb reutilizable (template-parts/breadcrumbs.php; Figma:
+     componente Breadcrumb, 12/ExtraBold, tracking 0.2em). Base: gris que
+     aclara al hover, para hero oscuro con foto de fondo. */
+  .crumbs {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -7421,7 +7431,7 @@
     color: var(--color-neutral-500);
   }
 
-  .nos-crumb a {
+  .crumbs a {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -7430,15 +7440,39 @@
     transition: color .2s ease;
   }
 
-  .nos-crumb__sep {
+  .crumbs__sep {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
   }
 
+  .crumbs__current {
+    color: var(--color-white);
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .nos-crumb a:hover {
+    .crumbs a:hover {
       color: var(--color-white);
+    }
+  }
+
+  /* Variante clara: fondo a pantalla completa (catálogo, ficha de producto)
+     donde el crumb va en blanco y el actual queda a full opacidad. */
+  .crumbs--light {
+    color: var(--color-white);
+  }
+
+  .crumbs--light .crumbs__sep {
+    color: rgb(255 255 255 / 0.32);
+  }
+
+  .crumbs--light a {
+    color: rgb(255 255 255 / 0.32);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .crumbs--light a:hover {
+      color: rgb(255 255 255 / 0.6);
     }
   }
 
@@ -9014,7 +9048,7 @@
    Prefijo .sec-* para el hero y la grilla bento; .proceso* para el bloque
    "Entendemos tu operación". Certificaciones y Contactemos se reutilizan
    tal cual desde sus template-parts (sin CSS nuevo). El breadcrumb
-   reutiliza .nos-crumb de la página Nosotros.
+   reutiliza template-parts/breadcrumbs.php (.crumbs).
    ========================================================= */
 @layer components {
   .sectores-page {
@@ -11667,10 +11701,6 @@
     padding: clamp(7rem, 19vh, 12.75rem) var(--dst-gutter) 0;
   }
 
-  .dst-hero__crumb a:hover {
-    color: var(--color-white);
-  }
-
   .dst-hero__title {
     margin-top: 1.5rem;
     max-width: 970px;
@@ -12155,11 +12185,13 @@
     }
   }
 }
+
 /* =========================================================
    MOBILE — ajustes transversales de la auditoría (320–768px)
    Todo encapsulado en media queries: desktop no cambia.
    ========================================================= */
 @layer components {
+
   /* Titulares de hero: piso más bajo para que una palabra larga
      (MUNICIPALIDADES, DISTRIBUIDOR) quepa en 320px sin recortarse. */
   @media (width < 48rem) {
@@ -12293,7 +12325,7 @@
     }
 
     /* Links de texto de 18–24px de alto: breadcrumb y "Restablecer filtros" */
-    .nos-crumb a,
+    .crumbs a,
     .cx-results__reset,
     .dst-results__reset {
       display: inline-flex;
@@ -12324,7 +12356,7 @@
       gap: 4px;
     }
 
-    .product-card--grid .product-card__specs > div {
+    .product-card--grid .product-card__specs>div {
       display: flex;
       align-items: baseline;
       justify-content: space-between;
@@ -12488,20 +12520,20 @@
     line-height: 26px;
   }
 
-  .art-cuerpo > * {
+  .art-cuerpo>* {
     margin: 0;
   }
 
   /* Cada titular arrastra su párrafo: el gap grande es entre bloques, no
      entre el titular y su texto. */
-  .art-cuerpo > :is(h2, h3, h4) {
+  .art-cuerpo> :is(h2, h3, h4) {
     margin-bottom: -33px;
     font-size: 18px;
     font-weight: 700;
     line-height: 32px;
   }
 
-  .art-cuerpo > p {
+  .art-cuerpo>p {
     font-size: 16px;
     line-height: 26px;
   }
@@ -12532,12 +12564,12 @@
     color: var(--color-neutral-400, #b3b3b3);
   }
 
-  .art-cuerpo :is(ul, ol) li + li {
+  .art-cuerpo :is(ul, ol) li+li {
     margin-top: 8px;
   }
 
   /* La cita destacada: recuadro verde claro con el filo a la izquierda. */
-  .art-cuerpo > blockquote {
+  .art-cuerpo>blockquote {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -12546,7 +12578,7 @@
     background-color: var(--color-circulogic-green-surface);
   }
 
-  .art-cuerpo > blockquote p {
+  .art-cuerpo>blockquote p {
     margin: 0;
     font-size: 20px;
     font-style: italic;
@@ -12554,7 +12586,7 @@
     line-height: 32px;
   }
 
-  .art-cuerpo > blockquote :is(cite, footer) {
+  .art-cuerpo>blockquote :is(cite, footer) {
     font-size: 16px;
     font-style: normal;
     font-weight: 400;
@@ -12591,7 +12623,7 @@
   }
 
   /* Los bloques se separan con la misma línea entre sí. */
-  .art-aside__bloque + .art-aside__bloque {
+  .art-aside__bloque+.art-aside__bloque {
     padding-top: clamp(2rem, 4vh, 3rem);
     border-top: 1px solid var(--color-neutral-200, #ededed);
   }
@@ -12721,13 +12753,13 @@
       gap: 40px;
     }
 
-    .art-cuerpo > :is(h2, h3, h4) {
+    .art-cuerpo> :is(h2, h3, h4) {
       margin-bottom: -24px;
     }
   }
 
   @media (width < 40rem) {
-    .art-cuerpo > blockquote {
+    .art-cuerpo>blockquote {
       padding: 24px;
     }
 
@@ -13091,7 +13123,7 @@
     gap: 1rem;
   }
 
-  .legal__texto > :is(h2, h3, h4) {
+  .legal__texto> :is(h2, h3, h4) {
     margin-top: 0.75rem;
     margin-bottom: -0.25rem;
   }

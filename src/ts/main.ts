@@ -18,6 +18,8 @@ import { initSliders } from './modules/slider';
 import { initMarquees } from './modules/marquee';
 import { initParallax } from './modules/parallax';
 import { initProductCarousel } from './modules/product-carousel';
+import { initProductFilter } from './modules/product-filter';
+import { initProductCardColors } from './modules/product-card-colors';
 import { initFloat } from './modules/float';
 import { initHeroCta } from './modules/hero-cta';
 import { initContactoReveal } from './modules/contacto-reveal';
@@ -38,7 +40,12 @@ function bootstrap(): void {
   initSliders();
   initMarquees();
   initParallax();
+  // Antes del carrusel: deja en el slider solo las variantes de la categoría
+  // activa, así Swiper mide de entrada el set que se va a ver.
+  initProductFilter();
   initProductCarousel();
+  // Listener delegado: no le importa cuándo entran o salen las tarjetas.
+  initProductCardColors();
   // Después del carrusel: si Swiper duplicó slides para el loop, sus copias ya
   // están en el DOM y también reciben la flotación.
   initFloat();

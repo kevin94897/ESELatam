@@ -208,13 +208,10 @@ add_action('acf/init', static function (): void {
                 'return_format' => 'id',
                 'max'           => 12,
             ]),
-            $campo('repeater', 'productos_filtros', __('Filtros', 'ese-latam'), [
-                'instructions' => __('Las pastillas sobre el slider. Vacío: las líneas de producto del diseño.', 'ese-latam'),
-                'layout'       => 'table',
-                'button_label' => __('Añadir filtro', 'ese-latam'),
-                'sub_fields'   => [
-                    $campo('text', 'etiqueta', __('Etiqueta', 'ese-latam'), ['key' => 'field_productos_filtro_etiqueta']),
-                ],
+            $campo('message', '', __('Las pastillas de filtro', 'ese-latam'), [
+                'key'      => 'field_msg_productos_filtros',
+                'message'  => __('Se arman solas: una pastilla por cada <strong>producto destacado</strong> de arriba. Al elegir una, el carrusel muestra las variantes de ese producto —un slide por cada color y capacidad que tenga foto cargada en su ficha (pestaña “3. Fotos”)—.', 'ese-latam'),
+                'esc_html' => 0,
             ]),
             $campo('link', 'productos_cta', __('Enlace al catálogo', 'ese-latam'), [
                 'instructions' => __('Vacío: “Explora todo el catálogo” hacia el archivo de productos.', 'ese-latam'),

@@ -111,14 +111,14 @@ if ([] === $ese_recomendados) {
             <div class="swiper-wrapper">
                 <?php foreach ($ese_recomendados as $ese_producto) : ?>
                     <article class="swiper-slide product-card product-card--glass">
-                        <?php if ('' !== $ese_producto['img']) : ?>
-                            <div class="product-card__media">
-                                <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                        <div class="product-card__media">
+                            <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                            <?php if ('' !== $ese_producto['img']) : ?>
                                 <img class="product-card__img" src="<?php echo esc_url($ese_producto['img']); ?>"
                                     alt="<?php echo esc_attr($ese_producto['name']); ?>" loading="lazy" decoding="async"
                                     data-float data-float-distance="14" data-float-duration="3.2">
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                         <div class="product-card__body">
                             <p class="product-card__cat"><?php echo esc_html($ese_producto['cat']); ?></p>
                             <h3 class="product-card__name"><?php echo esc_html($ese_producto['name']); ?></h3>

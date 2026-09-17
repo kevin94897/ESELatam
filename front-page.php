@@ -345,10 +345,42 @@ if ([] !== $ese_productos_ids) {
     ]);
 }
 
-$ese_productos = array_map(
-    static fn (WP_Post $p): array => ese_latam_producto_card_data($p->ID),
-    $ese_productos_query->posts
-);
+// Una pastilla por PRODUCTO (los de "Productos destacados") y un slide por
+// cada una de sus CAPACIDADES; los colores se eligen dentro de la tarjeta.
+// Ver ese_latam_producto_capacidades() en inc/template-tags.php.
+$ese_producto_slides  = [];
+$ese_producto_filtros = [];
+
+foreach ($ese_productos_query->posts as $ese_prod_post) {
+    $ese_prod_card = ese_latam_producto_card_data($ese_prod_post->ID);
+    $ese_prod_key  = (string) $ese_prod_post->post_name;
+
+    $ese_producto_filtros[$ese_prod_key] = $ese_prod_card['name'];
+
+    foreach (ese_latam_producto_capacidades($ese_prod_post->ID) as $ese_prod_cap) {
+        $ese_producto_slides[] = [
+            'producto' => $ese_prod_key,
+            'cat'      => $ese_prod_card['cat'],
+            'name'     => $ese_prod_card['name'],
+            'href'     => $ese_prod_card['href'],
+            'material' => $ese_prod_card['material'],
+            'litraje'  => $ese_prod_cap['litraje'],
+            'colores'  => $ese_prod_cap['colores'],
+            // El primer color es el que la tarjeta muestra al cargar; sin
+            // fotos por color y capacidad cae a la del producto.
+            'img'      => $ese_prod_cap['colores'][0]['img']
+                ?? ese_latam_producto_foto($ese_prod_post->ID, $ese_prod_cap['litraje']),
+        ];
+    }
+}
+
+// Un solo producto no es un filtro: la pastilla repetiría el nombre que ya
+// lleva cada tarjeta.
+if (count($ese_producto_filtros) < 2) {
+    $ese_producto_filtros = [];
+}
+
+$ese_producto_filtro_activo = (string) (array_key_first($ese_producto_filtros) ?? '');
 
 $ese_prod_copy = [
     'kicker' => trim((string) ese_latam_home('productos_kicker', '')),
@@ -358,16 +390,9 @@ $ese_prod_copy = [
 
 $ese_productos_cta = ese_latam_enlace(ese_latam_home('productos_cta'));
 
-$ese_producto_filtros = ese_latam_home('productos_filtros');
-$ese_producto_filtros = is_array($ese_producto_filtros)
-    ? array_values(array_filter(array_map(
-        static fn (array $f): string => trim((string) ($f['etiqueta'] ?? '')),
-        $ese_producto_filtros
-    ), static fn (string $f): bool => '' !== $f))
-    : [];
 ?>
 <?php // El slider vive de productos publicados: sin ninguno, no hay sección. ?>
-<?php if ([] !== $ese_productos) : ?>
+<?php if ([] !== $ese_producto_slides) : ?>
 <section id="productos" class="productos-wrap bg-white relative z-10">
     <div class="productos">
         <?php // Skyline de fondo: el parallax (parallax.ts) va en el <img>, no
@@ -411,12 +436,20 @@ $ese_producto_filtros = is_array($ese_producto_filtros)
             <?php endif; ?>
         </header>
 
+        <?php // Una pastilla por producto: al tocarla, product-filter.ts deja en
+        // el slider solo las tarjetas con su mismo data-producto (las variantes
+        // de ese producto) y reinicia Swiper. Sin JS quedan todas las variantes
+        // de todos los productos, que es el mismo contenido sin recortar. ?>
         <?php if ([] !== $ese_producto_filtros) : ?>
-            <div class="productos__filters" data-reveal="up" role="tablist"
-                aria-label="<?php esc_attr_e('Filtrar productos', 'ese-latam'); ?>">
-                <?php foreach ($ese_producto_filtros as $i => $filtro): ?>
-                    <button type="button" class="productos__filter<?php echo $i === 0 ? ' is-active' : ''; ?>">
-                        <?php echo esc_html($filtro); ?>
+            <div class="productos__filters" data-reveal="up" role="tablist" data-producto-filtros
+                aria-label="<?php esc_attr_e('Elegir producto', 'ese-latam'); ?>">
+                <?php foreach ($ese_producto_filtros as $ese_filtro_slug => $ese_filtro_nombre): ?>
+                    <?php $ese_filtro_on = $ese_filtro_slug === $ese_producto_filtro_activo; ?>
+                    <button type="button" role="tab"
+                        class="productos__filter<?php echo $ese_filtro_on ? ' is-active' : ''; ?>"
+                        data-producto-filtro="<?php echo esc_attr($ese_filtro_slug); ?>"
+                        aria-selected="<?php echo $ese_filtro_on ? 'true' : 'false'; ?>">
+                        <?php echo esc_html($ese_filtro_nombre); ?>
                     </button>
                 <?php endforeach; ?>
             </div>
@@ -435,27 +468,58 @@ $ese_producto_filtros = is_array($ese_producto_filtros)
 
             <?php // Cards con el diseño de "Soluciones recomendadas" (product-card--glass),
             // pero con la animación original de la home: coverflow plano (valores por
-            // defecto del carrusel: rotate 0 / depth 100 / modifier 2.5). ?>
+            // defecto del carrusel: rotate 0 / depth 100 / modifier 2.5).
+            // Una tarjeta por capacidad: la capacidad es fija y el color se elige
+            // con los swatches (product-card-colors.ts cambia la foto y el rótulo
+            // sin recargar). `data-capacidad` identifica la tarjeta junto a
+            // `data-producto`, para que el cambio alcance también a las copias
+            // que el carrusel crea para cerrar el loop. ?>
             <div class="swiper" data-product-carousel data-carousel-visible="5">
                 <div class="swiper-wrapper">
-                    <?php foreach ($ese_productos as $producto): ?>
-                        <article class="swiper-slide product-card product-card--glass">
-                            <?php if ('' !== $producto['img']) : ?>
-                                <div class="product-card__media">
-                                    <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
-                                    <img class="product-card__img"
+                    <?php foreach ($ese_producto_slides as $producto): ?>
+                        <?php
+                        $ese_slide_alt   = trim($producto['name'] . ' ' . $producto['litraje']);
+                        $ese_slide_color = $producto['colores'][0] ?? null;
+                        ?>
+                        <article class="swiper-slide product-card product-card--glass"
+                            data-producto="<?php echo esc_attr($producto['producto']); ?>"
+                            data-capacidad="<?php echo esc_attr($producto['litraje']); ?>">
+                            <div class="product-card__media">
+                                <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                                <?php if ('' !== $producto['img']) : ?>
+                                    <img class="product-card__img" data-card-img
+                                        data-card-alt="<?php echo esc_attr($ese_slide_alt); ?>"
                                         src="<?php echo esc_url($producto['img']); ?>"
-                                        alt="<?php echo esc_attr($producto['name']); ?>" loading="lazy" decoding="async"
+                                        alt="<?php echo esc_attr(trim($ese_slide_alt . ' ' . (string) ($ese_slide_color['nombre'] ?? ''))); ?>"
+                                        loading="lazy" decoding="async"
                                         data-float data-float-distance="14" data-float-duration="3.2">
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                             <div class="product-card__body">
                                 <p class="product-card__cat"><?php echo esc_html($producto['cat']); ?></p>
                                 <h3 class="product-card__name"><?php echo esc_html($producto['name']); ?></h3>
+                                <?php // Con un solo color no hay nada que elegir: una fila de un
+                                // swatch sería un control muerto. ?>
+                                <?php if (count($producto['colores']) > 1) : ?>
+                                    <div class="product-card__colors" role="group"
+                                        aria-label="<?php esc_attr_e('Elegir color', 'ese-latam'); ?>">
+                                        <?php foreach ($producto['colores'] as $ese_i => $ese_color): ?>
+                                            <button type="button"
+                                                class="product-card__color<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
+                                                style="--swatch: <?php echo esc_attr($ese_color['swatch']); ?>;"
+                                                data-card-color
+                                                data-color-img="<?php echo esc_url($ese_color['img']); ?>"
+                                                data-color-name="<?php echo esc_attr($ese_color['nombre']); ?>"
+                                                aria-pressed="<?php echo 0 === $ese_i ? 'true' : 'false'; ?>"
+                                                aria-label="<?php echo esc_attr($ese_color['nombre']); ?>"></button>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
                                 <dl class="product-card__specs">
                                     <div>
                                         <dt><?php esc_html_e('Litraje', 'ese-latam'); ?></dt>
-                                        <dd><?php echo esc_html($producto['litraje']); ?></dd>
+                                        <dd><?php echo esc_html('' !== $producto['litraje'] ? $producto['litraje'] : '—'); ?></dd>
                                     </div>
                                     <div>
                                         <dt><?php esc_html_e('Material', 'ese-latam'); ?></dt>

@@ -30,9 +30,27 @@ add_action('after_setup_theme', static function (): void {
     add_theme_support('align-wide');
     add_theme_support('editor-styles');
 
+    // Logo desde Apariencia → Personalizar → Identidad del sitio. El theme no
+    // usa the_custom_logo(): su markup no serviría para las DOS capas que se
+    // funden con el scroll en la cabecera (ver .site-logo en main.css), así
+    // que la imagen se lee con ese_latam_logo() y se pinta en el markup
+    // propio. Sin logo cargado sigue el PNG del theme.
+    add_theme_support('custom-logo', [
+        'height'      => 43,
+        'width'       => 142,
+        'flex-height' => true,
+        'flex-width'  => true,
+    ]);
+
+    // El footer son TRES columnas, cada una con su propio título y su propio
+    // orden, así que cada una lleva su menú: con uno solo no habría forma de
+    // mover un link de columna desde el admin. Los crea y asigna
+    // ese_latam_asegurar_menus() (inc/menus.php).
     register_nav_menus([
-        'primary' => __('Menú principal', 'ese-latam'),
-        'footer'  => __('Menú del footer', 'ese-latam'),
+        'primary'  => __('Menú principal', 'ese-latam'),
+        'footer_1' => __('Menú Footer — columna 1', 'ese-latam'),
+        'footer_2' => __('Menú Footer — columna 2', 'ese-latam'),
+        'footer_3' => __('Menú Footer — columna 3', 'ese-latam'),
     ]);
 });
 
@@ -47,10 +65,10 @@ function ese_latam_nav_fallback(array $args): void {
     // todas las páginas y un `#sectores` desde una ficha de producto no lleva
     // a ningún lado. "Productos" ya tiene página propia: el catálogo.
     $items = [
-        ['label' => __('Productos', 'ese-latam'),        'url' => get_post_type_archive_link('producto'), 'children' => []],
-        ['label' => __('Sectores', 'ese-latam'),         'url' => ese_latam_pagina_url('sectores', home_url('/#sectores')), 'children' => ese_latam_sectores()],
-        ['label' => __('Certificaciones', 'ese-latam'),  'url' => ese_latam_pagina_url('certificaciones', home_url('/#certificaciones')), 'children' => []],
-        ['label' => __('Impacto', 'ese-latam'),          'url' => ese_latam_pagina_url('impacto', home_url('/#impacto')), 'children' => []],
+        ['label' => __('Productos', 'ese-latam'),        'url' => get_post_type_archive_link('producto'), 'mega' => false],
+        ['label' => __('Sectores', 'ese-latam'),         'url' => ese_latam_pagina_url('sectores', home_url('/#sectores')), 'mega' => true],
+        ['label' => __('Certificaciones', 'ese-latam'),  'url' => ese_latam_pagina_url('certificaciones', home_url('/#certificaciones')), 'mega' => false],
+        ['label' => __('Impacto', 'ese-latam'),          'url' => ese_latam_pagina_url('impacto', home_url('/#impacto')), 'mega' => false],
     ];
 
     $class = isset($args['menu_class']) && is_string($args['menu_class']) ? $args['menu_class'] : '';
@@ -64,7 +82,11 @@ function ese_latam_nav_fallback(array $args): void {
 
     echo '<ul class="' . esc_attr($class) . '">';
     foreach ($items as $item) {
-        $has_children = $with_children && ! empty($item['children']);
+        // El panel lo arma ese_latam_nav_mega() (inc/menus.php), el mismo que
+        // usa el menú real: si no hay sectores publicados, devuelve '' y el
+        // item queda sin desplegable.
+        $mega         = $with_children && $item['mega'] ? ese_latam_nav_mega((string) $item['url']) : '';
+        $has_children = '' !== $mega;
         $li_class     = 'menu-item' . ($has_children ? ' menu-item-has-children' : '');
 
         echo '<li class="' . esc_attr($li_class) . '">';
@@ -72,27 +94,7 @@ function ese_latam_nav_fallback(array $args): void {
             . ($has_children ? ' aria-haspopup="true" aria-expanded="false"' : '')
             . '>' . esc_html($item['label']) . '</a>';
 
-        if ($has_children) {
-            echo '<ul class="sub-menu nav-mega">';
-            foreach ($item['children'] as $child) {
-                echo '<li class="menu-item">';
-                echo '<a class="nav-mega__item" href="' . esc_url(ese_latam_sector_url($child)) . '">';
-                echo '<img class="nav-mega__thumb" src="' . esc_url($child['img']) . '"'
-                    . ' alt="" width="48" height="48" loading="lazy" decoding="async">';
-                echo '<span class="nav-mega__text">';
-                echo '<span class="nav-mega__title">' . esc_html($child['title']) . '</span>';
-                echo '<span class="nav-mega__desc">' . esc_html($child['desc']) . '</span>';
-                echo '</span></a></li>';
-            }
-            // Pie del panel: a la página de sectores (a lo ancho de las dos columnas).
-            echo '<li class="menu-item nav-mega__all">';
-            echo '<a href="' . esc_url((string) $item['url']) . '">' . esc_html__('Ver todos los sectores', 'ese-latam');
-            echo '<span class="nav-mega__all-icon" aria-hidden="true">'
-                . '<svg width="14" height="12" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z" fill="currentColor"/></svg>'
-                . '</span></a></li>';
-            echo '</ul>';
-        }
-
+        echo $mega;
         echo '</li>';
     }
     echo '</ul>';

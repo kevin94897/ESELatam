@@ -12,6 +12,37 @@ if (! defined('ABSPATH')) {
 }
 
 /**
+ * Logo del sitio: el cargado en Apariencia → Personalizar → Identidad del
+ * sitio y, si no hay ninguno, el PNG que trae el theme.
+ *
+ * Devuelve las medidas reales del archivo (no las del PNG del theme) para
+ * que el `width`/`height` del <img> reserve el espacio correcto y el logo no
+ * salte al cargar, sea cual sea la proporción que suba el cliente.
+ *
+ * @return array{url: string, width: int, height: int}
+ */
+function ese_latam_logo(): array {
+    $id = (int) get_theme_mod('custom_logo');
+
+    if ($id > 0) {
+        $img = wp_get_attachment_image_src($id, 'full');
+        if (is_array($img) && isset($img[0]) && '' !== $img[0]) {
+            return [
+                'url'    => (string) $img[0],
+                'width'  => (int) ($img[1] ?: 142),
+                'height' => (int) ($img[2] ?: 43),
+            ];
+        }
+    }
+
+    return [
+        'url'    => ESE_LATAM_URI . '/assets/imgs/logo-ese.png',
+        'width'  => 142,
+        'height' => 43,
+    ];
+}
+
+/**
  * CTA primario ("píldora" + chip de flecha) reutilizable en varias páginas.
  * El hover (color, escala, morph de las siluetas SVG) lo maneja por completo
  * el CSS/JS existente — `.hero-cta*` en main.css y hero-cta.ts — así que
@@ -205,6 +236,58 @@ function ese_latam_producto_card_data(int $post_id): array {
         'img'      => ese_latam_producto_foto($post_id, $litraje),
         'href'     => (string) get_permalink($post_id),
     ];
+}
+
+/**
+ * Capacidades de un producto, cada una con los colores que puede mostrar.
+ *
+ * El carrusel de la portada arma un slide POR CAPACIDAD (pestaña
+ * "1. Litraje") y deja los colores como swatches dentro de la tarjeta, así
+ * que por cada capacidad quedan los colores de "2. Colores" que tengan foto
+ * para ESA capacidad en "3. Fotos": son los únicos que la tarjeta puede
+ * previsualizar al tocarlos.
+ *
+ * Un producto sin esas fotos conserva sus capacidades —son datos reales del
+ * CPT— con la lista de colores vacía: la tarjeta cae a la foto que ya usaba
+ * y no ofrece swatches que no podrían cambiar nada.
+ *
+ * @return list<array{litraje: string, colores: list<array{nombre: string, swatch: string, img: string}>}>
+ */
+function ese_latam_producto_capacidades(int $post_id): array {
+    $colores  = (array) ese_latam_campo('colores', $post_id, []);
+    $litrajes = (array) ese_latam_campo('litrajes', $post_id, []);
+    $fotos    = ese_latam_producto_fotos($post_id);
+
+    $capacidades = [];
+
+    foreach ($litrajes as $litraje) {
+        $valor = trim((string) ($litraje['valor'] ?? ''));
+        if ('' === $valor) {
+            continue;
+        }
+
+        $disponibles = [];
+        foreach ($colores as $color) {
+            $nombre = trim((string) ($color['nombre'] ?? ''));
+            $img    = $fotos[$nombre][$valor] ?? '';
+
+            if ('' !== $nombre && '' !== $img) {
+                $disponibles[] = [
+                    'nombre' => $nombre,
+                    'swatch' => trim((string) ($color['color'] ?? '')),
+                    'img'    => $img,
+                ];
+            }
+        }
+
+        $capacidades[] = ['litraje' => $valor, 'colores' => $disponibles];
+    }
+
+    if ([] !== $capacidades) {
+        return $capacidades;
+    }
+
+    return [['litraje' => ese_latam_producto_litraje($post_id), 'colores' => []]];
 }
 
 

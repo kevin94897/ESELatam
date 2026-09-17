@@ -51,6 +51,32 @@ function numberAttr(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/**
+ * Instancia y observer de cada carrusel, para poder soltarlos al re-montar:
+ * el filtro por categoría de la portada (product-filter.ts) cambia el set de
+ * slides y vuelve a llamar a mountCarousel().
+ */
+const instances = new WeakMap<HTMLElement, Swiper>();
+const observers = new WeakMap<HTMLElement, IntersectionObserver>();
+
+/** Suelta Swiper y el observer de un carrusel, y borra las copias del loop. */
+export function unmountProductCarousel(el: HTMLElement): void {
+  observers.get(el)?.disconnect();
+  observers.delete(el);
+  // destroy(deleteInstance, cleanStyles): limpia los transforms que Swiper
+  // dejó inline en los slides, así el próximo montaje vuelve a medir desde
+  // cero. Tiene que correr con los slides TODAVÍA en el DOM.
+  instances.get(el)?.destroy(true, true);
+  instances.delete(el);
+
+  el.querySelectorAll<HTMLElement>('[data-carousel-clone]').forEach((clone) => clone.remove());
+}
+
+export function mountProductCarousel(el: HTMLElement): void {
+  unmountProductCarousel(el);
+  initCarousel(el);
+}
+
 function initCarousel(el: HTMLElement): void {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Swiper implementa pauseOnMouseEnter con mouseenter/mouseleave reales: en
@@ -66,7 +92,7 @@ function initCarousel(el: HTMLElement): void {
   const rotate = numberAttr(el.dataset.carouselRotate, 0);
   const depth = numberAttr(el.dataset.carouselDepth, 100);
   const modifier = numberAttr(el.dataset.carouselModifier, 2.5);
-  const loop = el.dataset.carouselLoop !== 'false';
+  const wantsLoop = el.dataset.carouselLoop !== 'false';
 
   const paginationEl =
     root.querySelector<HTMLElement>('[data-carousel-pagination]') ??
@@ -84,8 +110,12 @@ function initCarousel(el: HTMLElement): void {
   const realSlides = wrapper ? (Array.from(wrapper.children) as HTMLElement[]) : [];
   const realCount = realSlides.length;
   const minForLoop = visible + 1;
+  // Con un solo slide no hay nada que duplicar y el loop es imposible: sin
+  // apagarlo, Swiper avisa por consola en cada montaje. Pasa de verdad al
+  // filtrar por una categoría con un único producto (front-page.php).
+  const loop = wantsLoop && realCount >= 2;
   let cloned = false;
-  if (loop && wrapper && realCount >= 2 && realCount < minForLoop) {
+  if (loop && wrapper && realCount < minForLoop) {
     while (wrapper.children.length < minForLoop) {
       realSlides.forEach((slide) => {
         const copy = slide.cloneNode(true) as HTMLElement;
@@ -98,21 +128,34 @@ function initCarousel(el: HTMLElement): void {
   }
 
   // Impar: uno al centro y (visible - 1) / 2 a cada lado — pero nunca más
-  // vecinas que productos distintos haya: con 3 productos y 5 visibles el
-  // mismo producto asomaría dos veces (una por lado), así que se muestran
-  // solo 3 hasta que el catálogo alcance para los 5 del diseño.
-  const reach = Math.min((visible - 1) / 2, Math.max(0, Math.floor((realCount - 1) / 2)));
+  // vecinas que slides distintos haya, o el mismo asomaría dos veces (una
+  // por lado) con el loop cerrándose sobre pocos slides.
+  //
+  // El reparto NO es simétrico: los distintos que sobran (realCount - 1) van
+  // con prioridad a la DERECHA, así que con 2 slides el otro asoma de ese
+  // lado en vez de esconderse a los dos (que era lo que hacía ver un
+  // producto de dos capacidades como si tuviera una sola tarjeta). Con 5
+  // vuelve a ser 2 y 2, como el diseño.
+  const reachMax = (visible - 1) / 2;
+  const otros = Math.max(0, realCount - 1);
+  const reachDerecha = Math.min(reachMax, Math.ceil(otros / 2));
+  const reachIzquierda = Math.min(reachMax, Math.floor(otros / 2));
 
-  // `progress` es 0 en el slide activo y ±1, ±2… según se aleja del centro
-  // (fraccionario mientras se arrastra), así que redondearlo da la distancia
-  // en pasos. Los valores de opacidad de cada nivel viven en main.css, junto
-  // a los de .swiper-slide / -active; acá solo se marca en qué nivel cae.
+  // `progress` es 0 en el slide activo y crece con la distancia al centro
+  // (fraccionario mientras se arrastra), así que redondearlo da el paso.
+  // OJO con el signo: es POSITIVO hacia la izquierda del activo y NEGATIVO
+  // hacia la derecha —el mismo con el que el coverflow decide para qué lado
+  // gira cada tarjeta—, no al revés. Los valores de opacidad de cada nivel
+  // viven en main.css, junto a los de .swiper-slide / -active; acá solo se
+  // marca en qué nivel cae.
   const updateVisible = (swiper: Swiper): void => {
     swiper.slides.forEach((slide) => {
-      const step = Math.round(Math.abs((slide as ProgressSlide).progress ?? 0));
-      // step > 0 evita que con visible=1 el propio activo quede de "extremo".
-      slide.classList.toggle('is-edge', step > 0 && step === reach);
-      slide.classList.toggle('is-hidden', step > reach);
+      const step = Math.round((slide as ProgressSlide).progress ?? 0);
+      const dist = Math.abs(step);
+      const reach = step <= 0 ? reachDerecha : reachIzquierda;
+      // dist > 0 evita que con visible=1 el propio activo quede de "extremo".
+      slide.classList.toggle('is-edge', dist > 0 && dist === reach);
+      slide.classList.toggle('is-hidden', dist > reach);
     });
   };
 
@@ -160,6 +203,9 @@ function initCarousel(el: HTMLElement): void {
   // Sin contenedor de bullets no se registra la paginación: Swiper con
   // `el: null` no falla, pero tampoco hace falta cargarle el módulo.
   if (paginationEl) {
+    // Los bullets los escribe Swiper: al re-montar (filtro por categoría) se
+    // vacían primero, o quedarían los del set anterior debajo de los nuevos.
+    paginationEl.innerHTML = '';
     options.pagination = { el: paginationEl, clickable: true };
   }
 
@@ -181,18 +227,21 @@ function initCarousel(el: HTMLElement): void {
   }
 
   const swiper = new Swiper(el, options);
+  instances.set(el, swiper);
 
   // Teclado solo con el carrusel a la vista (misma compuerta que el autoplay
   // de residuos-selector.ts): así dos carruseles en la misma página no se
   // pelean las flechas, y uno fuera de pantalla no se mueve a ciegas.
   if (typeof IntersectionObserver === 'function') {
-    new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) swiper.keyboard.enable();
         else swiper.keyboard.disable();
       },
       { threshold: 0.25 }
-    ).observe(el);
+    );
+    observer.observe(el);
+    observers.set(el, observer);
   } else {
     swiper.keyboard.enable();
   }
