@@ -1271,10 +1271,24 @@
     position: absolute;
     z-index: 2;
     bottom: 7%;
-    /* El tercer límite (svh) acota la ALTURA resultante de la isla: en
-       pantallas anchas pero no tan altas (p. ej. ultrawide o full HD grande),
-       sin él la isla crece por ancho y su copa termina rozando el header. */
-    --island-w: min(92vw, 1720px, 142svh);
+
+    /* Tres topes, y el tercero es el que importa cuando cambia la imagen.
+     *
+     * La isla se dimensiona por ANCHO, así que su alto depende de la
+     * proporción del archivo: con el mismo ancho, una imagen casi cuadrada
+     * sale muchísimo más alta que una apaisada y la copa termina contra el
+     * header. Antes ese tope era un `142svh` fijo, calculado a ojo para la
+     * isla original (2400×1350): 80svh de alto × 1.78 de proporción.
+     *
+     * Ahora se calcula: front-page.php imprime --island-ratio con la
+     * proporción real del adjunto y el tope de alto se convierte a ancho
+     * multiplicando. Con la isla vieja da los mismos 142svh de siempre.
+     *
+     * --island-max (ancho máximo en px) sale del campo "Ancho máximo" del
+     * hero; sin campo cargado, los 1720px de siempre. */
+    --island-alto-max: 80svh;
+    --island-ratio: 1.7778;
+    --island-w: min(92vw, var(--island-max, 1720px), var(--island-alto-max) * var(--island-ratio));
     /* island.png trae ~26% de ancho transparente a la derecha (medido sobre el
        canal alpha: el dibujo ocupa del 24.5% al 73.96% del PNG). Se descuenta
        ese margen para que el borde VISIBLE de la isla caiga en el gutter del
@@ -4818,11 +4832,25 @@
    visible (.product-card--grid) en vez de aparecer con el hover del swiper.
    ========================================================= */
 @layer components {
+  /* La sección ocupa TODO el ancho y el tope de 1920px se lo queda su
+     contenido, no ella.
+     Antes iba al revés (max-width + margin-inline:auto): por encima de
+     1920px la sección dejaba margen a los lados y por ahí se asomaba el
+     fondo de la página. Con el padding calculado, el blanco llega siempre
+     de borde a borde y el contenido conserva exactamente el mismo ancho en
+     cualquier viewport:
+
+       ≤ 1920px → max() se queda con el canalón, igual que antes.
+       > 1920px → crece lo que antes era margen, y ahora es blanco. */
   .catalogo-productos {
-    max-width: 1920px;
-    margin-inline: auto;
+    --cat-gutter: clamp(1.5rem, 6.25vw, 7.5rem);
+
     background: white;
-    padding: clamp(2.5rem, 6vh, 4.5rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(4rem, 10vh, 7rem);
+    padding-block: clamp(2.5rem, 6vh, 4.5rem) clamp(4rem, 10vh, 7rem);
+    padding-inline: max(
+      var(--cat-gutter),
+      (100% - (1920px - 2 * var(--cat-gutter))) / 2
+    );
   }
 
   .catalogo-filters {
@@ -7231,6 +7259,15 @@
     font-weight: 500;
     line-height: 1.625;
     color: var(--color-neutral-500);
+  }
+
+  /* Las bajadas y los textos de objetivo se escriben en un WYSIWYG: lo que
+   * el editor pone en negrita es el tramo que va en verde (mismo color que
+   * .hl-accent), no un cambio de peso. */
+  .nos-desc strong,
+  .nos-objetivo__text strong {
+    font-weight: inherit;
+    color: #86c437;
   }
 
   /* ---------- 1. Hero ---------- */
@@ -12308,5 +12345,805 @@
     .catalogo-filters__label {
       font-size: 12px;
     }
+  }
+}
+
+/* ------------------------------------------------------------------
+ * Barra de administración de WordPress
+ *
+ * WordPress empuja la página con `html { margin-top }`, pero .site-header
+ * es `position: fixed` y ese margen no le afecta: sin esto quedaría por
+ * debajo de la barra, que va en z-index 99999. Los tres cortes son los del
+ * propio admin-bar.css: 32px, 46px bajo 782px y, bajo 600px, la barra pasa
+ * a `position: absolute` y se va con el scroll, así que el header vuelve a 0.
+ * --------------------------------------------------------------- */
+@layer components {
+  body.admin-bar .site-header {
+    top: 32px;
+  }
+
+  @media screen and (max-width: 782px) {
+    body.admin-bar .site-header {
+      top: 46px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    body.admin-bar .site-header {
+      top: 0;
+    }
+  }
+}
+
+/* =========================================================
+   BLOG: ARTÍCULO (single-post.php, Figma 3873-10142)
+   ========================================================= */
+@layer components {
+
+  /* ---------- 1. Hero con la foto destacada ----------
+     Mismo .nos-hero de las internas, pero de 720px y con el titular a la
+     izquierda; bajo una línea van el chip de categoría, el lugar y el año. */
+  .art-hero,
+  .art-hero .nos-hero__content {
+    min-height: min(45rem, 100svh);
+  }
+
+  .art-hero .nos-hero__content {
+    justify-content: flex-start;
+    gap: clamp(1.5rem, 4vh, 2.5rem);
+    padding-top: clamp(6.5rem, 13vh, 8.75rem);
+    padding-bottom: clamp(2rem, 5vh, 3rem);
+  }
+
+  /* El degradado del Figma: casi opaco arriba y abajo, para que el titular
+     se lea sobre cualquier foto destacada. */
+  .art-hero__shade {
+    background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.68) 0%, rgb(0 0 0 / 0.85) 35%, rgb(0 0 0 / 0.85) 100%);
+  }
+
+  /* El hero de Nosotros apaga su foto casi a negro (ver .nos-hero__bg img);
+     acá la foto es la del artículo y tiene que leerse: la oscurece el
+     degradado de arriba, no un filtro. */
+  .art-hero .nos-hero__bg img {
+    filter: none;
+  }
+
+  .art-hero__body {
+    width: 100%;
+    max-width: 1067px;
+    margin-top: auto;
+  }
+
+  .art-hero__title {
+    max-width: none;
+    font-size: clamp(2rem, 7vw, var(--text-display));
+    font-weight: 300;
+    text-transform: uppercase;
+  }
+
+  .art-hero__desc {
+    max-width: 592px;
+    margin-top: clamp(1rem, 2.5vh, 1.5rem);
+    padding-bottom: 0;
+  }
+
+  /* Fila del pie: la separa del titular la misma línea del Figma. */
+  .art-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    margin-top: clamp(1.5rem, 4vh, 3rem);
+    padding-top: clamp(1.5rem, 4vh, 3rem);
+    border-top: 1px solid rgb(255 255 255 / 0.18);
+  }
+
+  .art-hero__chip {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: rgb(0 0 0 / 0.69);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-white);
+  }
+
+  .art-hero__dato {
+    font-size: 16px;
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  .art-hero__sep {
+    width: 4px;
+    height: 4px;
+    border-radius: 99px;
+    background-color: rgb(255 255 255 / 0.5);
+  }
+
+  /* ---------- 2. Cuerpo + barra lateral ----------
+     Dos columnas del Figma (1112 / 483) con el canalón de la página. */
+  .art-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1112fr) minmax(0, 483fr);
+    column-gap: clamp(2rem, 4.4vw, 5.3rem);
+    row-gap: clamp(2.5rem, 6vh, 4rem);
+    padding: clamp(3rem, 7vh, 4.5rem) var(--nos-gutter) clamp(4rem, 9vh, 6rem);
+    background-color: var(--color-white);
+  }
+
+  /* ---------- El contenido del editor ----------
+     Se estilan las etiquetas y no clases: lo que sale del editor de la
+     entrada no lleva clases nuestras. */
+  .art-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 57px;
+    min-width: 0;
+    color: var(--color-text-dark);
+  }
+
+  .art-cuerpo__entradilla {
+    font-size: 16px;
+    font-style: italic;
+    line-height: 26px;
+  }
+
+  .art-cuerpo > * {
+    margin: 0;
+  }
+
+  /* Cada titular arrastra su párrafo: el gap grande es entre bloques, no
+     entre el titular y su texto. */
+  .art-cuerpo > :is(h2, h3, h4) {
+    margin-bottom: -33px;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 32px;
+  }
+
+  .art-cuerpo > p {
+    font-size: 16px;
+    line-height: 26px;
+  }
+
+  .art-cuerpo :is(a):not(.link-arrow) {
+    color: var(--color-primary);
+    text-decoration: underline;
+  }
+
+  /* El preflight de Tailwind quita las viñetas: acá el contenido viene del
+     editor y una lista tiene que verse como una lista. */
+  .art-cuerpo :is(ul, ol) {
+    padding-left: 1.5rem;
+    font-size: 16px;
+    line-height: 26px;
+    list-style-position: outside;
+  }
+
+  .art-cuerpo ul {
+    list-style-type: disc;
+  }
+
+  .art-cuerpo ol {
+    list-style-type: decimal;
+  }
+
+  .art-cuerpo li::marker {
+    color: var(--color-neutral-400, #b3b3b3);
+  }
+
+  .art-cuerpo :is(ul, ol) li + li {
+    margin-top: 8px;
+  }
+
+  /* La cita destacada: recuadro verde claro con el filo a la izquierda. */
+  .art-cuerpo > blockquote {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 32px 40px;
+    border-left: 6px solid var(--color-circulogic-green);
+    background-color: var(--color-circulogic-green-surface);
+  }
+
+  .art-cuerpo > blockquote p {
+    margin: 0;
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 32px;
+  }
+
+  .art-cuerpo > blockquote :is(cite, footer) {
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 26px;
+  }
+
+  /* Imagen con pie: la foto ancha y el pie en gris chico. */
+  .art-cuerpo :is(figure, .wp-block-image) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .art-cuerpo :is(img, video) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .art-cuerpo figcaption {
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--color-neutral-500);
+  }
+
+  /* ---------- La barra lateral ---------- */
+  .art-aside {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2rem, 4vh, 3rem);
+    min-width: 0;
+    padding-top: 59px;
+  }
+
+  /* Los bloques se separan con la misma línea entre sí. */
+  .art-aside__bloque + .art-aside__bloque {
+    padding-top: clamp(2rem, 4vh, 3rem);
+    border-top: 1px solid var(--color-neutral-200, #ededed);
+  }
+
+  .art-aside__label {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #546895;
+  }
+
+  .art-aside__cat {
+    display: inline-flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 32px;
+    color: var(--color-text-dark);
+  }
+
+  .art-aside__punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 99px;
+    background-color: var(--color-secondary);
+  }
+
+  .art-aside__cat-desc {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--color-neutral-500);
+  }
+
+  .art-aside__cat-desc p {
+    margin: 0;
+  }
+
+  .art-aside__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .art-aside__tag {
+    display: inline-flex;
+    padding: 8px 12px;
+    border: 1px solid #c9d0e2;
+    border-radius: 8px;
+    background-color: var(--color-neutral-50, #f9f9f9);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 22px;
+    color: var(--color-primary);
+  }
+
+  .art-aside__share {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .art-aside__red {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background-color: var(--color-neutral-50, #f9f9f9);
+    color: #546895;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .art-aside__copiado {
+    margin: 16px 0 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #2ccf78;
+  }
+
+  /* ---------- 3. Volver al blog ---------- */
+  .art-volver {
+    grid-column: 1 / -1;
+    padding-top: clamp(2rem, 5vh, 3rem);
+    border-top: 1px solid var(--color-neutral-200, #ededed);
+  }
+
+  .link-arrow--back .link-arrow__icon svg {
+    transform: rotate(180deg);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .art-aside__red:hover {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
+
+    .art-aside__tag:hover,
+    .art-hero__chip:hover {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
+  }
+
+  @media (width < 64rem) {
+    .art-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .art-aside {
+      padding-top: 0;
+    }
+
+    .art-cuerpo {
+      gap: 40px;
+    }
+
+    .art-cuerpo > :is(h2, h3, h4) {
+      margin-bottom: -24px;
+    }
+  }
+
+  @media (width < 40rem) {
+    .art-cuerpo > blockquote {
+      padding: 24px;
+    }
+
+    .art-aside__share {
+      gap: 16px;
+    }
+  }
+}
+
+/* =========================================================
+   CASO DE ÉXITO (single-caso.php, Figma 3891-4495)
+   ========================================================= */
+@layer components {
+
+  /* ---------- 2. El reto, problema y solución ---------- */
+  .caso-arq {
+    padding: clamp(3rem, 8vh, 5rem) var(--nos-gutter) clamp(3rem, 8vh, 5rem);
+    background-color: var(--color-white);
+  }
+
+  .caso-arq__header {
+    max-width: 782px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  /* Clases propias en vez de .type-h2/.hl: son @utility de Tailwind y su
+     color no se puede pisar desde @layer components (ver .certificaciones__title). */
+  .caso-arq__title {
+    margin-top: 1rem;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 300;
+    line-height: 1.125;
+    text-transform: uppercase;
+    color: var(--color-text-dark);
+  }
+
+  .caso-arq__title-accent {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  .caso-arq__desc {
+    margin-top: 1.5rem;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 26px;
+    color: var(--color-neutral-500);
+  }
+
+  .caso-arq__desc strong {
+    font-weight: 700;
+    color: var(--color-circulogic-green);
+  }
+
+  /* La fila de pastillas: fondo gris con las pastillas dentro. */
+  .caso-arq__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    width: fit-content;
+    margin: clamp(2rem, 5vh, 3rem) auto 0;
+    padding: 4px 8px;
+    border-radius: 16px;
+    background-color: var(--color-neutral-100);
+  }
+
+  .caso-arq__pill {
+    min-width: 150px;
+    padding: 12px 24px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 26px;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .caso-arq__pill.is-active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+  }
+
+  .caso-arq__panel {
+    display: none;
+    grid-template-columns: minmax(0, 686fr) minmax(0, 614fr);
+    gap: 56px;
+    align-items: center;
+    max-width: 1396px;
+    margin: clamp(2.5rem, 6vh, 5rem) auto 0;
+  }
+
+  .caso-arq__panel.is-active {
+    display: grid;
+  }
+
+  .caso-arq__media {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 32px;
+    aspect-ratio: 686 / 468;
+  }
+
+  .caso-arq__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .caso-arq__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .caso-arq__badge {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    align-self: flex-start;
+    padding: 4px 12px;
+    border: 0.5px solid rgb(255 255 255 / 0.24);
+    border-radius: 8px;
+    background-color: #ebeff8;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+  }
+
+  .caso-arq__badge-punto {
+    width: 4px;
+    height: 4px;
+    border-radius: 99px;
+    background-color: currentColor;
+  }
+
+  .caso-arq__panel-title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 32px;
+    color: var(--color-text-dark);
+  }
+
+  .caso-arq__panel-desc {
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--color-neutral-600, #666);
+  }
+
+  .caso-arq__nota {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 2rem;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--color-neutral-500);
+  }
+
+  .caso-arq__nota svg {
+    flex-shrink: 0;
+    color: var(--color-secondary);
+  }
+
+  /* ---------- 4. Franja de cifras ---------- */
+  .caso-cifras {
+    padding: clamp(2.5rem, 7vh, 4.5rem) var(--nos-gutter);
+    background-color: var(--color-white);
+  }
+
+  .caso-cifras__lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: clamp(2rem, 5vw, 4rem);
+    max-width: 1396px;
+    margin-inline: auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  .caso-cifra {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .caso-cifra__valor {
+    font-size: clamp(3rem, 5.5vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.18;
+    color: var(--color-primary);
+  }
+
+  .caso-cifra__label {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #8a98b6;
+  }
+
+  /* ---------- 5. El relato ---------- */
+  .caso-relato {
+    padding: clamp(3rem, 8vh, 5rem) var(--nos-gutter) clamp(4rem, 9vh, 6rem);
+    background-color: var(--color-neutral-50, #f9f9f9);
+  }
+
+  .caso-relato__kicker {
+    margin-bottom: clamp(2rem, 5vh, 3rem);
+    text-align: center;
+  }
+
+  /* Mismo cuerpo del artículo del blog, acá centrado y más angosto. */
+  .caso-relato__cuerpo {
+    max-width: 828px;
+    margin-inline: auto;
+  }
+
+  @media (width < 64rem) {
+    .caso-arq__panel {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .caso-arq__pill {
+      min-width: 0;
+      flex: 1 0 auto;
+    }
+  }
+}
+
+/* =========================================================
+   PÁGINAS LEGALES (page-legal.php)
+   ========================================================= */
+@layer components {
+
+  /* Índice pegajoso a la izquierda + texto a la derecha, con las mismas
+     proporciones del aside de "Objetivos con propósito". */
+  .legal {
+    display: grid;
+    grid-template-columns: minmax(0, 360fr) minmax(0, 1000fr);
+    column-gap: clamp(2rem, 5vw, 6rem);
+    row-gap: clamp(2rem, 5vh, 3rem);
+    padding: clamp(3rem, 8vh, 5.5rem) var(--nos-gutter) clamp(4rem, 10vh, 6.5rem);
+    background-color: var(--color-white);
+  }
+
+  .legal__aside {
+    min-width: 0;
+  }
+
+  .legal__indice {
+    position: sticky;
+    /* Bajo la cabecera fija, con aire. */
+    top: calc(var(--hdr-h, 88px) + 2rem);
+  }
+
+  .legal__indice-title {
+    margin: 0 0 1.25rem;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+  }
+
+  .legal__indice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+  }
+
+  .legal__indice-link {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    padding: 10px 14px;
+    border-left: 2px solid var(--color-neutral-200, #ededed);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--color-neutral-500);
+    transition: color 0.25s, border-color 0.25s, background-color 0.25s;
+  }
+
+  .legal__indice-num {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-neutral-400, #b3b3b3);
+    transition: color 0.25s;
+  }
+
+  .legal__indice-link.is-active {
+    border-left-color: var(--color-primary);
+    background-color: var(--color-neutral-50, #f9f9f9);
+    font-weight: 700;
+    color: var(--color-primary);
+  }
+
+  .legal__indice-link.is-active .legal__indice-num {
+    color: var(--color-secondary);
+  }
+
+  .legal__fecha {
+    margin: 1.75rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-neutral-200, #ededed);
+    font-size: 13px;
+    color: var(--color-neutral-500);
+  }
+
+  .legal__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vh, 4rem);
+    min-width: 0;
+  }
+
+  /* El ancla queda bajo la cabecera fija al saltar desde el índice. */
+  .legal__seccion {
+    scroll-margin-top: calc(var(--hdr-h, 88px) + 2rem);
+  }
+
+  .legal__titulo {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+    margin: 0 0 1.25rem;
+    font-size: clamp(1.375rem, 2.4vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--color-text-dark);
+  }
+
+  .legal__num {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--color-secondary);
+  }
+
+  /* El cuerpo reusa la prosa del artículo del blog, pero acá los bloques
+     van seguidos: el separador grande es entre secciones, no entre párrafos. */
+  .legal__texto {
+    gap: 1rem;
+  }
+
+  .legal__texto > :is(h2, h3, h4) {
+    margin-top: 0.75rem;
+    margin-bottom: -0.25rem;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .legal__indice-link:hover {
+      border-left-color: var(--color-secondary);
+      color: var(--color-text-dark);
+    }
+  }
+
+  @media (width < 64rem) {
+    .legal {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* En móvil el índice deja de perseguir y va arriba, plegado en una caja. */
+    .legal__indice {
+      position: static;
+      padding: 1.25rem 1rem;
+      border: 1px solid var(--color-neutral-200, #ededed);
+      border-radius: 16px;
+      background-color: var(--color-neutral-50, #f9f9f9);
+    }
+
+    .legal__indice-link {
+      padding: 8px 12px;
+    }
+  }
+}
+
+/* =========================================================
+   CATÁLOGO SOBRE BLANCO (page-catalogo-de-productos.php)
+   ========================================================= */
+
+/* Va en `utilities` y no en `components` a propósito: el body lleva la clase
+   `bg-bg` de Tailwind y, en cascada por capas, cualquier utilidad le gana a
+   cualquier componente por más específico que sea. Desde utilities manda la
+   especificidad, y `body.catalogo-blanco` supera a `.bg-bg`. */
+@layer utilities {
+
+  /* El theme pinta el body en --color-bg (#f9f9f9). En el catálogo eso se
+     asoma en los costados —el bloque de productos está centrado con un ancho
+     máximo— y bajo el pie. Acá toda la página va sobre blanco. */
+  body.catalogo-blanco {
+    background-color: var(--color-white);
+  }
+
+  /* La caja de filtros ya se distingue por su borde: sin el gris queda
+     alineada con el resto de la pantalla. */
+  body.catalogo-blanco .catalogo-filters,
+  body.catalogo-blanco .catalogo-pagination__side--prev {
+    background-color: var(--color-white);
   }
 }

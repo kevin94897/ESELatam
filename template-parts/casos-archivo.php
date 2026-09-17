@@ -6,10 +6,8 @@
  *
  * Trabaja sobre la QUERY PRINCIPAL del archivo (archive-caso.php): los
  * filtros los aplica ese_latam_casos_pre_get_posts() en inc/cpt-casos.php,
- * así que acá solo se leen para pintar el formulario. Mientras no haya casos
- * publicados y no haya filtros activos, muestra las tarjetas de ejemplo de
- * ese_latam_casos_placeholder() (mismo criterio que los sliders de
- * productos) para que la página se vea completa desde el día uno.
+ * así que acá solo se leen para pintar el formulario. Sin casos publicados
+ * —o sin resultados para los filtros— se muestra el aviso de lista vacía.
  *
  * @package EseLatam
  */
@@ -30,8 +28,7 @@ $ese_cx_ciudades = get_terms(['taxonomy' => 'caso_ciudad', 'hide_empty' => true]
 $ese_cx_sectores = is_array($ese_cx_sectores) ? $ese_cx_sectores : [];
 $ese_cx_ciudades = is_array($ese_cx_ciudades) ? $ese_cx_ciudades : [];
 
-// Tarjetas a pintar: los posts de la query principal o, si todavía no hay
-// ninguno publicado (y nadie está filtrando), las de ejemplo.
+// Tarjetas a pintar: los posts de la query principal.
 $ese_cx_cards = [];
 $ese_cx_total = (int) $wp_query->found_posts;
 if (have_posts()) {
@@ -40,9 +37,6 @@ if (have_posts()) {
         $ese_cx_cards[] = ese_latam_caso_card_data(get_the_ID());
     }
     wp_reset_postdata();
-} elseif (! $ese_cx_activos) {
-    $ese_cx_cards = ese_latam_casos_placeholder();
-    $ese_cx_total = count($ese_cx_cards);
 }
 
 $ese_cx_paginas = (int) $wp_query->max_num_pages;
@@ -65,7 +59,7 @@ $ese_cx_actual  = max(1, (int) get_query_var('paged'));
         <div class="cx-filters__field">
             <label class="cx-filters__label" for="cx-sector"><?php esc_html_e('Sector', 'ese-latam'); ?></label>
             <div class="cx-filters__control cx-filters__control--select">
-                <select id="cx-sector" name="sector" onchange="this.form.submit()">
+                <select id="cx-sector" name="rubro" onchange="this.form.submit()">
                     <option value=""><?php esc_html_e('Todos los sectores', 'ese-latam'); ?></option>
                     <?php foreach ($ese_cx_sectores as $ese_cx_term) : ?>
                         <option value="<?php echo esc_attr($ese_cx_term->slug); ?>" <?php selected($ese_cx_filtros['sector'], $ese_cx_term->slug); ?>>

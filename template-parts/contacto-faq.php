@@ -6,9 +6,8 @@
  * comportamiento del navegador) y contacto-page.ts solo le agrega la
  * animación de altura y el comportamiento de "una abierta a la vez".
  *
- * Las respuestas 2 a 6 son un borrador redactado a partir del contenido
- * técnico del resto del sitio (EN 840, RAL, HDPE): el Figma solo trae el
- * texto de la primera. Revisar con el cliente antes de publicar.
+ * Las preguntas salen del módulo "Preguntas frecuentes"; el antetítulo y el
+ * titular, de la página.
  *
  * @package EseLatam
  */
@@ -30,14 +29,22 @@ foreach (ese_latam_modulo_entradas('faq') as $ese_pregunta) {
 if ([] === $ese_faqs) {
     return;
 }
+
+$ese_id     = (int) get_queried_object_id();
+$ese_kicker = (string) ese_latam_campo('ctc_faq_kicker', $ese_id, '');
+$ese_titulo = (string) ese_latam_campo('ctc_faq_titulo', $ese_id, '');
 ?>
 
 <section class="ctc-faq">
     <header class="ctc-faq__header" data-reveal-header>
-        <p class="type-kicker text-secondary">/ <?php esc_html_e('Respondemos dudas', 'ese-latam'); ?></p>
-        <h2 class="type-h2 uppercase">
-            <?php echo ese_latam_titulo(__('Preguntas', 'ese-latam') . "\n" . __('|frecuentes|', 'ese-latam'), 'span', 'hl'); ?>
-        </h2>
+        <?php if ('' !== $ese_kicker) : ?>
+            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_kicker); ?></p>
+        <?php endif; ?>
+        <?php if ('' !== $ese_titulo) : ?>
+            <h2 class="type-h2 uppercase">
+                <?php echo ese_latam_titulo($ese_titulo, 'span', 'hl'); ?>
+            </h2>
+        <?php endif; ?>
     </header>
 
     <div class="ctc-faq__list" data-ctc-faq>

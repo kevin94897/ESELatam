@@ -110,10 +110,28 @@ add_action('acf/init', static function (): void {
 
             // ---------- Desafíos ----------
             $tab('sector_desafios', __('Desafíos', 'ese-latam')),
+            $campo('text', 'desafios_kicker', __('Antetítulo', 'ese-latam'), [
+                'placeholder' => __('Desafíos', 'ese-latam'),
+                'wrapper'     => ['width' => '40'],
+            ]),
+            $campo('textarea', 'desafios_titulo', __('Titular', 'ese-latam'), [
+                'instructions' => ese_latam_ayuda_titulo(),
+                'rows'         => 2,
+                'placeholder'  => "Desafíos en la\n|gestión urbana|",
+                'wrapper'      => ['width' => '60'],
+            ]),
             $campo('wysiwyg', 'desafios_desc', __('Bajada de la sección', 'ese-latam'), [
                 'tabs'         => 'visual',
                 'toolbar'      => 'basic',
                 'media_upload' => 0,
+            ]),
+            $campo('text', 'desafios_label_dolores', __('Etiqueta del primer panel', 'ese-latam'), [
+                'placeholder' => __('Dolores y brechas', 'ese-latam'),
+                'wrapper'     => ['width' => '50'],
+            ]),
+            $campo('text', 'desafios_label_alivios', __('Etiqueta del segundo panel', 'ese-latam'), [
+                'placeholder' => __('Alivio ESE Latam', 'ese-latam'),
+                'wrapper'     => ['width' => '50'],
             ]),
             $campo('repeater', 'dolores', __('Dolores y brechas', 'ese-latam'), [
                 'instructions' => __('El estado “problema” del comparador.', 'ese-latam'),
@@ -130,12 +148,88 @@ add_action('acf/init', static function (): void {
 
             // ---------- Criterio ----------
             $tab('sector_criterio', __('Criterio', 'ese-latam')),
+            $campo('text', 'criterio_kicker', __('Antetítulo', 'ese-latam'), [
+                'placeholder' => __('ESE Latam', 'ese-latam'),
+                'wrapper'     => ['width' => '40'],
+            ]),
+            $campo('textarea', 'criterio_titulo', __('Titular', 'ese-latam'), [
+                'instructions' => ese_latam_ayuda_titulo(),
+                'rows'         => 2,
+                'placeholder'  => "Nuestro criterio\n|de adaptabilidad|",
+                'wrapper'      => ['width' => '60'],
+            ]),
             $campo('wysiwyg', 'cita', __('Frase destacada', 'ese-latam'), [
+                'instructions' => __('Se imprime entre comillas. Se puede resaltar en negrita el tramo en color.', 'ese-latam'),
                 'tabs'         => 'visual',
                 'toolbar'      => 'basic',
                 'media_upload' => 0,
             ]),
             $campo('textarea', 'criterio', __('Texto del criterio', 'ese-latam'), ['rows' => 4]),
+            $campo('text', 'criterio_firma', __('Firma', 'ese-latam'), [
+                'instructions' => __('Quién respalda la frase, junto al icono de marca.', 'ese-latam'),
+                'placeholder'  => __('ESE Latam', 'ese-latam'),
+                'wrapper'      => ['width' => '40'],
+            ]),
+            $campo('text', 'criterio_firma_sub', __('Firma — segunda línea', 'ese-latam'), [
+                'placeholder' => __('Equipo ejecutivo de desarrollo sostenible', 'ese-latam'),
+                'wrapper'     => ['width' => '60'],
+            ]),
+            $campo('image', 'criterio_producto', __('Foto del contenedor', 'ese-latam'), [
+                'instructions'  => __('El producto que flota a la derecha, con sus etiquetas alrededor. PNG con fondo transparente.', 'ese-latam'),
+                'return_format' => 'url',
+                'preview_size'  => 'medium',
+                'mime_types'    => 'png,webp',
+            ]),
+            $campo('repeater', 'criterio_callouts', __('Etiquetas del contenedor', 'ese-latam'), [
+                'instructions' => __('Las tres llamadas con línea y punto. La posición decide de qué lado sale cada una.', 'ese-latam'),
+                'layout'       => 'table',
+                'max'          => 3,
+                'button_label' => __('Añadir etiqueta', 'ese-latam'),
+                'sub_fields'   => [
+                    $campo('text', 'label', __('Texto', 'ese-latam'), [
+                        'key'       => 'field_callout_label',
+                        'required'  => 1,
+                        'maxlength' => 24,
+                    ]),
+                    $campo('select', 'pos', __('Posición', 'ese-latam'), [
+                        'key'           => 'field_callout_pos',
+                        'required'      => 1,
+                        'choices'       => [
+                            'left-top'    => __('Izquierda arriba', 'ese-latam'),
+                            'left-bottom' => __('Izquierda abajo', 'ese-latam'),
+                            'right'       => __('Derecha', 'ese-latam'),
+                        ],
+                        'default_value' => 'left-top',
+                    ]),
+                ],
+            ]),
+
+            // ---------- Cierre ----------
+            $tab('sector_cierre', __('Cierre', 'ese-latam')),
+            $campo('text', 'marquee', __('Frase del marquee', 'ese-latam'), [
+                'instructions' => __('La cinta que separa el criterio de las soluciones recomendadas. Vacía: no se muestra.', 'ese-latam'),
+                'placeholder'  => __('soluciones recomendadas', 'ese-latam'),
+                'maxlength'    => 60,
+            ]),
+            $campo('message', '', __('Casos reales', 'ese-latam'), [
+                'key'      => 'field_seccasos_msg',
+                'message'  => __('Las tarjetas son los cuatro casos más recientes del módulo <strong>Casos de éxito</strong>. Acá solo se define cómo se presenta la sección.', 'ese-latam'),
+                'esc_html' => 0,
+            ]),
+            $campo('text', 'casos_kicker', __('Antetítulo', 'ese-latam'), [
+                'placeholder' => __('Casos reales', 'ese-latam'),
+                'wrapper'     => ['width' => '40'],
+            ]),
+            $campo('textarea', 'casos_titulo', __('Titular', 'ese-latam'), [
+                'instructions' => ese_latam_ayuda_titulo(),
+                'rows'         => 2,
+                'placeholder'  => "Casos reales en\n|gestión urbana|",
+                'wrapper'      => ['width' => '60'],
+            ]),
+            $campo('textarea', 'casos_desc', __('Bajada', 'ese-latam'), ['rows' => 2]),
+            $campo('link', 'casos_enlace', __('Enlace', 'ese-latam'), [
+                'instructions' => __('Vacío: la sección se muestra sin enlace.', 'ese-latam'),
+            ]),
         ],
     ]);
 

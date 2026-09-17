@@ -5,10 +5,10 @@
  * artículo". Compartida por Solución por sector, Certificaciones e Impacto.
  *
  * Los casos salen del CPT `caso` (inc/cpt-casos.php): los 4 últimos
- * publicados; mientras no haya ninguno, las tarjetas de ejemplo. El enlace
- * "Ver todos" lleva al archivo /casos-de-exito/ (archive-caso.php).
+ * publicados. Sin casos no se pinta la franja. El enlace "Ver todos" lleva
+ * al archivo /casos-de-exito/ (archive-caso.php).
  *
- * @param array{kicker?: string, title?: string, desc?: string, link_label?: string, link_href?: string} $args
+ * @param array{kicker?: string, title?: string, desc?: string, link_label?: string, link_href?: string, excluir?: list<int>} $args
  *
  * @package EseLatam
  */
@@ -24,18 +24,28 @@ $ese_cr = wp_parse_args($args ?? [], [
     'desc'         => '',
     'link_label'   => '',
     'link_href'    => ese_latam_casos_url(),
+    'excluir'      => [],
 ]);
 
-$ese_casos = ese_latam_casos_cards(4);
+$ese_casos = ese_latam_casos_cards(4, (array) $ese_cr['excluir']);
+
+// Sin casos publicados no hay franja: el theme no inventa proyectos.
+if ([] === $ese_casos) {
+    return;
+}
 ?>
 
 <section class="casos" id="casos-reales">
     <header class="casos__header" data-reveal-header>
         <div class="casos__heading">
-            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_cr['kicker']); ?></p>
-            <h2 class="type-h2 uppercase">
-                <?php echo ese_latam_titulo($ese_cr['title'], 'span', 'hl'); ?>
-            </h2>
+            <?php if ('' !== $ese_cr['kicker']) : ?>
+                <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_cr['kicker']); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_cr['title']) : ?>
+                <h2 class="type-h2 uppercase">
+                    <?php echo ese_latam_titulo($ese_cr['title'], 'span', 'hl'); ?>
+                </h2>
+            <?php endif; ?>
             <?php if ('' !== $ese_cr['desc']) : ?>
                 <p class="nos-desc" data-reveal-desc><?php echo esc_html($ese_cr['desc']); ?></p>
             <?php endif; ?>

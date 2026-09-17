@@ -1,14 +1,21 @@
 <?php
 /**
- * Ficha de producto — "Soluciones recomendadas" (Figma 5105-4693): carrusel
- * coverflow con los otros productos del catálogo, sobre fondo navy. Se
- * llama desde single-producto.php DENTRO del loop para poder dejar fuera el
- * producto que se está viendo.
+ * Carrusel coverflow de productos sobre fondo navy. Dos usos, mismo bloque:
+ *   · Ficha de producto — "Soluciones recomendadas" (Figma 5105-4693): se
+ *     llama desde single-producto.php DENTRO del loop, para dejar fuera el
+ *     producto que se está viendo.
+ *   · Caso de éxito — "Soluciones utilizadas" (Figma 3891-4495): recibe la
+ *     lista de productos que el caso usó de verdad.
  *
  * Las cards son el mismo `.product-card` del slider de la home y de la
  * grilla del catálogo (variante `--dark`), alimentadas por el mismo helper
  * (ese_latam_producto_card_data); el carrusel es el mismo módulo
  * (product-carousel.ts) con el coverflow inclinado vía `data-carousel-*`.
+ *
+ * @param array{
+ *     kicker?: string, title?: string, desc?: string,
+ *     productos?: list<int>  IDs; vacío = los otros productos del catálogo
+ * } $args
  *
  * @package EseLatam
  */
@@ -18,28 +25,41 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-$ese_actual_id = get_the_ID();
-
-$ese_reco_query = new WP_Query([
-    'post_type'      => 'producto',
-    'post_status'    => 'publish',
-    'posts_per_page' => 8,
-    'post__not_in'   => [$ese_actual_id],
-    'orderby'        => 'menu_order date',
-    'order'          => 'ASC',
+$ese_reco = wp_parse_args($args ?? [], [
+    'kicker'    => '',
+    'title'     => '',
+    'desc'      => '',
+    'productos' => [],
 ]);
 
-$ese_recomendados = array_map(
-    static fn (WP_Post $p): array => ese_latam_producto_card_data($p->ID),
-    $ese_reco_query->posts
-);
+$ese_actual_id = get_the_ID();
+$ese_elegidos  = array_values(array_filter(array_map('intval', (array) $ese_reco['productos'])));
 
-// Con menos de 3 "otros" productos vuelve a entrar el actual: así el
-// coverflow tiene al menos una vecina distinta a cada lado del activo
-// (product-carousel.ts cierra el anillo duplicando el set cuando hay pocos
-// slides, pero no inventa productos).
-if (count($ese_recomendados) < 3) {
-    $ese_recomendados[] = ese_latam_producto_card_data($ese_actual_id);
+if ([] !== $ese_elegidos) {
+    // Lista elegida a mano: se respeta su orden.
+    $ese_recomendados = array_map('ese_latam_producto_card_data', $ese_elegidos);
+} else {
+    $ese_reco_query = new WP_Query([
+        'post_type'      => 'producto',
+        'post_status'    => 'publish',
+        'posts_per_page' => 8,
+        'post__not_in'   => [$ese_actual_id],
+        'orderby'        => 'menu_order date',
+        'order'          => 'ASC',
+    ]);
+
+    $ese_recomendados = array_map(
+        static fn (WP_Post $p): array => ese_latam_producto_card_data($p->ID),
+        $ese_reco_query->posts
+    );
+
+    // Con menos de 3 "otros" productos vuelve a entrar el actual: así el
+    // coverflow tiene al menos una vecina distinta a cada lado del activo
+    // (product-carousel.ts cierra el anillo duplicando el set cuando hay pocos
+    // slides, pero no inventa productos).
+    if (count($ese_recomendados) < 3 && 'producto' === get_post_type($ese_actual_id)) {
+        $ese_recomendados[] = ese_latam_producto_card_data($ese_actual_id);
+    }
 }
 
 // Sin productos publicados no hay nada que recomendar: el theme no inventa
@@ -53,18 +73,24 @@ if ([] === $ese_recomendados) {
     <?php // Misma trama de puntos del hero de la ficha (fondo navy también). ?>
     <div class="producto-hero__dots" aria-hidden="true"></div>
 
+    <?php if ('' !== $ese_reco['kicker'] || '' !== $ese_reco['title'] || '' !== $ese_reco['desc']) : ?>
     <header class="recomendados__header" data-reveal-header>
-        <p class="type-kicker text-white">/ <?php esc_html_e('Productos', 'ese-latam'); ?></p>
+        <?php if ('' !== $ese_reco['kicker']) : ?>
+            <p class="type-kicker text-white">/ <?php echo esc_html($ese_reco['kicker']); ?></p>
+        <?php endif; ?>
         <?php // Clases propias en vez de .type-h2/.hl: son @utility de Tailwind y
         // su color no se puede pisar desde @layer components (ver
         // .certificaciones__title). ?>
-        <h2 class="recomendados__title">
-            <?php echo ese_latam_titulo(__('Soluciones', 'ese-latam') .' '. __('|recomendadas|', 'ese-latam'), 'span', 'recomendados__title-accent'); ?>
-        </h2>
-        <p class="recomendados__desc">
-            <?php esc_html_e('Otras configuraciones de la misma familia, pensadas para distintos volúmenes y necesidades de recolección', 'ese-latam'); ?>
-        </p>
+        <?php if ('' !== $ese_reco['title']) : ?>
+            <h2 class="recomendados__title">
+                <?php echo ese_latam_titulo($ese_reco['title'], 'span', 'recomendados__title-accent'); ?>
+            </h2>
+        <?php endif; ?>
+        <?php if ('' !== $ese_reco['desc']) : ?>
+            <p class="recomendados__desc"><?php echo esc_html($ese_reco['desc']); ?></p>
+        <?php endif; ?>
     </header>
+    <?php endif; ?>
 
     <div class="recomendados__slider" data-reveal="up">
         <button type="button" class="embla__arrow embla__arrow--glass is-mirrored" data-carousel-prev

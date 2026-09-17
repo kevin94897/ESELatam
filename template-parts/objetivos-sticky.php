@@ -10,7 +10,7 @@
  * @param array{
  *     id?: string, kicker?: string, title?: string,
  *     desc?: string (HTML mínimo: span.hl-accent / strong),
- *     items?: list<array{id: string, title: string, img: string, text: array{0: string, 1: string, 2: string}}>,
+ *     items?: list<array{id: string, title: string, img: string, text: string}>,
  *     metas_title?: string, metas?: list<string>, skip_label?: string, skip_href?: string
  * } $args
  *
@@ -23,22 +23,23 @@ if (! defined('ABSPATH')) {
 }
 
 $ese_os = wp_parse_args($args ?? [], [
-    'id'           => 'objetivos',
-    'kicker'       => __('Sobre nosotros', 'ese-latam'),
-    'title'        => __('Objetivos con', 'ese-latam') . "\n" . __('|propósito|', 'ese-latam'),
-    'desc'         => '',
-    'items'        => [],
-    'metas_title'  => __('Algunas de nuestras metas y objetivos del programa:', 'ese-latam'),
-    'metas'        => [],
-    'skip_label'   => '',
-    'skip_href'    => '#',
+    'id'          => 'objetivos',
+    'kicker'      => '',
+    'title'       => '',
+    'desc'        => '',
+    'items'       => [],
+    'metas_title' => '',
+    'metas'       => [],
+    'skip_label'  => '',
+    'skip_href'   => '#',
 ]);
 
 if (empty($ese_os['items'])) {
     return;
 }
 
-$ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' . $file;
+// Acepta tanto una URL de campo como una ruta relativa del theme.
+$ese_img = 'ese_latam_img_ruta';
 
 // Check-circle (Figma check_circle 17px).
 $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.23015 12.306L13.2455 6.29067L12.3026 5.34784L7.23015 10.4203L4.68015 7.87033L3.73732 8.81316L7.23015 12.306ZM8.50157 17C7.32588 17 6.22081 16.7769 5.18634 16.3307C4.15188 15.8846 3.25207 15.279 2.48692 14.5142C1.72177 13.7493 1.11596 12.8499 0.669487 11.8159C0.223162 10.7819 0 9.6771 0 8.50157C0 7.32588 0.223088 6.22081 0.669263 5.18634C1.11544 4.15188 1.72095 3.25207 2.4858 2.48692C3.25065 1.72177 4.15009 1.11596 5.18411 0.669487C6.21812 0.223162 7.3229 0 8.49843 0C9.67412 0 10.7792 0.223087 11.8137 0.669263C12.8481 1.11544 13.7479 1.72095 14.5131 2.4858C15.2782 3.25065 15.884 4.15009 16.3305 5.18411C16.7768 6.21812 17 7.3229 17 8.49843C17 9.67412 16.7769 10.7792 16.3307 11.8137C15.8846 12.8481 15.279 13.7479 14.5142 14.5131C13.7493 15.2782 12.8499 15.884 11.8159 16.3305C10.7819 16.7768 9.6771 17 8.50157 17ZM8.5 15.6579C10.4982 15.6579 12.1908 14.9645 13.5776 13.5776C14.9645 12.1908 15.6579 10.4982 15.6579 8.5C15.6579 6.50175 14.9645 4.80921 13.5776 3.42237C12.1908 2.03553 10.4982 1.34211 8.5 1.34211C6.50175 1.34211 4.80921 2.03553 3.42237 3.42237C2.03553 4.80921 1.34211 6.50175 1.34211 8.5C1.34211 10.4982 2.03553 12.1908 3.42237 13.5776C4.80921 14.9645 6.50175 15.6579 8.5 15.6579Z" fill="currentColor"/></svg>';
@@ -47,14 +48,20 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
 <section id="<?php echo esc_attr($ese_os['id']); ?>" class="nos-objetivos" data-nos-objetivos>
     <header class="nos-objetivos__header" data-reveal-header>
         <div>
-            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_os['kicker']); ?></p>
-            <h2 class="type-h2 uppercase">
-                <?php echo ese_latam_titulo($ese_os['title'], 'span', 'hl'); ?>
-            </h2>
+            <?php if ('' !== $ese_os['kicker']) : ?>
+                <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_os['kicker']); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_os['title']) : ?>
+                <h2 class="type-h2 uppercase">
+                    <?php echo ese_latam_titulo($ese_os['title'], 'span', 'hl'); ?>
+                </h2>
+            <?php endif; ?>
         </div>
-        <p class="nos-desc" data-reveal-desc>
-            <?php echo wp_kses($ese_os['desc'], ['span' => ['class' => []], 'strong' => []]); ?>
-        </p>
+        <?php if ('' !== $ese_os['desc']) : ?>
+            <p class="nos-desc" data-reveal-desc>
+                <?php echo wp_kses($ese_os['desc'], ['span' => ['class' => []], 'strong' => [], 'em' => [], 'br' => []]); ?>
+            </p>
+        <?php endif; ?>
     </header>
 
     <div class="nos-objetivos__layout">
@@ -83,7 +90,9 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
 
                 <?php if (! empty($ese_os['metas'])) : ?>
                 <div class="nos-objetivos__metas" data-reveal="up" data-reveal-delay="0.1">
-                    <p class="nos-objetivos__metas-title"><?php echo esc_html($ese_os['metas_title']); ?></p>
+                    <?php if ('' !== $ese_os['metas_title']) : ?>
+                        <p class="nos-objetivos__metas-title"><?php echo esc_html($ese_os['metas_title']); ?></p>
+                    <?php endif; ?>
                     <ul class="nos-objetivos__metas-list">
                         <?php foreach ($ese_os['metas'] as $ese_meta): ?>
                             <li>
@@ -106,10 +115,10 @@ $ese_check_svg = '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xm
                         <span class="nos-objetivo__num" aria-hidden="true"><?php echo esc_html(str_pad((string) ($ese_i + 1), 2, '0', STR_PAD_LEFT)); ?></span>
                         <h3 class="nos-objetivo__title"><?php echo esc_html($ese_obj['title']); ?></h3>
                     </div>
-                    <p class="nos-objetivo__text" data-reveal="up">
-                        <?php echo esc_html($ese_obj['text'][0]); ?>
-                        <span class="hl-accent"><?php echo esc_html($ese_obj['text'][1]); ?></span><?php echo esc_html($ese_obj['text'][2]); ?>
-                    </p>
+                    <?php $ese_txt = ese_latam_texto_rico((string) ($ese_obj['text'] ?? '')); ?>
+                    <?php if ('' !== $ese_txt) : ?>
+                        <p class="nos-objetivo__text" data-reveal="up"><?php echo $ese_txt; // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>

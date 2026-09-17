@@ -20,11 +20,13 @@ if (! defined('ABSPATH')) {
 }
 
 $ese_d = wp_parse_args($args ?? [], [
-    'kicker'       => __('Desafíos', 'ese-latam'),
-    'title'        => __('Desafíos en la', 'ese-latam') . "\n" . __('|gestión urbana|', 'ese-latam'),
-    'desc'         => '',
-    'dolores'      => [],
-    'alivios'      => [],
+    'kicker'        => '',
+    'title'         => '',
+    'desc'          => '',
+    'dolores'       => [],
+    'alivios'       => [],
+    'label_dolores' => '',
+    'label_alivios' => '',
 ]);
 
 if (empty($ese_d['dolores'])) {
@@ -35,8 +37,8 @@ $ese_img   = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/'
 $ese_areas = ['a', 'b', 'c', 'd', 'e', 'f'];
 
 $ese_paneles = [
-    ['key' => 'dolores', 'label' => __('Dolores y brechas', 'ese-latam'), 'cards' => $ese_d['dolores']],
-    ['key' => 'alivio',  'label' => __('Alivio ESE Latam', 'ese-latam'),  'cards' => $ese_d['alivios']],
+    ['key' => 'dolores', 'label' => $ese_d['label_dolores'], 'cards' => $ese_d['dolores']],
+    ['key' => 'alivio',  'label' => $ese_d['label_alivios'], 'cards' => $ese_d['alivios']],
 ];
 $ese_paneles = array_values(array_filter($ese_paneles, static fn (array $p): bool => ! empty($p['cards'])));
 ?>

@@ -38,6 +38,16 @@ function ese_latam_paginas_base(): array {
         'certificaciones' => ['title' => __('Certificaciones', 'ese-latam'),         'template' => ''],
         'impacto'         => ['title' => __('Residuos inteligentes', 'ese-latam'),   'template' => ''],
         'distribuidores'  => ['title' => __('Encuentra un distribuidor', 'ese-latam'), 'template' => ''],
+        // El blog no tiene page-blog.php: es la página de entradas
+        // (Ajustes → Lectura), así que WordPress la pinta con home.php.
+        // ese_latam_asegurar_blog() la fija. Existe como página para poder
+        // colgarle los campos de inc/pcf-blog.php.
+        'blog'            => ['title' => __('Blog', 'ese-latam'),                    'template' => ''],
+        // Las dos legales comparten plantilla y grupo de campos: la regla de
+        // ubicación es la plantilla, no el ID, así que cualquier página legal
+        // que se cree después hereda los mismos campos (ver inc/pcf-legal.php).
+        'terminos-y-condiciones'  => ['title' => __('Términos y condiciones', 'ese-latam'),  'template' => 'page-legal.php'],
+        'politicas-de-privacidad' => ['title' => __('Políticas de privacidad', 'ese-latam'), 'template' => 'page-legal.php'],
     ];
 }
 
@@ -117,8 +127,8 @@ add_action('after_switch_theme', 'ese_latam_asegurar_paginas');
  *
  * Se hace UNA sola vez y nunca se revierte: si alguien elige otra portada (o
  * vuelve a las entradas), la marca ya está puesta y esto no vuelve a tocar
- * los ajustes. El índice del blog no se pierde: el listado editorial del
- * sitio es el archivo de "Casos de éxito" (archive-caso.php).
+ * los ajustes. El índice de entradas se mueve a la página "Blog"
+ * (ese_latam_asegurar_blog()).
  */
 function ese_latam_asegurar_portada(): void {
     if (get_option('ese_latam_portada_fijada')) {
@@ -159,3 +169,32 @@ function ese_latam_body_class_hero_claro(array $classes): array {
     return $classes;
 }
 add_filter('body_class', 'ese_latam_body_class_hero_claro');
+
+/**
+ * Fija la página "Blog" como página de entradas en Ajustes → Lectura.
+ *
+ * Con la portada estática, el índice de entradas necesita una página propia:
+ * sin ella WordPress no lo pinta en ningún lado y el enlace "Blog" del footer
+ * no tiene destino. Al fijarla, /blog/ lo pinta home.php (Figma 3848-9017) y
+ * los campos de inc/pcf-blog.php se editan en esa misma página.
+ *
+ * Misma política que la portada: se hace UNA vez y no se revierte, para no
+ * pisar la decisión del cliente si más adelante mueve el índice.
+ */
+function ese_latam_asegurar_blog(): void {
+    if (get_option('ese_latam_blog_fijado')) {
+        return;
+    }
+
+    $blog = get_page_by_path('blog');
+    if (! $blog instanceof WP_Post || 'publish' !== $blog->post_status) {
+        return;
+    }
+
+    if ((int) get_option('page_for_posts') <= 0) {
+        update_option('page_for_posts', $blog->ID);
+    }
+
+    update_option('ese_latam_blog_fijado', 1);
+}
+add_action('init', 'ese_latam_asegurar_blog', 12);

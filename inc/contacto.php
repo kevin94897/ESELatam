@@ -17,24 +17,43 @@ if (! defined('ABSPATH')) {
  * formulario, el bloque de "Información de contacto", la sección de la sede
  * y cualquier otra plantilla que los necesite.
  *
- * Filtrable con `ese_latam_contacto_datos` para no tener que tocar el theme
- * cuando el cliente cambie un teléfono o el horario.
+ * Se editan en Apariencia → Personalizar → ESE Latam → Datos de contacto
+ * (inc/customizer.php). Lo que no esté cargado vuelve como cadena vacía y
+ * cada plantilla se salta ese dato: el theme no inventa un teléfono.
+ *
+ * Sigue siendo filtrable con `ese_latam_contacto_datos`.
  *
  * @return array{telefono: string, telefono_link: string, email: string, direccion: string, horario: string, maps_query: string, maps_url: string}
  */
 function ese_latam_contacto_datos(): array {
-    $direccion = __('Calle Grimaldo del Solar 162. Of. 603, Miraflores', 'ese-latam');
+    $dato = static fn (string $name): string => trim((string) get_theme_mod('ese_latam_' . $name, ''));
+
+    $direccion = $dato('direccion');
+    $ciudad    = $dato('ciudad');
+
+    // Lo que se busca en el mapa: la dirección y, si está, la ciudad.
+    $query = trim($direccion . ('' !== $ciudad ? ', ' . $ciudad : ''), ', ');
+
+    // El número del enlace `tel:` no lleva espacios ni signos. Si no se
+    // cargó aparte, se deduce del que se lee.
+    $link = $dato('telefono_link');
+    if ('' === $link) {
+        $link = (string) preg_replace('/[^\d+]/', '', $dato('telefono'));
+    }
+
+    $maps_url = $dato('maps_url');
+    if ('' === $maps_url && '' !== $query) {
+        $maps_url = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query);
+    }
 
     return apply_filters('ese_latam_contacto_datos', [
-        'telefono'      => '+51 997 171 302',
-        // tel: sin espacios ni signos, como pide el esquema.
-        'telefono_link' => '+51997171302',
-        'email'         => 'eselatam@gmail.com',
+        'telefono'      => $dato('telefono'),
+        'telefono_link' => $link,
+        'email'         => $dato('email'),
         'direccion'     => $direccion,
-        'horario'       => __('Lun a Vie: 8:00 - 17:00', 'ese-latam'),
-        'maps_query'    => $direccion . ', Lima, Perú',
-        'maps_url'      => 'https://www.google.com/maps/search/?api=1&query='
-            . rawurlencode($direccion . ', Lima, Perú'),
+        'horario'       => $dato('horario'),
+        'maps_query'    => $query,
+        'maps_url'      => $maps_url,
     ]);
 }
 
@@ -109,7 +128,8 @@ function ese_latam_contacto_enviar(): void {
         $responder(false, __('Revisa los campos marcados.', 'ese-latam'), $errores);
     }
 
-    $destino = apply_filters('ese_latam_contacto_destino', get_option('admin_email'));
+    $destino = trim((string) get_theme_mod('ese_latam_form_destino', ''));
+    $destino = apply_filters('ese_latam_contacto_destino', '' !== $destino ? $destino : get_option('admin_email'));
 
     $asunto = sprintf(
         /* translators: 1: sector, 2: nombre de quien escribe */

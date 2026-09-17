@@ -17,46 +17,48 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-$ese_pasos = [
-    [
-        'tab'   => __('Reconoce', 'ese-latam'),
-        'title' => __('Reconoce sellos válidos', 'ese-latam'),
-        'text'  => __('El marcado EN 840 debe estar moldeado en relieve directo sobre la superficie de polietileno (frente, tapa o lateral). Si está impreso en un sticker adhesivo común, es una imitación no autorizada.', 'ese-latam'),
-        'tip'   => __('Pide el informe original completo de ensayos mecánicos en formato PDF de alta resolución.', 'ese-latam'),
-    ],
-    [
-        'tab'   => __('Evita', 'ese-latam'),
-        'title' => __('Evita imitaciones', 'ese-latam'),
-        'text'  => __('Desconfía de logos de certificadoras sin número de certificado ni fecha de vigencia. Un sello legítimo siempre identifica al laboratorio, al modelo ensayado y al periodo de validez.', 'ese-latam'),
-        'tip'   => __('Verifica el número de certificado directamente en el sitio web del organismo certificador.', 'ese-latam'),
-    ],
-    [
-        'tab'   => __('Verifica', 'ese-latam'),
-        'title' => __('Verifica el material', 'ese-latam'),
-        'text'  => __('El HDPE certificado tiene un color uniforme, sin vetas ni burbujas, y conserva la flexibilidad en frío. Un plástico de reciclaje no controlado se vuelve quebradizo con el sol y los golpes.', 'ese-latam'),
-        'tip'   => __('Solicita la ficha técnica con el porcentaje de material PCR y su origen.', 'ese-latam'),
-    ],
-    [
-        'tab'   => __('Valida', 'ese-latam'),
-        'title' => __('Valida con ESE Latam', 'ese-latam'),
-        'text'  => __('Envíanos el modelo y el número de serie: confirmamos en 24 horas si el contenedor sale de una fábrica certificada y si su documentación está vigente.', 'ese-latam'),
-        'tip'   => __('Nuestro equipo técnico valida certificados sin costo para compras públicas y licitaciones.', 'ese-latam'),
-    ],
-];
+// Los pasos se editan en la página de Certificaciones.
+$ese_vc_id = (int) get_queried_object_id();
+$ese_pasos = [];
+
+foreach ((array) ese_latam_campo('certpag_val_pasos', $ese_vc_id, []) as $ese_fila) {
+    $ese_tab = trim((string) ($ese_fila['tab'] ?? ''));
+    if ('' === $ese_tab) {
+        continue;
+    }
+    $ese_pasos[] = [
+        'tab'   => $ese_tab,
+        'title' => (string) ($ese_fila['title'] ?? ''),
+        'text'  => (string) ($ese_fila['text'] ?? ''),
+        'tip'   => (string) ($ese_fila['tip'] ?? ''),
+    ];
+}
+
+if ([] === $ese_pasos) {
+    return;
+}
+
+$ese_vc_kicker = trim((string) ese_latam_campo('certpag_val_kicker', $ese_vc_id, ''));
+$ese_vc_titulo = trim((string) ese_latam_campo('certpag_val_titulo', $ese_vc_id, ''));
+$ese_vc_desc   = ese_latam_texto_rico((string) ese_latam_campo('certpag_val_desc', $ese_vc_id, ''));
+$ese_vc_pasos_kicker = trim((string) ese_latam_campo('certpag_val_pasos_kicker', $ese_vc_id, ''));
+$ese_vc_enlace       = ese_latam_enlace(ese_latam_campo('certpag_val_enlace', $ese_vc_id, null));
 ?>
 
 <section class="valida" id="valida-certificados">
     <div class="valida__intro">
         <header data-reveal-header>
-            <p class="type-kicker text-secondary">/ <?php esc_html_e('Sobre nosotros', 'ese-latam'); ?></p>
-            <h2 class="type-h2 uppercase">
-                <?php echo ese_latam_titulo(__('Valida certificados', 'ese-latam') . "\n" . __('|originales|', 'ese-latam'), 'span', 'hl'); ?>
-            </h2>
-            <p class="nos-desc" data-reveal-desc>
-                <?php esc_html_e('Detectar marcas falsificadas y validar sellos legítimos de calidad', 'ese-latam'); ?>
-                <span class="hl-accent"><?php esc_html_e('es crucial para asegurar el cumplimiento normativo', 'ese-latam'); ?></span>.
-                <?php esc_html_e('Explora las tarjetas del carrusel.', 'ese-latam'); ?>
-            </p>
+            <?php if ('' !== $ese_vc_kicker) : ?>
+                <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_vc_kicker); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_vc_titulo) : ?>
+                <h2 class="type-h2 uppercase">
+                    <?php echo ese_latam_titulo($ese_vc_titulo, 'span', 'hl'); ?>
+                </h2>
+            <?php endif; ?>
+            <?php if ('' !== $ese_vc_desc) : ?>
+                <p class="nos-desc" data-reveal-desc><?php echo $ese_vc_desc; ?></p>
+            <?php endif; ?>
         </header>
         <div class="valida__photo" data-reveal="up" data-reveal-delay="0.2">
             <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/nosotros/parque.webp'); ?>" alt="" loading="lazy" decoding="async"
@@ -66,13 +68,17 @@ $ese_pasos = [
 
     <div class="valida__steps" data-tabs data-tabs-autoplay="6000">
         <div class="valida__head" data-reveal-header>
-            <p class="type-kicker text-secondary">/ <?php esc_html_e('Pasos a seguir', 'ese-latam'); ?></p>
-            <a href="<?php echo esc_url(ese_latam_contacto_url()); ?>" class="link-arrow">
-                <span class="link-arrow__text"><?php esc_html_e('Ver la guía completa', 'ese-latam'); ?></span>
+            <?php if ('' !== $ese_vc_pasos_kicker) : ?>
+                <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_vc_pasos_kicker); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_vc_enlace['label']) : ?>
+            <a href="<?php echo esc_url($ese_vc_enlace['href']); ?>" class="link-arrow"<?php echo ese_latam_target_attr($ese_vc_enlace['target']); ?>>
+                <span class="link-arrow__text"><?php echo esc_html($ese_vc_enlace['label']); ?></span>
                 <span class="link-arrow__icon" aria-hidden="true">
                     <svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.7165 7.15792L9.95748 12.7276C9.77717 12.902 9.53261 13 9.2776 13C9.02259 13 8.77803 12.902 8.59772 12.7276C8.4174 12.5532 8.3161 12.3167 8.3161 12.0701C8.3161 11.8235 8.4174 11.587 8.59772 11.4126L12.7178 7.42945H0.959834C0.70527 7.42945 0.461133 7.33164 0.281129 7.15756C0.101125 6.98347 0 6.74736 0 6.50116C0 6.25496 0.101125 6.01885 0.281129 5.84476C0.461133 5.67067 0.70527 5.57287 0.959834 5.57287H12.7178L8.59932 1.58743C8.419 1.41304 8.3177 1.17652 8.3177 0.929896C8.3177 0.683272 8.419 0.44675 8.59932 0.27236C8.77963 0.0979708 9.02419 0 9.2792 0C9.5342 0 9.77877 0.0979708 9.95908 0.27236L15.7181 5.84208C15.8076 5.92843 15.8786 6.03104 15.9269 6.144C15.9753 6.25696 16.0001 6.37805 16 6.50032C15.9998 6.62259 15.9747 6.74362 15.9261 6.85647C15.8774 6.96933 15.8062 7.07177 15.7165 7.15792Z" fill="currentColor"/></svg>
                 </span>
             </a>
+            <?php endif; ?>
         </div>
 
         <div class="valida__deck" data-reveal="up" data-reveal-delay="0.15">

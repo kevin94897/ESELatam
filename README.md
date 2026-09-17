@@ -163,15 +163,18 @@ acepta SVG por defecto.
 | **Páginas → Inicio** | Hero, marquee, titulares de cada sección y "Productos destacados" | `inc/pcf-home.php` |
 | **Sectores** (módulo) | Un sector por entrada: resumen, foto, y todo el contenido de su página | `inc/cpt-sectores.php`, `inc/pcf-sectores.php` |
 | **Páginas → Soluciones por sector** | Solo el hero y los pasos del proceso de esa pantalla | `inc/pcf-sectores.php` |
+| **Páginas → Certificaciones** | Hero, qué sellos muestra, los cuatro argumentos, los paneles de calidad, el ciclo Blue Angel y la guía de validación | `inc/pcf-certificaciones.php` |
+| **Páginas → Residuos inteligentes** | Hero, mosaico "decisión humana", franja de frases y encabezados de alianzas y casos | `inc/pcf-impacto.php` |
 | **ESE Latam → Cabecera** | El botón del menú principal |
 | **ESE Latam → Certificaciones** | Solo el encabezado de la franja | `inc/pcf-globales.php` |
 | **Certificaciones** (módulo) | Un sello por entrada: logo, resumen, criterios, PDF | `inc/modulos.php` |
 | **Distribuidores** (módulo) | Una empresa por entrada; el país es una taxonomía con sus coordenadas | `inc/modulos.php` |
 | **Aliados**, **Preguntas frecuentes** (módulos) | Logos de socios y las FAQ de Contacto | `inc/modulos.php` |
 | **ESE Latam → Distribuidores** | Países (repetidor) con sus empresas (repetidor anidado) | `inc/pcf-globales.php` |
+| **ESE Latam → Pruebas de rigurosidad** | El bloque "¿Qué hace que sea excelente?", compartido por cada ficha de producto y Certificaciones | `inc/pcf-globales.php` |
 | **ESE Latam → Residuos inteligentes** | Encabezado + servicios (repetidor) | `inc/pcf-globales.php` |
 | **ESE Latam → Contactemos** | El bloque de cierre por defecto | `inc/pcf-globales.php` |
-| **Cualquier página o producto → "Secciones compartidas"** | Override del copy de Contactemos / Certificaciones / Residuos solo en esa página | `inc/pcf-globales.php` |
+| **Cualquier página o producto → "Secciones compartidas"** | Override del copy de Contactemos / Certificaciones / Residuos / Pruebas de rigurosidad solo en esa página | `inc/pcf-globales.php` |
 
 La portada es una **página estática** (`inicio`) fijada en Ajustes → Lectura
 por `ese_latam_asegurar_portada()` (`inc/paginas.php`). Sin ella, la home no
@@ -624,6 +627,22 @@ espera 2,5 s, alinea la fase con la orientación actual y retoma sin salto
 (constantes `IDLE_*` en `globe-scene.ts`).
 
 ---
+
+## 🛠️ Barra de administración
+
+El theme ya no la desactiva: quien esté logueado la ve en el frontend, con
+los accesos de WordPress y el enlace para editar la página en la que está.
+
+`.site-header` es `position: fixed`, así que el `margin-top` que WordPress
+pone en `html` no le afecta y quedaría por debajo de la barra, que va en
+`z-index: 99999`. Por eso `body.admin-bar .site-header` lo desplaza siguiendo
+los cortes del propio `admin-bar.css`:
+
+| Ancho | Alto de la barra | `top` del header |
+| --- | --- | --- |
+| > 782px | 32px | 32px |
+| 601–782px | 46px | 46px |
+| ≤ 600px | 46px, pero se va con el scroll | 0 |
 
 ## 🧭 Header: barra de vidrio
 

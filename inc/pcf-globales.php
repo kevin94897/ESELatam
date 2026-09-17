@@ -95,6 +95,63 @@ function ese_latam_campos_certificaciones(string $prefijo, array $extra = []): a
 }
 
 /**
+ * Campos de "Pruebas de rigurosidad" (global y override).
+ *
+ * @return list<array<string, mixed>>
+ */
+function ese_latam_campos_pruebas(string $prefijo, array $extra = []): array {
+    $campo = static fn (string $type, string $name, string $label, array $args = []): array =>
+        ese_latam_campo_def($type, $prefijo . $name, $label, array_merge($args, $extra));
+
+    return [
+        $campo('text', 'kicker', __('Antetítulo', 'ese-latam'), [
+            'placeholder' => __('Pruebas de rigurosidad', 'ese-latam'),
+            'wrapper'     => ['width' => '40'],
+        ]),
+        $campo('textarea', 'titulo', __('Titular', 'ese-latam'), [
+            'instructions' => ese_latam_ayuda_titulo(),
+            'rows'         => 2,
+            'placeholder'  => "¿qué hace que\n|sea excelente?|",
+            'wrapper'      => ['width' => '60'],
+        ]),
+        $campo('wysiwyg', 'desc', __('Bajada', 'ese-latam'), [
+            'tabs'         => 'visual',
+            'toolbar'      => 'basic',
+            'media_upload' => 0,
+        ]),
+        $campo('repeater', 'lista', __('Pruebas', 'ese-latam'), [
+            'instructions' => __('Las tarjetas se reparten a los dos lados del video, mitad y mitad. Sin pruebas cargadas, el bloque no se muestra.', 'ese-latam'),
+            'layout'       => 'table',
+            'max'          => 10,
+            'button_label' => __('Añadir prueba', 'ese-latam'),
+            'sub_fields'   => [
+                ese_latam_campo_def('text', 'title', __('Nombre', 'ese-latam'), [
+                    'key'       => 'field_' . $prefijo . 'titulo_item',
+                    'required'  => 1,
+                    'maxlength' => 40,
+                ]),
+                ese_latam_campo_def('textarea', 'desc', __('Descripción', 'ese-latam'), [
+                    'key'  => 'field_' . $prefijo . 'desc_item',
+                    'rows' => 2,
+                ]),
+            ],
+        ]),
+        $campo('file', 'video', __('Video', 'ese-latam'), [
+            'instructions'  => __('MP4 optimizado. Sin video, el centro queda con el botón de play.', 'ese-latam'),
+            'return_format' => 'url',
+            'mime_types'    => 'mp4,webm',
+            'wrapper'       => ['width' => '50'],
+        ]),
+        $campo('image', 'poster', __('Imagen del video', 'ese-latam'), [
+            'instructions'  => __('Se ve antes de darle al play.', 'ese-latam'),
+            'return_format' => 'url',
+            'preview_size'  => 'medium',
+            'wrapper'       => ['width' => '50'],
+        ]),
+    ];
+}
+
+/**
  * Campos del encabezado de "Residuos inteligentes" (global y override).
  *
  * @return list<array<string, mixed>>
@@ -149,6 +206,7 @@ add_action('acf/init', static function (): void {
         'cabecera'        => __('Cabecera', 'ese-latam'),
         'certificaciones' => __('Certificaciones', 'ese-latam'),
         'distribuidores'  => __('Distribuidores', 'ese-latam'),
+        'pruebas'         => __('Pruebas de rigurosidad', 'ese-latam'),
         'residuos'        => __('Residuos inteligentes', 'ese-latam'),
         'contacto'        => __('Contactemos', 'ese-latam'),
     ];
@@ -332,6 +390,15 @@ add_action('acf/init', static function (): void {
         __('La red que alimenta el globo de la portada y la página “Encuentra un distribuidor”.', 'ese-latam')
     ));
 
+    // ---------- Pruebas de rigurosidad ----------
+    acf_add_local_field_group($base(
+        'pruebas',
+        __('Pruebas de rigurosidad', 'ese-latam'),
+        'ese-latam-pruebas',
+        ese_latam_campos_pruebas('pruebas_'),
+        __('El bloque “¿Qué hace que sea excelente?”, que sale en cada ficha de producto y en la página de Certificaciones. Cada una puede personalizarlo desde su propio editor.', 'ese-latam')
+    ));
+
     // ---------- Residuos inteligentes ----------
     acf_add_local_field_group($base(
         'residuos',
@@ -411,6 +478,7 @@ add_action('acf/init', static function (): void {
             [['param' => 'post_type', 'operator' => '==', 'value' => 'page']],
             [['param' => 'post_type', 'operator' => '==', 'value' => 'producto']],
             [['param' => 'post_type', 'operator' => '==', 'value' => 'sector']],
+            [['param' => 'post_type', 'operator' => '==', 'value' => 'post']],
         ],
         'menu_order'            => 20,
         'position'              => 'normal',
@@ -434,7 +502,12 @@ add_action('acf/init', static function (): void {
                 $tab('pag_residuos', __('Residuos inteligentes', 'ese-latam')),
                 $interruptor('residuos', __('Personalizar “Residuos inteligentes” en esta página', 'ese-latam')),
             ],
-            ese_latam_campos_residuos('residuos_pag_', $solo_si('residuos'))
+            ese_latam_campos_residuos('residuos_pag_', $solo_si('residuos')),
+            [
+                $tab('pag_pruebas', __('Pruebas de rigurosidad', 'ese-latam')),
+                $interruptor('pruebas', __('Personalizar “Pruebas de rigurosidad” en esta página', 'ese-latam')),
+            ],
+            ese_latam_campos_pruebas('pruebas_pag_', $solo_si('pruebas'))
         ),
     ]);
 });

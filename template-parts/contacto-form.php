@@ -16,44 +16,26 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
+$ese_id  = (int) get_queried_object_id();
+$ese_cmp = static fn (string $name, $def = '') => (string) ese_latam_campo($name, $ese_id, $def);
+
 $ese_datos = ese_latam_contacto_datos();
 
-// Sectores: los mismos ocho de la sección "Sectores" de la home. Se listan
-// acá (solo los nombres) en vez de importarlos de front-page.php para que
-// esta parte siga siendo autocontenida, igual que el resto de template-parts.
-$ese_sectores_opts = [
-    __('Municipalidades y gobiernos locales', 'ese-latam'),
-    __('Empresas de recolección', 'ese-latam'),
-    __('Inmobiliarias', 'ese-latam'),
-    __('Hospitalarios', 'ese-latam'),
-    __('Uso doméstico', 'ese-latam'),
-    __('Supermercados y aeropuertos', 'ese-latam'),
-    __('Restaurantes y hostelería', 'ese-latam'),
-    __('Industria y manufactura', 'ese-latam'),
-    __('Otro', 'ese-latam'),
-];
+// La salida para quien no se ve en la lista; se añade al final de los tres
+// desplegables si está cargada.
+$ese_otro = $ese_cmp('ctc_f_otro');
 
-// Los 13 países de Latinoamérica donde opera ESE Latam (mismo set que el
-// riel de Distribuidores de la home).
-$ese_paises_opts = [
-    __('Perú', 'ese-latam'),
-    __('Chile', 'ese-latam'),
-    __('Colombia', 'ese-latam'),
-    __('Ecuador', 'ese-latam'),
-    __('Bolivia', 'ese-latam'),
-    __('Argentina', 'ese-latam'),
-    __('Uruguay', 'ese-latam'),
-    __('Paraguay', 'ese-latam'),
-    __('Brasil', 'ese-latam'),
-    __('México', 'ese-latam'),
-    __('Panamá', 'ese-latam'),
-    __('Costa Rica', 'ese-latam'),
-    __('República Dominicana', 'ese-latam'),
-    __('Otro', 'ese-latam'),
-];
+// País: los mismos de Distribuidores (taxonomía `pais`), no una lista
+// aparte que haya que mantener sincronizada a mano.
+$ese_paises_opts = array_map(
+    static fn (WP_Term $t): string => $t->name,
+    array_filter((array) get_terms(['taxonomy' => 'pais', 'hide_empty' => false]), static fn ($t): bool => $t instanceof WP_Term)
+);
 
-// Productos reales del CPT; si el cliente todavía no publicó ninguno, el
-// select cae a las familias de producto del catálogo.
+// Sector: el módulo "Sectores", que es el que alimenta el menú y la página.
+$ese_sectores_opts = array_column(ese_latam_sectores(), 'title');
+
+// Producto: el catálogo.
 $ese_productos_query = new WP_Query([
     'post_type'      => 'producto',
     'post_status'    => 'publish',
@@ -63,46 +45,45 @@ $ese_productos_query = new WP_Query([
     'fields'         => 'ids',
 ]);
 $ese_productos_opts = array_map('get_the_title', $ese_productos_query->posts);
-if (empty($ese_productos_opts)) {
-    $ese_productos_opts = [
-        __('Contenedores con ruedas', 'ese-latam'),
-        __('Contenedores soterrados', 'ese-latam'),
-        __('Papeleras urbanas', 'ese-latam'),
-        __('Contenedores hospitalarios', 'ese-latam'),
-    ];
+
+foreach (['ese_paises_opts', 'ese_sectores_opts', 'ese_productos_opts'] as $ese_lista) {
+    if ('' !== $ese_otro && ! empty($$ese_lista)) {
+        $$ese_lista[] = $ese_otro;
+    }
 }
 
 // Resultado del envío sin JS (ver inc/contacto.php).
 $ese_estado = isset($_GET['contacto']) ? sanitize_key(wp_unslash($_GET['contacto'])) : '';
 
 // Ítems del panel derecho. El ícono es el SVG exportado del Figma (80×80,
-// ya trae su propia caja gris): se usa tal cual, sin re-dibujarlo.
-$ese_info = [
+// ya trae su propia caja gris): se usa tal cual, sin re-dibujarlo. El dato
+// viene de los globales y el rótulo de la página; sin dato, no hay ítem.
+$ese_info = array_values(array_filter([
     [
         'icon'  => 'phone.svg',
-        'label' => __('Teléfono', 'ese-latam'),
+        'label' => $ese_cmp('ctc_info_telefono'),
         'value' => $ese_datos['telefono'],
-        'href'  => 'tel:' . $ese_datos['telefono_link'],
+        'href'  => '' !== $ese_datos['telefono_link'] ? 'tel:' . $ese_datos['telefono_link'] : '',
     ],
     [
         'icon'  => 'mail.svg',
-        'label' => __('Correo electrónico', 'ese-latam'),
+        'label' => $ese_cmp('ctc_info_email'),
         'value' => $ese_datos['email'],
-        'href'  => 'mailto:' . $ese_datos['email'],
+        'href'  => '' !== $ese_datos['email'] ? 'mailto:' . $ese_datos['email'] : '',
     ],
     [
         'icon'  => 'pin.svg',
-        'label' => __('Dirección', 'ese-latam'),
+        'label' => $ese_cmp('ctc_info_direccion'),
         'value' => $ese_datos['direccion'],
         'href'  => $ese_datos['maps_url'],
     ],
     [
         'icon'  => 'clock.svg',
-        'label' => __('Horario de atención', 'ese-latam'),
+        'label' => $ese_cmp('ctc_info_horario'),
         'value' => $ese_datos['horario'],
         'href'  => '',
     ],
-];
+], static fn (array $i): bool => '' !== $i['value']));
 
 /**
  * Imprime un campo del formulario. Todos comparten estructura (label +
@@ -125,17 +106,24 @@ $ese_campo = static function (array $args): void {
     ]);
 
     $id    = 'ctc-' . $args['name'];
+    $label = trim((string) $args['label']);
+
+    // Sin rótulo cargado no se pinta un <label> vacío, que dejaría al campo
+    // sin nombre accesible: se le pone aria-label con lo que haya a mano.
     $attrs = 'id="' . esc_attr($id) . '" name="' . esc_attr($args['name']) . '"'
         . ($args['required'] ? ' required' : '')
-        . ($args['autocomplete'] ? ' autocomplete="' . esc_attr($args['autocomplete']) . '"' : '');
+        . ($args['autocomplete'] ? ' autocomplete="' . esc_attr($args['autocomplete']) . '"' : '')
+        . ('' === $label ? ' aria-label="' . esc_attr('' !== $args['placeholder'] ? $args['placeholder'] : $args['name']) . '"' : '');
     ?>
     <div class="ctc-field<?php echo $args['full'] ? ' ctc-field--full' : ''; ?>">
-        <label class="ctc-field__label" for="<?php echo esc_attr($id); ?>">
-            <?php echo esc_html($args['label']); ?>
-            <?php if ($args['required']) : ?>
-                <span class="ctc-field__req" aria-hidden="true">*</span>
-            <?php endif; ?>
-        </label>
+        <?php if ('' !== $label) : ?>
+            <label class="ctc-field__label" for="<?php echo esc_attr($id); ?>">
+                <?php echo esc_html($label); ?>
+                <?php if ($args['required']) : ?>
+                    <span class="ctc-field__req" aria-hidden="true">*</span>
+                <?php endif; ?>
+            </label>
+        <?php endif; ?>
 
         <?php if ('select' === $args['type']) : ?>
             <div class="ctc-field__control ctc-field__control--select">
@@ -171,15 +159,20 @@ $ese_campo = static function (array $args): void {
 
 <section class="ctc-intro" id="formulario">
     <header class="ctc-intro__header" data-reveal-header>
-        <p class="type-kicker text-secondary">/ <?php esc_html_e('Contacto', 'ese-latam'); ?></p>
-        <h1 class="ctc-intro__title">
-            <?php echo ese_latam_titulo(__('Cuéntanos tu', 'ese-latam') . "\n" . __('|operación|', 'ese-latam'), 'span', 'hl'); ?>
-        </h1>
-        <p class="ctc-intro__lede" data-reveal-desc>
-            <?php esc_html_e('Te responderemos en menos de', 'ese-latam'); ?>
-            <span class="hl-accent"><?php esc_html_e('24 horas', 'ese-latam'); ?></span>
-            <?php esc_html_e('hábiles.', 'ese-latam'); ?>
-        </p>
+        <?php $ese_kicker = $ese_cmp('ctc_kicker'); ?>
+        <?php if ('' !== $ese_kicker) : ?>
+            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_kicker); ?></p>
+        <?php endif; ?>
+        <?php $ese_titulo = $ese_cmp('ctc_titulo'); ?>
+        <?php if ('' !== $ese_titulo) : ?>
+            <h1 class="ctc-intro__title">
+                <?php echo ese_latam_titulo($ese_titulo, 'span', 'hl'); ?>
+            </h1>
+        <?php endif; ?>
+        <?php $ese_lede = ese_latam_texto_rico($ese_cmp('ctc_lede')); ?>
+        <?php if ('' !== $ese_lede) : ?>
+            <p class="ctc-intro__lede" data-reveal-desc><?php echo $ese_lede; // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
+        <?php endif; ?>
     </header>
 
     <div class="ctc-layout">
@@ -200,51 +193,51 @@ $ese_campo = static function (array $args): void {
                     <?php
                     $ese_campo([
                         'name'         => 'nombre',
-                        'label'        => __('Nombre y apellido', 'ese-latam'),
-                        'placeholder'  => __('Escribe tu nombre y apellido...', 'ese-latam'),
+                        'label'        => $ese_cmp('ctc_f_nombre_label'),
+                        'placeholder'  => $ese_cmp('ctc_f_nombre_ph'),
                         'autocomplete' => 'name',
                     ]);
                     $ese_campo([
                         'name'         => 'email',
                         'type'         => 'email',
-                        'label'        => __('Correo electrónico', 'ese-latam'),
-                        'placeholder'  => 'ejemplo@entidad.com',
+                        'label'        => $ese_cmp('ctc_f_email_label'),
+                        'placeholder'  => $ese_cmp('ctc_f_email_ph'),
                         'autocomplete' => 'email',
                     ]);
                     $ese_campo([
                         'name'         => 'telefono',
                         'type'         => 'tel',
-                        'label'        => __('Teléfono', 'ese-latam'),
-                        'placeholder'  => '+51 999 999 999',
+                        'label'        => $ese_cmp('ctc_f_telefono_label'),
+                        'placeholder'  => $ese_cmp('ctc_f_telefono_ph'),
                         'autocomplete' => 'tel',
                     ]);
                     $ese_campo([
                         'name'        => 'pais',
                         'type'        => 'select',
-                        'label'       => __('País', 'ese-latam'),
-                        'placeholder' => __('Selecciona tu país...', 'ese-latam'),
+                        'label'       => $ese_cmp('ctc_f_pais_label'),
+                        'placeholder' => $ese_cmp('ctc_f_pais_ph'),
                         'options'     => $ese_paises_opts,
                     ]);
                     $ese_campo([
                         'name'        => 'sector',
                         'type'        => 'select',
-                        'label'       => __('Sector', 'ese-latam'),
-                        'placeholder' => __('Selecciona tu sector...', 'ese-latam'),
+                        'label'       => $ese_cmp('ctc_f_sector_label'),
+                        'placeholder' => $ese_cmp('ctc_f_sector_ph'),
                         'options'     => $ese_sectores_opts,
                     ]);
                     $ese_campo([
                         'name'        => 'producto',
                         'type'        => 'select',
-                        'label'       => __('Producto de interés', 'ese-latam'),
-                        'placeholder' => __('Selecciona un producto...', 'ese-latam'),
+                        'label'       => $ese_cmp('ctc_f_producto_label'),
+                        'placeholder' => $ese_cmp('ctc_f_producto_ph'),
                         'options'     => $ese_productos_opts,
                         'required'    => false,
                     ]);
                     $ese_campo([
                         'name'        => 'mensaje',
                         'type'        => 'textarea',
-                        'label'       => __('Mensaje adicional o descripción de requerimiento', 'ese-latam'),
-                        'placeholder' => __('Cuéntanos volúmenes, plazos y el detalle de tu operación...', 'ese-latam'),
+                        'label'       => $ese_cmp('ctc_f_mensaje_label'),
+                        'placeholder' => $ese_cmp('ctc_f_mensaje_ph'),
                         'full'        => true,
                     ]);
                     ?>
@@ -259,7 +252,7 @@ $ese_campo = static function (array $args): void {
                     ?>
                     <button type="submit" class="hero-cta ctc-submit" data-ctc-submit>
                         <span class="hero-cta__label">
-                            <span class="ctc-submit__text"><?php esc_html_e('Solicitar asesoría', 'ese-latam'); ?></span>
+                            <span class="ctc-submit__text"><?php echo esc_html($ese_cmp('ctc_boton')); ?></span>
                             <span class="hero-cta__corner" aria-hidden="true">
                                 <svg viewBox="0 0 18 48" preserveAspectRatio="none">
                                     <path d="M0 0h5.63c7.808 0 13.536 7.337 11.642 14.91l-6.09 24.359A11.527 11.527 0 0 1 0 48V0Z"></path>
@@ -273,11 +266,20 @@ $ese_campo = static function (array $args): void {
                         </span>
                     </button>
 
-                    <p class="ctc-form__note">
-                        <?php esc_html_e('Los campos con', 'ese-latam'); ?>
-                        <span class="ctc-field__req">*</span>
-                        <?php esc_html_e('son obligatorios.', 'ese-latam'); ?>
-                    </p>
+                    <?php // El asterisco es marcado, no texto: se pinta donde el
+                    // cliente escriba un * en la nota. ?>
+                    <?php $ese_nota = $ese_cmp('ctc_nota'); ?>
+                    <?php if ('' !== $ese_nota) : ?>
+                        <p class="ctc-form__note">
+                            <?php
+                            $ese_partes = explode('*', $ese_nota, 2);
+                            echo esc_html($ese_partes[0]);
+                            if (isset($ese_partes[1])) {
+                                echo '<span class="ctc-field__req">*</span>' . esc_html($ese_partes[1]);
+                            }
+                            ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
 
                 <?php // Estado del envío: lo rellena contacto-page.ts, o llega
@@ -286,9 +288,9 @@ $ese_campo = static function (array $args): void {
                     data-ctc-status role="status" aria-live="polite">
                     <?php
                     if ('ok' === $ese_estado) {
-                        esc_html_e('¡Gracias! Recibimos tu mensaje y te responderemos en menos de 24 horas hábiles.', 'ese-latam');
+                        echo esc_html($ese_cmp('ctc_msg_ok'));
                     } elseif ($ese_estado) {
-                        esc_html_e('No pudimos enviar tu mensaje. Revisa los campos e inténtalo de nuevo.', 'ese-latam');
+                        echo esc_html($ese_cmp('ctc_msg_error'));
                     }
                     ?>
                 </p>
@@ -298,18 +300,31 @@ $ese_campo = static function (array $args): void {
         <aside class="ctc-aside">
             <?php // Tarjeta de marca en el hueco que el Figma deja como
             // placeholder gris: foto urbana del theme + dato de respaldo. ?>
-            <div class="ctc-aside__media" data-reveal="fade">
-                <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/contacto-bg.jpg'); ?>" alt=""
-                    loading="lazy" decoding="async">
-                <div class="ctc-aside__media-body">
-                    <p class="ctc-aside__media-kicker"><?php esc_html_e('Sede Miraflores', 'ese-latam'); ?></p>
-                    <p class="ctc-aside__media-text">
-                        <?php esc_html_e('Atendemos operaciones en 13 países de Latinoamérica.', 'ese-latam'); ?>
-                    </p>
+            <?php
+            $ese_aside_img    = ese_latam_img_url($ese_cmp('ctc_aside_imagen'));
+            $ese_aside_kicker = $ese_cmp('ctc_aside_kicker');
+            $ese_aside_texto  = $ese_cmp('ctc_aside_texto');
+            ?>
+            <?php if ('' !== $ese_aside_img) : ?>
+                <div class="ctc-aside__media" data-reveal="fade">
+                    <img src="<?php echo esc_url($ese_aside_img); ?>" alt="" loading="lazy" decoding="async">
+                    <?php if ('' !== $ese_aside_kicker || '' !== $ese_aside_texto) : ?>
+                        <div class="ctc-aside__media-body">
+                            <?php if ('' !== $ese_aside_kicker) : ?>
+                                <p class="ctc-aside__media-kicker"><?php echo esc_html($ese_aside_kicker); ?></p>
+                            <?php endif; ?>
+                            <?php if ('' !== $ese_aside_texto) : ?>
+                                <p class="ctc-aside__media-text"><?php echo esc_html($ese_aside_texto); ?></p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
-            </div>
+            <?php endif; ?>
 
-            <p class="ctc-aside__title"><?php esc_html_e('Información de contacto', 'ese-latam'); ?></p>
+            <?php $ese_aside_titulo = $ese_cmp('ctc_aside_titulo'); ?>
+            <?php if ('' !== $ese_aside_titulo && [] !== $ese_info) : ?>
+                <p class="ctc-aside__title"><?php echo esc_html($ese_aside_titulo); ?></p>
+            <?php endif; ?>
 
             <ul class="ctc-info" data-reveal-stagger>
                 <?php foreach ($ese_info as $ese_item) : ?>
@@ -318,7 +333,9 @@ $ese_campo = static function (array $args): void {
                             src="<?php echo esc_url(ESE_LATAM_URI . '/assets/icons/contacto/' . $ese_item['icon']); ?>"
                             alt="" width="80" height="80" loading="lazy" decoding="async">
                         <span class="ctc-info__text">
-                            <span class="ctc-info__label"><?php echo esc_html($ese_item['label']); ?></span>
+                            <?php if ('' !== $ese_item['label']) : ?>
+                                <span class="ctc-info__label"><?php echo esc_html($ese_item['label']); ?></span>
+                            <?php endif; ?>
                             <?php if ($ese_item['href']) : ?>
                                 <a class="ctc-info__value" href="<?php echo esc_url($ese_item['href']); ?>"
                                     <?php echo 0 === strpos($ese_item['href'], 'http') ? 'target="_blank" rel="noopener"' : ''; ?>>

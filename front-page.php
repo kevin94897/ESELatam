@@ -22,6 +22,37 @@ $ese_hero = [
 ];
 
 $ese_hero_cta  = ese_latam_enlace(ese_latam_home('hero_cta'));
+
+// La isla se pide por ID y no por URL: así la pinta wp_get_attachment_image()
+// con el srcset que WordPress ya generó, en vez de mantener a mano los cuatro
+// tamaños que antes vivían en el theme.
+$ese_hero_isla = (int) ese_latam_home('hero_isla', 0);
+
+// El alto de la isla depende de su proporción, así que se la pasamos al CSS
+// en vez de dejarla escrita a ojo: así una imagen más cuadrada se achica sola
+// y no termina contra la cabecera (ver .hero__island en main.css).
+$ese_isla_estilo = '';
+$ese_isla_sizes  = '';
+if ($ese_hero_isla > 0) {
+    $ese_isla_meta  = wp_get_attachment_metadata($ese_hero_isla);
+    $ese_isla_w     = (int) ($ese_isla_meta['width'] ?? 0);
+    $ese_isla_h     = (int) ($ese_isla_meta['height'] ?? 0);
+    $ese_isla_ratio = $ese_isla_w > 0 && $ese_isla_h > 0 ? round($ese_isla_w / $ese_isla_h, 4) : 1.7778;
+    $ese_isla_ancho = (int) ese_latam_home('hero_isla_ancho', 0);
+    $ese_isla_ancho = $ese_isla_ancho > 0 ? $ese_isla_ancho : 1720;
+
+    $ese_isla_estilo = '--island-ratio:' . $ese_isla_ratio . ';--island-max:' . $ese_isla_ancho . 'px;';
+
+    // `sizes` es la pista que usa el navegador para elegir del srcset, así que
+    // tiene que decir lo mismo que el CSS. No admite var(), de modo que los
+    // tres topes se calculan acá con los números reales (80svh es
+    // --island-alto-max en main.css).
+    $ese_isla_sizes = sprintf(
+        '(max-width: 47.9375rem) min(120vw, 640px), min(92vw, %dpx, %ssvh)',
+        $ese_isla_ancho,
+        round(80 * $ese_isla_ratio, 2)
+    );
+}
 $ese_hero_card = '' !== $ese_hero['stat'] || '' !== $ese_hero['tag'] || '' !== $ese_hero['desc'];
 
 // El titular se anima línea por línea (hero-scroll.ts busca cada
@@ -46,16 +77,22 @@ $ese_hero_hay = [] !== $ese_hero_lineas || '' !== $ese_hero['lede'] || $ese_hero
 
     <div class="hero__shade" aria-hidden="true"></div>
 
-    <div class="hero__island" data-hero-island aria-hidden="true">
-        <img src="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-2400.webp'); ?>"
-            srcset="<?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-480.webp'); ?> 480w,
-                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-768.webp'); ?> 768w,
-                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-1200.webp'); ?> 1200w,
-                <?php echo esc_url(ESE_LATAM_URI . '/assets/imgs/island/island-2400.webp'); ?> 2400w"
-            sizes="(max-width: 47.9375rem) min(120vw, 640px), min(92vw, 1720px, 142svh)" alt=""
-            width="2400" height="1350"
-            fetchpriority="high" decoding="async">
-    </div>
+    <?php if ($ese_hero_isla > 0) : ?>
+        <?php // El srcset lo arma WordPress con los tamaños que generó al
+        // subir la imagen; `sizes` sí es nuestro, porque la isla no ocupa
+        // el ancho del contenedor sino el que le da .hero__island. ?>
+        <div class="hero__island" data-hero-island aria-hidden="true"
+            <?php echo '' !== $ese_isla_estilo ? 'style="' . esc_attr($ese_isla_estilo) . '"' : ''; ?>>
+            <?php
+            echo wp_get_attachment_image($ese_hero_isla, 'full', false, [
+                'alt'           => '',
+                'sizes'         => $ese_isla_sizes,
+                'fetchpriority' => 'high',
+                'decoding'      => 'async',
+            ]);
+            ?>
+        </div>
+    <?php endif; ?>
 
     <div class="hero__content">
         <div class="hero__title-wrap" data-hero-title-wrap>

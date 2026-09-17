@@ -126,7 +126,10 @@ $ese_hdr_cta = ese_latam_enlace(
         <a href="<?php echo esc_url($ese_hdr_cta['href']); ?>" class="nav-pill__cta mobile-nav__cta"<?php echo ese_latam_target_attr($ese_hdr_cta['target']); ?>>
             <?php echo esc_html($ese_hdr_cta['label']); ?>
         </a>
-        <a class="mobile-nav__mail" href="mailto:hola@eselatam.com">hola@eselatam.com</a>
+        <?php $ese_hdr_mail = ese_latam_contacto_datos()['email']; ?>
+        <?php if ('' !== $ese_hdr_mail) : ?>
+            <a class="mobile-nav__mail" href="mailto:<?php echo esc_attr($ese_hdr_mail); ?>"><?php echo esc_html($ese_hdr_mail); ?></a>
+        <?php endif; ?>
     </div>
 </header>
 

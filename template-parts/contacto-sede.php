@@ -16,14 +16,31 @@ if (! defined('ABSPATH')) {
 }
 
 $ese_datos = ese_latam_contacto_datos();
+
+$ese_id  = (int) get_queried_object_id();
+$ese_cmp = static fn (string $name, $def = '') => (string) ese_latam_campo($name, $ese_id, $def);
+
+$ese_kicker = $ese_cmp('ctc_sede_kicker');
+$ese_titulo = $ese_cmp('ctc_sede_titulo');
+$ese_enlace = $ese_cmp('ctc_sede_enlace');
+$ese_mapa   = false !== ese_latam_campo('ctc_sede_mapa', $ese_id, true);
+
+// Sin dirección ni titular no hay sección: el theme no inventa una sede.
+if ('' === $ese_datos['direccion'] && '' === $ese_titulo) {
+    return;
+}
 ?>
 
 <section class="ctc-sede">
     <header class="ctc-sede__header" data-reveal-header>
-        <p class="type-kicker text-secondary">/ <?php esc_html_e('Arquitectura del proyecto', 'ese-latam'); ?></p>
-        <h2 class="type-h2 uppercase">
-            <?php echo ese_latam_titulo(__('Sede central', 'ese-latam') . "\n" . __('|ESE Latam|', 'ese-latam'), 'span', 'hl'); ?>
-        </h2>
+        <?php if ('' !== $ese_kicker) : ?>
+            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_kicker); ?></p>
+        <?php endif; ?>
+        <?php if ('' !== $ese_titulo) : ?>
+            <h2 class="type-h2 uppercase">
+                <?php echo ese_latam_titulo($ese_titulo, 'span', 'hl'); ?>
+            </h2>
+        <?php endif; ?>
     </header>
 
     <div class="ctc-sede__bar" data-reveal="up">
@@ -37,9 +54,10 @@ $ese_datos = ese_latam_contacto_datos();
             <?php echo esc_html($ese_datos['direccion']); ?>
         </p>
 
+        <?php if ('' !== $ese_enlace && '' !== $ese_datos['maps_url']) : ?>
         <a class="link-arrow ctc-sede__link" href="<?php echo esc_url($ese_datos['maps_url']); ?>"
             target="_blank" rel="noopener">
-            <span class="link-arrow__text"><?php esc_html_e('Llegar con Google Maps', 'ese-latam'); ?></span>
+            <span class="link-arrow__text"><?php echo esc_html($ese_enlace); ?></span>
             <span class="link-arrow__icon" aria-hidden="true">
                 <svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -48,12 +66,15 @@ $ese_datos = ese_latam_contacto_datos();
                 </svg>
             </span>
         </a>
+        <?php endif; ?>
     </div>
 
+    <?php if ($ese_mapa && '' !== $ese_datos['maps_query']) : ?>
     <div class="ctc-sede__map" data-reveal="up" data-reveal-delay="0.1">
         <iframe
             src="https://www.google.com/maps?q=<?php echo rawurlencode($ese_datos['maps_query']); ?>&amp;output=embed"
             title="<?php esc_attr_e('Mapa de la sede de ESE Latam', 'ese-latam'); ?>"
             loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
     </div>
+    <?php endif; ?>
 </section>

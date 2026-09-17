@@ -107,16 +107,20 @@ function ese_latam_casos_url(): string {
 }
 
 /**
- * Filtros activos del archivo, ya saneados. El buscador se llama `q` y no
- * `s` a propósito: con `s` en la URL WordPress marca la petición como
- * búsqueda global y deja de aplicar archive-caso.php.
+ * Filtros activos del archivo, ya saneados.
+ *
+ * Ninguno de los tres se llama como su concepto, y es a propósito: `s` haría
+ * que WordPress tratara la petición como búsqueda global y dejara de aplicar
+ * archive-caso.php, y `sector` es la query var del CPT `sector`
+ * (inc/cpt-sectores.php), así que `?sector=hospitalarios` servía la página
+ * de ese sector en vez de filtrar los casos. De ahí `q` y `rubro`.
  *
  * @return array{q: string, sector: string, ciudad: string}
  */
 function ese_latam_casos_filtros(): array {
     return [
         'q'      => isset($_GET['q']) ? sanitize_text_field(wp_unslash($_GET['q'])) : '',
-        'sector' => isset($_GET['sector']) ? sanitize_title(wp_unslash($_GET['sector'])) : '',
+        'sector' => isset($_GET['rubro']) ? sanitize_title(wp_unslash($_GET['rubro'])) : '',
         'ciudad' => isset($_GET['ciudad']) ? sanitize_title(wp_unslash($_GET['ciudad'])) : '',
     ];
 }
@@ -165,54 +169,37 @@ function ese_latam_caso_card_data(int $post_id): array {
         'title'  => get_the_title($post_id),
         'tag'    => is_array($sectores) && ! empty($sectores) ? $sectores[0]->name : '',
         'ciudad' => is_array($ciudades) && ! empty($ciudades) ? $ciudades[0]->name : '',
-        'img'    => get_the_post_thumbnail_url($post_id, 'large')
-            ?: (ESE_LATAM_URI . '/assets/imgs/casos/bbva-recidar.webp'),
+        'img'    => (string) (get_the_post_thumbnail_url($post_id, 'large') ?: ''),
         'href'   => (string) get_permalink($post_id),
     ];
 }
 
 /**
- * Tarjetas de ejemplo (mismo formato que ese_latam_caso_card_data()) para
- * cuando el cliente todavía no publicó casos: el archivo y "Casos reales"
- * se ven completos desde el día uno. Sin ficha real detrás, todas enlazan
- * al archivo.
+ * Últimos N casos publicados como tarjetas. Lista vacía si todavía no hay
+ * ninguno: la sección que la pide decide no pintarse, igual que el resto de
+ * los módulos. Lo usa "Casos reales" (template-parts/casos-reales.php).
  *
+ * `$excluir` es para el single de caso, donde la franja es "Casos de éxito
+ * relacionados" y no tiene sentido que el caso se recomiende a sí mismo.
+ *
+ * @param list<int> $excluir
  * @return list<array{title: string, tag: string, ciudad: string, img: string, href: string}>
  */
-function ese_latam_casos_placeholder(): array {
-    $href = ese_latam_casos_url();
-    $img  = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/casos/' . $file;
-
-    return [
-        ['title' => __('Campaña BBVA con Recidar', 'ese-latam'),        'tag' => __('Municipalidades', 'ese-latam'), 'ciudad' => 'Lima',      'img' => $img('bbva-recidar.webp'), 'href' => $href],
-        ['title' => __('Proyecto Quito', 'ese-latam'),                  'tag' => __('Gestión urbana', 'ese-latam'),  'ciudad' => 'Quito',     'img' => $img('quito.webp'),        'href' => $href],
-        ['title' => __('Campaña BBVA con Recidar', 'ese-latam'),        'tag' => __('Municipalidades', 'ese-latam'), 'ciudad' => 'Lima',      'img' => $img('bbva-recidar.webp'), 'href' => $href],
-        ['title' => __('Proyecto Quito', 'ese-latam'),                  'tag' => __('Gestión urbana', 'ese-latam'),  'ciudad' => 'Quito',     'img' => $img('quito.webp'),        'href' => $href],
-        ['title' => __('Campaña BBVA con Recidar', 'ese-latam'),        'tag' => __('Municipalidades', 'ese-latam'), 'ciudad' => 'Lima',      'img' => $img('bbva-recidar.webp'), 'href' => $href],
-        ['title' => __('Proyecto Quito', 'ese-latam'),                  'tag' => __('Gestión urbana', 'ese-latam'),  'ciudad' => 'Quito',     'img' => $img('quito.webp'),        'href' => $href],
-        ['title' => __('Campaña BBVA con Recidar', 'ese-latam'),        'tag' => __('Municipalidades', 'ese-latam'), 'ciudad' => 'Lima',      'img' => $img('bbva-recidar.webp'), 'href' => $href],
-        ['title' => __('Proyecto Quito', 'ese-latam'),                  'tag' => __('Gestión urbana', 'ese-latam'),  'ciudad' => 'Quito',     'img' => $img('quito.webp'),        'href' => $href],
-    ];
-}
-
-/**
- * Últimos N casos publicados como tarjetas; si no hay ninguno, N de ejemplo.
- * Lo usa "Casos reales" (template-parts/casos-reales.php).
- *
- * @return list<array{title: string, tag: string, ciudad: string, img: string, href: string}>
- */
-function ese_latam_casos_cards(int $cantidad = 4): array {
-    $ids = get_posts([
+function ese_latam_casos_cards(int $cantidad = 4, array $excluir = []): array {
+    $args = [
         'post_type'      => 'caso',
         'post_status'    => 'publish',
         'posts_per_page' => $cantidad,
         'fields'         => 'ids',
         'no_found_rows'  => true,
-    ]);
+    ];
 
-    if (empty($ids)) {
-        return array_slice(ese_latam_casos_placeholder(), 0, $cantidad);
+    $excluir = array_values(array_filter(array_map('intval', $excluir)));
+    if ([] !== $excluir) {
+        $args['post__not_in'] = $excluir;
     }
+
+    $ids = get_posts($args);
 
     return array_map(static fn (int $id): array => ese_latam_caso_card_data($id), $ids);
 }
@@ -234,7 +221,9 @@ function ese_latam_caso_card(array $caso, array $opts = []): void {
     ?>
     <li class="<?php echo esc_attr(trim('caso ' . $opts['class'])); ?>">
         <a class="caso__link" href="<?php echo esc_url($caso['href']); ?>">
-            <img class="caso__img" src="<?php echo esc_url($caso['img']); ?>" alt="" loading="lazy" decoding="async">
+            <?php if ('' !== $caso['img']) : ?>
+                <img class="caso__img" src="<?php echo esc_url($caso['img']); ?>" alt="" loading="lazy" decoding="async">
+            <?php endif; ?>
             <span class="caso__shade" aria-hidden="true"></span>
             <?php if ('' !== $caso['tag']) : ?>
                 <span class="caso__tag"><?php echo esc_html($caso['tag']); ?></span>

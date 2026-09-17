@@ -22,6 +22,7 @@ define('ESE_LATAM_IS_DEV', file_exists(ESE_LATAM_DIR . '/.vite-dev') && $is_loca
 define('ESE_LATAM_VITE_SERVER', 'http://localhost:5173');
 
 require_once ESE_LATAM_DIR . '/inc/setup.php';
+require_once ESE_LATAM_DIR . '/inc/customizer.php';
 require_once ESE_LATAM_DIR . '/inc/enqueue.php';
 require_once ESE_LATAM_DIR . '/inc/pcf.php';
 require_once ESE_LATAM_DIR . '/inc/pcf-home.php';
@@ -34,8 +35,15 @@ require_once ESE_LATAM_DIR . '/inc/modulos.php';
 require_once ESE_LATAM_DIR . '/inc/pcf-modulos.php';
 require_once ESE_LATAM_DIR . '/inc/cpt-sectores.php';
 require_once ESE_LATAM_DIR . '/inc/pcf-sectores.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-impacto.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-certificaciones.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-nosotros.php';
 require_once ESE_LATAM_DIR . '/inc/cpt-casos.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-casos.php';
+require_once ESE_LATAM_DIR . '/inc/blog.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-blog.php';
 require_once ESE_LATAM_DIR . '/inc/distribuidores.php';
+require_once ESE_LATAM_DIR . '/inc/pcf-legal.php';
 require_once ESE_LATAM_DIR . '/inc/paginas.php';
 require_once ESE_LATAM_DIR . '/inc/contacto.php';
-add_filter( 'show_admin_bar', '__return_false' );
+require_once ESE_LATAM_DIR . '/inc/pcf-contacto.php';

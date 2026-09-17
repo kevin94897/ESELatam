@@ -27,7 +27,8 @@ declare(strict_types=1);
 
 get_header();
 
-$ese_id = get_the_ID();
+$ese_id    = get_the_ID();
+$ese_madre = get_page_by_path(ESE_LATAM_SECTORES_BASE);
 
 // Titular en dos pesos: "municipalidades y" + "gobiernos locales". El corte
 // sale del nombre del sector, así que un sector nuevo lo hereda sin tocar nada.
@@ -52,7 +53,21 @@ $ese_sec = [
     'criterio' => trim((string) ese_latam_campo('criterio', $ese_id, '')),
 ];
 
+// Las tres llamadas que rodean al contenedor del bloque "criterio".
+$ese_callouts = [];
+foreach ((array) ese_latam_campo('criterio_callouts', $ese_id, []) as $ese_fila) {
+    $ese_label = trim((string) ($ese_fila['label'] ?? ''));
+    if ('' === $ese_label) {
+        continue;
+    }
+    $ese_callouts[] = [
+        'label' => $ese_label,
+        'pos'   => (string) ($ese_fila['pos'] ?? 'left-top'),
+    ];
+}
+
 $ese_sec_cta = ese_latam_enlace(ese_latam_campo('hero_cta', $ese_id, null));
+$ese_marquee = trim((string) ese_latam_campo('marquee', $ese_id, ''));
 ?>
 
 <div class="nosotros nosotros--sector" data-nosotros>
@@ -68,7 +83,8 @@ $ese_sec_cta = ese_latam_enlace(ese_latam_campo('hero_cta', $ese_id, null));
         'cta_label'  => $ese_sec_cta['label'],
         'cta_href'   => $ese_sec_cta['href'],
         'cta_target' => $ese_sec_cta['target'],
-        'crumb'      => [['label' => __('Sectores', 'ese-latam'), 'url' => ese_latam_pagina_url(ESE_LATAM_SECTORES_BASE, home_url('/#sectores'))]],
+        // La miga de pan nombra a la página madre con su propio título.
+        'crumb'      => [['label' => ese_latam_titulo_plano(get_the_title($ese_madre)), 'url' => ese_latam_pagina_url(ESE_LATAM_SECTORES_BASE, home_url('/#sectores'))]],
         'current'    => get_the_title($ese_id),
         'bg'         => $ese_sec['bg'],
     ]);
@@ -76,6 +92,10 @@ $ese_sec_cta = ese_latam_enlace(ese_latam_campo('hero_cta', $ese_id, null));
     // Sin dolores ni alivios cargados el comparador no tiene nada que comparar.
     if ([] !== $ese_sec['dolores'] || [] !== $ese_sec['alivios']) {
         get_template_part('template-parts/sector-desafios', null, [
+            'kicker'        => (string) ese_latam_campo('desafios_kicker', $ese_id, ''),
+            'title'         => (string) ese_latam_campo('desafios_titulo', $ese_id, ''),
+            'label_dolores' => (string) ese_latam_campo('desafios_label_dolores', $ese_id, ''),
+            'label_alivios' => (string) ese_latam_campo('desafios_label_alivios', $ese_id, ''),
             'desc'    => $ese_sec['desafios'],
             'dolores' => $ese_sec['dolores'],
             'alivios' => $ese_sec['alivios'],
@@ -84,21 +104,37 @@ $ese_sec_cta = ese_latam_enlace(ese_latam_campo('hero_cta', $ese_id, null));
 
     if ('' !== $ese_sec['cita'] || '' !== $ese_sec['criterio']) {
         get_template_part('template-parts/sector-criterio', null, [
-            'quote' => $ese_sec['cita'],
-            'desc'  => $ese_sec['criterio'],
+            'kicker'    => (string) ese_latam_campo('criterio_kicker', $ese_id, ''),
+            'title'     => (string) ese_latam_campo('criterio_titulo', $ese_id, ''),
+            'quote'     => $ese_sec['cita'],
+            'desc'      => $ese_sec['criterio'],
+            'firma'     => (string) ese_latam_campo('criterio_firma', $ese_id, ''),
+            'firma_sub' => (string) ese_latam_campo('criterio_firma_sub', $ese_id, ''),
+            'product'   => ese_latam_img_url(ese_latam_campo('criterio_producto', $ese_id, '')),
+            'callouts'  => $ese_callouts,
+            'alt'       => get_the_title($ese_id),
         ]);
     }
     ?>
 
-    <div class="nos-marquee nos-marquee--sm" aria-hidden="true">
-        <p class="nos-marquee__track" data-marquee="right">
-            <span><?php esc_html_e('soluciones recomendadas', 'ese-latam'); ?></span>
-            <span><?php esc_html_e('soluciones recomendadas', 'ese-latam'); ?></span>
-        </p>
-    </div>
+    <?php if ('' !== $ese_marquee) : ?>
+        <div class="nos-marquee nos-marquee--sm" aria-hidden="true">
+            <p class="nos-marquee__track" data-marquee="right">
+                <span><?php echo esc_html($ese_marquee); ?></span>
+                <span><?php echo esc_html($ese_marquee); ?></span>
+            </p>
+        </div>
+    <?php endif; ?>
 
     <?php
-    get_template_part('template-parts/producto-recomendados');
+    // Mismo bloque que la ficha de producto y el caso de éxito: desde que lo
+    // comparten, el copy viaja por args. Acá sigue escrito en la plantilla:
+    // el sector todavía no tiene campos para esta sección.
+    get_template_part('template-parts/producto-recomendados', null, [
+        'kicker' => __('Productos', 'ese-latam'),
+        'title'  => __('Soluciones', 'ese-latam') . ' ' . __('|recomendadas|', 'ese-latam'),
+        'desc'   => __('Otras configuraciones de la misma familia, pensadas para distintos volúmenes y necesidades de recolección', 'ese-latam'),
+    ]);
 
     get_template_part('template-parts/certificaciones', null, [
         'centered' => true,
@@ -106,10 +142,7 @@ $ese_sec_cta = ese_latam_enlace(ese_latam_campo('hero_cta', $ese_id, null));
 
     get_template_part('template-parts/economia-circular');
 
-    get_template_part('template-parts/casos-reales', null, [
-        'kicker'     => __('Casos reales', 'ese-latam'),
-        'link_label' => __('Ver todos los casos', 'ese-latam'),
-    ]);
+    get_template_part('template-parts/casos-reales', null, ese_latam_args_casos($ese_id, 'casos'));
 
     get_template_part('template-parts/contacto', null, [
         'class' => 'contacto--upper',

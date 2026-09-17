@@ -22,7 +22,10 @@ declare(strict_types=1);
 
 get_header();
 
-$ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' . $file;
+// Todo el copy de esta pantalla se edita en la propia página (ver
+// inc/pcf-impacto.php); las secciones compartidas traen el suyo.
+$ese_id      = (int) get_queried_object_id();
+$ese_hero_cta = ese_latam_enlace(ese_latam_campo('impacto_hero_cta', $ese_id, null));
 ?>
 
 <div class="nosotros nosotros--impacto" data-nosotros>
@@ -30,13 +33,16 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
 
     <?php
     get_template_part('template-parts/hero-interno', null, [
-        'kicker'       => __('Impacto', 'ese-latam'),
-        'title'        => __('Residuos |inteligentes|', 'ese-latam'),
-        'desc'         => __('Trabajamos con gobiernos y comunidades para convertir la gestión de residuos en una decisión humana: medible, circular y con impacto real en cada ciudad.', 'ese-latam'),
-        'cta_label'    => __('Conoce los casos', 'ese-latam'),
-        'cta_href'     => '#casos-reales',
-        'current'      => __('Impacto', 'ese-latam'),
-        'bg'           => $ese_img('nosotros/parque.webp'),
+        'kicker'     => (string) ese_latam_campo('impacto_hero_kicker', $ese_id, ''),
+        'title'      => (string) ese_latam_campo('impacto_hero_titulo', $ese_id, ''),
+        'desc'       => (string) ese_latam_campo('impacto_hero_desc', $ese_id, ''),
+        'cta_label'  => $ese_hero_cta['label'],
+        'cta_href'   => $ese_hero_cta['href'],
+        'cta_target' => $ese_hero_cta['target'],
+        // La miga de pan usa el antetítulo ("Impacto"), que es como el menú
+        // nombra a esta página; sin él cae al título real.
+        'current'    => (string) ese_latam_campo('impacto_hero_kicker', $ese_id, '') ?: get_the_title($ese_id),
+        'bg'         => ese_latam_img_url(ese_latam_campo('impacto_hero_imagen', $ese_id, '')),
     ]);
 
     get_template_part('template-parts/impacto-stats');
@@ -44,14 +50,13 @@ $ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' .
     get_template_part('template-parts/residuos');
 
     get_template_part('template-parts/aliados', null, [
-        'kicker'       => __('Alianzas', 'ese-latam'),
-        'title'        => __('Unidos por', 'ese-latam') . "\n" . __('|las mejores alianzas|', 'ese-latam'),
-        'desc'         => __('Distribuidores, municipios y operadores que ya trabajan con contenedores ESE en toda Latinoamérica.', 'ese-latam'),
+        'kicker' => (string) ese_latam_campo('impacto_aliados_kicker', $ese_id, ''),
+        'title'  => (string) ese_latam_campo('impacto_aliados_titulo', $ese_id, ''),
+        'desc'   => (string) ese_latam_campo('impacto_aliados_desc', $ese_id, ''),
+        'isla'   => ese_latam_img_url(ese_latam_campo('impacto_aliados_isla', $ese_id, '')),
     ]);
 
-    get_template_part('template-parts/casos-reales', null, [
-        'link_label' => __('Ver todos los casos', 'ese-latam'),
-    ]);
+    get_template_part('template-parts/casos-reales', null, ese_latam_args_casos($ese_id, 'impacto_casos'));
 
     get_template_part('template-parts/contacto', null, [
         'class' => 'contacto--upper',

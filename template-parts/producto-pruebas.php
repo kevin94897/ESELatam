@@ -1,10 +1,13 @@
 <?php
 /**
- * Ficha de producto — "Pruebas de rigurosidad" (Figma 3694-6617). A
- * diferencia de producto-hero.php/producto-specs.php, este bloque es copy
- * genérico de marca sobre control de calidad: no depende del post actual, así
- * que también podría llamarse fuera de un single de producto si hiciera
- * falta más adelante.
+ * "Pruebas de rigurosidad" (Figma 3694-6617). A diferencia de
+ * producto-hero.php/producto-specs.php, este bloque es copy genérico de marca
+ * sobre control de calidad, así que su contenido es global (ESE Latam →
+ * Pruebas de rigurosidad) y lo comparten la ficha de producto y la página de
+ * Certificaciones. Cualquiera de las dos puede personalizarlo desde su
+ * editor; ver la precedencia en inc/pcf.php.
+ *
+ * @param array{kicker?: string, titulo?: string, desc?: string, lista?: array, video?: string, poster?: string} $args
  *
  * @package EseLatam
  */
@@ -14,14 +17,57 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-$ese_pruebas = [
-    ['title' => __('Pruebas de caída libre', 'ese-latam'), 'desc' => __('Resiste impactos reales sin quebrarse ni deformarse.', 'ese-latam')],
-    ['title' => __('Pruebas de elevación', 'ese-latam'), 'desc' => __('Verificamos la compatibilidad con los camiones recolectores más usados.', 'ese-latam')],
-    ['title' => __('Pruebas de ruedas', 'ese-latam'), 'desc' => __('Miles de ciclos simulados garantizan un traslado suave y duradero.', 'ese-latam')],
-    ['title' => __('Pruebas de caída de bala', 'ese-latam'), 'desc' => __('Medimos la resistencia estructural frente a impactos del uso diario.', 'ese-latam')],
-    ['title' => __('Prueba de la guillotina', 'ese-latam'), 'desc' => __('Comprobamos que el contenedor resista cortes e impactos.', 'ese-latam')],
-    ['title' => __('Agente humectante', 'ese-latam'), 'desc' => __('Material impermeable que no absorbe líquidos ni genera filtraciones.', 'ese-latam')],
-];
+// El bloque es copy de marca, no del producto: se edita una vez en
+// ESE Latam → Pruebas de rigurosidad y sale igual en cada ficha y en la
+// página de Certificaciones. Cada una puede personalizarlo desde su propio
+// editor ("Secciones compartidas"), con la precedencia de inc/pcf.php.
+$ese_pr = ese_latam_seccion_args(
+    'pruebas',
+    (array) ($args ?? []),
+    [
+        'kicker' => '',
+        'titulo' => '',
+        'desc'   => '',
+        'lista'  => [],
+        'video'  => '',
+        'poster' => '',
+    ],
+    [
+        'kicker' => 'kicker',
+        'titulo' => 'titulo',
+        'desc'   => 'desc',
+        'lista'  => 'lista',
+        'video'  => 'video',
+        'poster' => 'poster',
+    ]
+);
+
+$ese_pruebas = [];
+
+foreach ((array) $ese_pr['lista'] as $ese_fila) {
+    $ese_t = trim((string) ($ese_fila['title'] ?? ''));
+    if ('' === $ese_t) {
+        continue;
+    }
+    $ese_pruebas[] = [
+        'title' => $ese_t,
+        'desc'  => (string) ($ese_fila['desc'] ?? ''),
+    ];
+}
+
+if ([] === $ese_pruebas) {
+    return;
+}
+
+$ese_pr_kicker = trim((string) $ese_pr['kicker']);
+$ese_pr_titulo = trim((string) $ese_pr['titulo']);
+$ese_pr_desc   = ese_latam_texto_rico((string) $ese_pr['desc']);
+$ese_pr_video  = ese_latam_img_url($ese_pr['video']);
+$ese_pr_poster = ese_latam_img_url($ese_pr['poster']);
+
+// Las tarjetas se reparten a los dos lados del video: la mitad de arriba a
+// la izquierda y el resto a la derecha, sea cual sea la cantidad.
+$ese_pr_mitad = (int) ceil(count($ese_pruebas) / 2);
 
 // Insignia compartida por las 6 tarjetas (Figma 3710:6735): un solo SVG, dos
 // capas (forma + glifo) recoloreadas por CSS según .is-active — no hace
@@ -40,15 +86,17 @@ $ese_pruebas_arrow = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
 
 <section id="pruebas-de-rigurosidad" class="pruebas">
     <header class="pruebas__header" data-reveal-header>
-        <p class="type-kicker text-secondary">/ <?php esc_html_e('Pruebas de rigurosidad', 'ese-latam'); ?></p>
-        <h2 class="type-h2 uppercase text-center">
-            <?php echo ese_latam_titulo(__('¿qué hace que', 'ese-latam') . "\n" . __('|sea excelente?|', 'ese-latam'), 'span', 'hl'); ?>
-        </h2>
-        <p class="pruebas__desc">
-            <?php esc_html_e('Antes de llegar a tu ciudad o industria, cada contenedor ESE pasa por', 'ese-latam'); ?>
-            <span class="hl-accent font-extrabold"><?php esc_html_e('pruebas que simulan años de uso real', 'ese-latam'); ?></span>:
-            <?php esc_html_e('caídas, impactos, presión y exposición al clima. Así nos aseguramos de que siga funcionando bien, incluso en las condiciones más exigentes.', 'ese-latam'); ?>
-        </p>
+        <?php if ('' !== $ese_pr_kicker) : ?>
+            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_pr_kicker); ?></p>
+        <?php endif; ?>
+        <?php if ('' !== $ese_pr_titulo) : ?>
+            <h2 class="type-h2 uppercase text-center">
+                <?php echo ese_latam_titulo($ese_pr_titulo, 'span', 'hl'); ?>
+            </h2>
+        <?php endif; ?>
+        <?php if ('' !== $ese_pr_desc) : ?>
+            <p class="pruebas__desc"><?php echo $ese_pr_desc; ?></p>
+        <?php endif; ?>
     </header>
 
     <?php // Insignia + flecha son UN solo SVG reutilizado en las 6 tarjetas
@@ -56,7 +104,7 @@ $ese_pruebas_arrow = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
     // cada estado sale de CSS vía .is-active, no de assets duplicados. ?>
     <div class="pruebas__frame" data-pruebas data-reveal="up">
         <div class="pruebas__cards pruebas__cards--left">
-            <?php foreach (array_slice($ese_pruebas, 0, 3) as $ese_i => $ese_prueba) : ?>
+            <?php foreach (array_slice($ese_pruebas, 0, $ese_pr_mitad) as $ese_i => $ese_prueba) : ?>
                 <button type="button" class="pruebas__card<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
                     data-pruebas-card>
                     <span class="pruebas__card-badge" aria-hidden="true">
@@ -73,10 +121,15 @@ $ese_pruebas_arrow = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
             <?php endforeach; ?>
         </div>
 
-        <?php // Sin video real todavía: placeholder decorativo (fondo navy +
-        // botón play), listo para recibir un <video>/poster cuando exista el
-        // asset — mismo criterio que "Descargar ficha técnica" deshabilitado. ?>
-        <div class="pruebas__media" aria-hidden="true">
+        <?php // Sin video cargado queda el placeholder decorativo (fondo navy +
+        // botón play); con video, el mismo hueco lo reproduce. ?>
+        <div class="pruebas__media"<?php echo '' === $ese_pr_video ? ' aria-hidden="true"' : ''; ?>>
+            <?php if ('' !== $ese_pr_video) : ?>
+                <video class="pruebas__video" src="<?php echo esc_url($ese_pr_video); ?>"
+                    <?php echo '' !== $ese_pr_poster ? 'poster="' . esc_url($ese_pr_poster) . '"' : ''; ?>
+                    controls playsinline preload="none"></video>
+            <?php endif; ?>
+            <?php if ('' === $ese_pr_video) : ?>
             <span class="pruebas__play">
                 <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" fill="none">
   <path d="M0 32C0 14.3269 14.3269 0 32 0H48C65.6731 0 80 14.3269 80 32V48C80 65.6731 65.6731 80 48 80H32C14.3269 80 0 65.6731 0 48V32Z" fill="white" fill-opacity="0.15"/>
@@ -84,10 +137,11 @@ $ese_pruebas_arrow = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true">'
   <path d="M30.9647 26.1687L53.3286 38.8419C53.5323 38.9575 53.7019 39.1256 53.8198 39.329C53.9378 39.5323 54 39.7636 54 39.9992C54 40.2347 53.9378 40.466 53.8198 40.6694C53.7019 40.8727 53.5323 41.0408 53.3286 41.1564L30.9647 53.8296C30.764 53.9433 30.5372 54.002 30.307 53.9999C30.0767 53.9979 29.851 53.9352 29.6523 53.8179C29.4536 53.7007 29.2888 53.5332 29.1744 53.3319C29.0599 53.1306 28.9998 52.9027 29 52.6707V27.3276C29.0001 27.0958 29.0604 26.8681 29.175 26.667C29.2896 26.466 29.4544 26.2986 29.653 26.1816C29.8517 26.0646 30.0773 26.002 30.3074 26C30.5375 25.9981 30.7641 26.0551 30.9647 26.1687Z" fill="white"/>
 </svg>
             </span>
+            <?php endif; ?>
         </div>
 
         <div class="pruebas__cards pruebas__cards--right">
-            <?php foreach (array_slice($ese_pruebas, 3, 3) as $ese_prueba) : ?>
+            <?php foreach (array_slice($ese_pruebas, $ese_pr_mitad) as $ese_prueba) : ?>
                 <button type="button" class="pruebas__card" data-pruebas-card>
                     <span class="pruebas__card-badge" aria-hidden="true">
                         <?php echo $ese_pruebas_badge; // phpcs:ignore WordPress.Security.EscapeOutput ?>

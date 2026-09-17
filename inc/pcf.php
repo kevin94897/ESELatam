@@ -148,6 +148,28 @@ function ese_latam_enlace($valor, string $label_default = '', string $href_defau
 }
 
 /**
+ * URL de una imagen que puede venir de un campo (URL absoluta) o de una ruta
+ * relativa a assets/imgs/ escrita en una plantilla.
+ *
+ * Las partes compartidas reciben las dos cosas mientras quedan páginas sin
+ * migrar: anteponer la ruta del theme a una URL absoluta genera enlaces rotos
+ * del tipo `assets/imgs/http://…`.
+ */
+function ese_latam_img_ruta(string $valor): string {
+    $valor = trim($valor);
+
+    if ('' === $valor) {
+        return '';
+    }
+
+    if (preg_match('#^(https?:)?//|^/#', $valor)) {
+        return $valor;
+    }
+
+    return ese_latam_asset($valor);
+}
+
+/**
  * Atributos de destino de un enlace: solo salen cuando el campo tiene
  * marcada la casilla "Nueva pestaña" del modal. `noopener` acompaña siempre
  * a `_blank`.
@@ -249,8 +271,10 @@ function ese_latam_seccion_args(string $seccion, array $args, array $defaults, a
     $valores = wp_parse_args($args, $valores);
 
     // 1. Override de la página actual, solo si el editor activó el interruptor.
+    // is_home() entra porque la página de entradas (el blog) es una página
+    // con sus campos, aunque WordPress no la considere "singular".
     $post_id = (int) get_queried_object_id();
-    if ($post_id > 0 && ese_latam_campos_activos() && is_singular()) {
+    if ($post_id > 0 && ese_latam_campos_activos() && (is_singular() || is_home())) {
         if (true === get_field($seccion . '_override', $post_id)) {
             foreach ($mapa as $clave => $campo) {
                 if (in_array($clave, $bools, true)) {

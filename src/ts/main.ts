@@ -100,6 +100,22 @@ function bootstrap(): void {
     });
   }
 
+  // Páginas legales (page-legal.php): el índice que sigue al scroll.
+  const legal = document.querySelector<HTMLElement>('[data-legal]');
+  if (legal) {
+    void import('./modules/legal').then(({ initLegal }) => {
+      initLegal(legal);
+    });
+  }
+
+  // Artículo del blog (single-post.php): el botón de copiar el enlace.
+  const artShare = document.querySelector<HTMLElement>('[data-art-share]');
+  if (artShare) {
+    void import('./modules/articulo-share').then(({ initArticuloShare }) => {
+      initArticuloShare(artShare);
+    });
+  }
+
   // Página Contacto (page-contacto.php): acordeón de FAQ + envío del
   // formulario sin recarga.
   const contactoPage = document.querySelector<HTMLElement>('[data-contacto-page]');

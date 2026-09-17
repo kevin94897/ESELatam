@@ -155,17 +155,9 @@ $ese_catalogo_link = static function (int $page) use ($ese_catalogo_base_url, $e
                     ? $ese_categoria_terms[0]->name
                     : __('Producto ESE Latam', 'ese-latam');
 
-                $ese_litrajes = get_field('litrajes');
-                $ese_litraje_valor = '—';
-                if (is_array($ese_litrajes) && ! empty($ese_litrajes)) {
-                    $ese_litraje_valor = $ese_litrajes[0]['valor'];
-                    foreach ($ese_litrajes as $ese_litraje_item) {
-                        if (! empty($ese_litraje_item['predeterminado'])) {
-                            $ese_litraje_valor = $ese_litraje_item['valor'];
-                            break;
-                        }
-                    }
-                }
+                // El litraje marcado "Por defecto" en la ficha; el mismo que
+                // usan las tarjetas de los sliders (inc/template-tags.php).
+                $ese_litraje_valor = ese_latam_producto_litraje(get_the_ID());
 
                 $ese_caracteristicas = get_field('caracteristicas');
                 $ese_material = '—';
@@ -181,22 +173,27 @@ $ese_catalogo_link = static function (int $page) use ($ese_catalogo_base_url, $e
                     }
                 }
 
-                $ese_card_img = get_the_post_thumbnail_url(get_the_ID(), 'large')
-                    ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png');
+                // Misma foto que la ficha y que los sliders: la del primer
+                // color en el litraje por defecto. Antes caía a un contenedor
+                // de 3 ruedas del theme, así que la Papelera y el Soterrado
+                // mostraban una pieza que no era la suya.
+                $ese_card_img = ese_latam_producto_foto(get_the_ID(), $ese_litraje_valor);
                 ?>
                 <article class="product-card product-card--grid">
-                    <div class="product-card__media">
-                        <span class="product-card__shadow" aria-hidden="true"></span>
-                        <img class="product-card__img" src="<?php echo esc_url($ese_card_img); ?>"
-                            alt="<?php the_title_attribute(); ?>" loading="lazy" decoding="async">
-                    </div>
+                    <?php if ('' !== $ese_card_img) : ?>
+                        <div class="product-card__media">
+                            <span class="product-card__shadow" aria-hidden="true"></span>
+                            <img class="product-card__img" src="<?php echo esc_url($ese_card_img); ?>"
+                                alt="<?php the_title_attribute(); ?>" loading="lazy" decoding="async">
+                        </div>
+                    <?php endif; ?>
                     <div class="product-card__body">
                         <p class="product-card__cat"><?php echo esc_html($ese_categoria_nombre); ?></p>
                         <h3 class="product-card__name"><?php the_title(); ?></h3>
                         <dl class="product-card__specs">
                             <div>
                                 <dt><?php esc_html_e('Litraje', 'ese-latam'); ?></dt>
-                                <dd><?php echo esc_html($ese_litraje_valor); ?></dd>
+                                <dd><?php echo esc_html('' !== $ese_litraje_valor ? $ese_litraje_valor : '—'); ?></dd>
                             </div>
                             <div>
                                 <dt><?php esc_html_e('Material', 'ese-latam'); ?></dt>

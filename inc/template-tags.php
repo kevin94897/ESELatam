@@ -99,23 +99,90 @@ function ese_latam_icon_svg(string $name): string {
  *
  * @return array{cat: string, name: string, litraje: string, material: string, img: string, href: string}
  */
+/**
+ * Litraje por defecto de un producto: el marcado "Por defecto" en la pestaña
+ * "1. Litraje" y, si ninguno lo está, el primero de la lista.
+ */
+function ese_latam_producto_litraje(int $post_id): string {
+    $litrajes = ese_latam_campo('litrajes', $post_id, []);
+    if (! is_array($litrajes) || [] === $litrajes) {
+        return '';
+    }
+
+    foreach ($litrajes as $item) {
+        if (! empty($item['predeterminado'])) {
+            return trim((string) ($item['valor'] ?? ''));
+        }
+    }
+
+    return trim((string) ($litrajes[0]['valor'] ?? ''));
+}
+
+/**
+ * Fotos de la pestaña "3. Fotos" agrupadas por color: color => [litraje => URL].
+ *
+ * Lo usan la ficha —que necesita el mapa entero para cambiar de foto al
+ * elegir color y capacidad— y ese_latam_producto_foto(), que solo quiere una.
+ *
+ * @return array<string, array<string, string>>
+ */
+function ese_latam_producto_fotos(int $post_id): array {
+    $mapa = [];
+
+    foreach ((array) ese_latam_campo('fotos', $post_id, []) as $foto) {
+        $color   = trim((string) ($foto['color'] ?? ''));
+        $litraje = trim((string) ($foto['litraje'] ?? ''));
+        $img     = ese_latam_img_url($foto['imagen'] ?? '');
+
+        if ('' !== $color && '' !== $litraje && '' !== $img) {
+            $mapa[$color][$litraje] = $img;
+        }
+    }
+
+    return $mapa;
+}
+
+/**
+ * La foto que representa al producto en una tarjeta.
+ *
+ * Misma precedencia que el hero de la ficha, para que la tarjeta y la ficha
+ * muestren la misma pieza:
+ *
+ *   1. La foto del primer color en el litraje por defecto (pestaña "3. Fotos").
+ *   2. La "foto por defecto" de ese color (pestaña "2. Colores").
+ *   3. La imagen destacada del producto.
+ *
+ * Sin nada de eso devuelve cadena vacía y la tarjeta se pinta sin foto: el
+ * theme no inventa una imagen que el producto no tiene.
+ */
+function ese_latam_producto_foto(int $post_id, string $litraje = ''): string {
+    $litraje = '' !== $litraje ? $litraje : ese_latam_producto_litraje($post_id);
+    $colores = (array) ese_latam_campo('colores', $post_id, []);
+
+    if (isset($colores[0])) {
+        $nombre = trim((string) ($colores[0]['nombre'] ?? ''));
+        $fotos  = ese_latam_producto_fotos($post_id);
+
+        if ('' !== $litraje && isset($fotos[$nombre][$litraje])) {
+            return $fotos[$nombre][$litraje];
+        }
+
+        $propia = ese_latam_img_url($colores[0]['imagen'] ?? '');
+        if ('' !== $propia) {
+            return $propia;
+        }
+    }
+
+    return (string) (get_the_post_thumbnail_url($post_id, 'large') ?: '');
+}
+
 function ese_latam_producto_card_data(int $post_id): array {
     $terms = get_the_terms($post_id, 'producto_categoria');
     $cat   = is_array($terms) && ! empty($terms)
         ? $terms[0]->name
         : __('Producto ESE Latam', 'ese-latam');
 
-    $litrajes = get_field('litrajes', $post_id);
-    $litraje  = '—';
-    if (is_array($litrajes) && ! empty($litrajes)) {
-        $litraje = (string) $litrajes[0]['valor'];
-        foreach ($litrajes as $item) {
-            if (! empty($item['predeterminado'])) {
-                $litraje = (string) $item['valor'];
-                break;
-            }
-        }
-    }
+    $litraje = ese_latam_producto_litraje($post_id);
 
     $caracteristicas = get_field('caracteristicas', $post_id);
     $material        = '—';
@@ -131,9 +198,11 @@ function ese_latam_producto_card_data(int $post_id): array {
     return [
         'cat'      => $cat,
         'name'     => get_the_title($post_id),
-        'litraje'  => $litraje,
+        'litraje'  => '' !== $litraje ? $litraje : '—',
         'material' => $material,
-        'img'      => (string) (get_the_post_thumbnail_url($post_id, 'large') ?: ''),
+        // La foto de esa capacidad, no la destacada: sin foto por color y
+        // capacidad las tarjetas salían vacías (ningún producto tiene destacada).
+        'img'      => ese_latam_producto_foto($post_id, $litraje),
         'href'     => (string) get_permalink($post_id),
     ];
 }
@@ -187,6 +256,26 @@ function ese_latam_sectores(): array {
     }
 
     return $cache = $lista;
+}
+
+/**
+ * Argumentos de template-parts/casos-reales.php a partir de los campos de una
+ * página. Varias pantallas presentan esa misma sección con su propio
+ * encabezado, así que en cada una los campos se llaman igual salvo el prefijo.
+ *
+ * @param string $prefijo Por ejemplo 'impacto_casos' para 'impacto_casos_kicker'.
+ * @return array<string, string>
+ */
+function ese_latam_args_casos(int $post_id, string $prefijo): array {
+    $enlace = ese_latam_enlace(ese_latam_campo($prefijo . '_enlace', $post_id, null));
+
+    return [
+        'kicker'     => (string) ese_latam_campo($prefijo . '_kicker', $post_id, ''),
+        'title'      => (string) ese_latam_campo($prefijo . '_titulo', $post_id, ''),
+        'desc'       => (string) ese_latam_campo($prefijo . '_desc', $post_id, ''),
+        'link_label' => $enlace['label'],
+        'link_href'  => $enlace['href'],
+    ];
 }
 
 /**
@@ -252,4 +341,46 @@ function ese_latam_buscador_chips(): array {
         static fn (string $q): array => ['label' => $q, 'url' => add_query_arg('s', $q, $catalogo)],
         [__('Contenedor', 'ese-latam'), __('Papelera', 'ese-latam'), __('Soterrado', 'ese-latam'), '120L', __('HDPE', 'ese-latam')]
     );
+}
+
+/**
+ * Los tres íconos de las tarjetas HDPE (Figma ArrowClockwise / Leaf /
+ * ShieldCheck, 72px). Son dibujo, no contenido: el editor elige cuál usa
+ * cada tarjeta desde un desplegable y el trazado vive acá.
+ *
+ * @return array<string, array{label: string, path: string}>
+ */
+function ese_latam_iconos_hdpe(): array {
+    return [
+        'circularidad' => [
+            'label' => __('Flecha circular', 'ese-latam'),
+            'path'  => '<path d="M51.5 26.2489V32.7492C51.5 33.0366 51.3906 33.3121 51.1959 33.5153C51.0011 33.7185 50.737 33.8326 50.4616 33.8326H44.231C43.9555 33.8326 43.6914 33.7185 43.4967 33.5153C43.3019 33.3121 43.1925 33.0366 43.1925 32.7492C43.1925 32.4619 43.3019 32.1863 43.4967 31.9832C43.6914 31.78 43.9555 31.6658 44.231 31.6658H47.7876L44.3361 28.3669L44.3036 28.3344C42.8603 26.8292 41.0238 25.801 39.0237 25.3784C37.0235 24.9557 34.9483 25.1573 33.0573 25.9579C31.1662 26.7585 29.5433 28.1228 28.3911 29.8801C27.2389 31.6375 26.6086 33.71 26.5789 35.839C26.5492 37.9679 27.1215 40.0587 28.2242 41.8503C29.3268 43.6419 30.9111 45.0548 32.779 45.9125C34.6469 46.7701 36.7156 47.0346 38.7267 46.6728C40.7378 46.3111 42.6022 45.3391 44.0869 43.8783C44.2871 43.6807 44.5543 43.5743 44.8297 43.5823C45.1051 43.5903 45.3663 43.7121 45.5556 43.9209C45.745 44.1298 45.847 44.4086 45.8393 44.6959C45.8317 44.9833 45.7149 45.2557 45.5147 45.4532C43.2061 47.7375 40.1436 49.0074 36.9619 49H36.7906C34.7497 48.9708 32.7469 48.4191 30.9583 47.3933C29.1697 46.3675 27.65 44.8991 26.5327 43.117C25.4155 41.335 24.7349 39.2939 24.5508 37.1732C24.3667 35.0524 24.6847 32.917 25.477 30.9545C26.2692 28.9921 27.5113 27.2627 29.0942 25.9184C30.6771 24.574 32.5522 23.6559 34.5549 23.2447C36.5575 22.8335 38.6263 22.9418 40.5794 23.5601C42.5326 24.1784 44.3102 25.2877 45.7562 26.7906L49.4231 30.2845V26.2489C49.4231 25.9616 49.5325 25.686 49.7273 25.4829C49.922 25.2797 50.1862 25.1655 50.4616 25.1655C50.737 25.1655 51.0011 25.2797 51.1959 25.4829C51.3906 25.686 51.5 25.9616 51.5 26.2489Z"/>',
+        ],
+        'eco' => [
+            'label' => __('Hojas', 'ese-latam'),
+            'path'  => '<path d="M50.4536 24.9854C50.4393 24.7407 50.3357 24.5098 50.1624 24.3366C49.9891 24.1633 49.7581 24.0596 49.5135 24.0454C43.0424 23.6703 37.8466 25.6379 35.6137 29.323C34.1385 31.7594 34.141 34.7183 35.5937 37.5409C34.7668 38.5251 34.1625 39.6764 33.8222 40.916L31.7881 38.8747C32.7657 36.8333 32.7282 34.7058 31.6631 32.9382C30.0128 30.2143 26.2034 28.7543 21.4739 29.0318C21.2292 29.0461 20.9983 29.1497 20.825 29.323C20.6517 29.4963 20.548 29.7272 20.5337 29.9718C20.255 34.7008 21.7164 38.5096 24.4406 40.1597C25.3396 40.7089 26.3726 40.9995 27.4261 40.9997C28.4487 40.9871 29.4553 40.7449 30.3716 40.291L33.4971 43.4161V47C33.4971 47.2652 33.6025 47.5196 33.79 47.7071C33.9776 47.8946 34.232 48 34.4973 48C34.7625 48 35.0169 47.8946 35.2045 47.7071C35.3921 47.5196 35.4974 47.2652 35.4974 47V43.3136C35.493 41.7226 36.0344 40.1783 37.0314 38.9384C38.3178 39.6106 39.7445 39.9703 41.1959 39.9885C42.5991 39.993 43.9762 39.6097 45.1753 38.8809C48.8609 36.6508 50.8337 31.4556 50.4536 24.9854ZM25.4721 38.4496C23.5542 37.2883 22.4691 34.5395 22.4953 30.9994C26.0359 30.9694 28.7851 32.0582 29.9465 33.9757C30.5529 34.9758 30.6516 36.1421 30.2541 37.3434L27.2023 34.292C27.0132 34.1124 26.7614 34.0137 26.5006 34.017C26.2398 34.0204 25.9907 34.1254 25.8062 34.3099C25.6218 34.4943 25.5167 34.7434 25.5134 35.0042C25.51 35.265 25.6087 35.5167 25.7884 35.7058L28.8401 38.7572C27.6387 39.1547 26.4735 39.0559 25.4721 38.4496ZM44.1388 37.1721C42.4636 38.1859 40.4945 38.2634 38.4942 37.4221L45.2065 30.7094C45.3862 30.5203 45.4848 30.2685 45.4815 30.0078C45.4782 29.747 45.3731 29.4978 45.1886 29.3134C45.0042 29.129 44.755 29.0239 44.4942 29.0206C44.2334 29.0173 43.9816 29.1159 43.7925 29.2955L37.0789 35.9996C36.2338 33.9995 36.3101 32.0294 37.329 30.3556C39.0718 27.4805 43.2049 25.8779 48.497 26.0017C48.6171 31.2919 47.0168 35.4295 44.1388 37.1721Z"/>',
+        ],
+        'durabilidad' => [
+            'label' => __('Escudo con visto', 'ese-latam'),
+            'path'  => '<path d="M47.3333 23H25.6667C25.092 23 24.5409 23.2276 24.1346 23.6326C23.7283 24.0377 23.5 24.5871 23.5 25.16V32.72C23.5 39.8372 26.9558 44.1504 29.8551 46.5156C32.9778 49.0617 36.0843 49.9257 36.2197 49.9621C36.4059 50.0126 36.6022 50.0126 36.7884 49.9621C36.9239 49.9257 40.0263 49.0617 43.153 46.5156C46.0442 44.1504 49.5 39.8372 49.5 32.72V25.16C49.5 24.5871 49.2717 24.0377 48.8654 23.6326C48.4591 23.2276 47.908 23 47.3333 23ZM47.3333 32.72C47.3333 37.7244 45.4835 41.7865 41.8354 44.7916C40.2474 46.0953 38.4413 47.1099 36.5 47.7886C34.5841 47.1217 32.8003 46.1252 31.2296 44.8443C27.5381 41.8338 25.6667 37.7555 25.6667 32.72V25.16H47.3333V32.72ZM30.3169 36.7241C30.1136 36.5214 29.9994 36.2466 29.9994 35.96C29.9994 35.6734 30.1136 35.3985 30.3169 35.1959C30.5202 34.9932 30.7959 34.8794 31.0833 34.8794C31.3708 34.8794 31.6465 34.9932 31.8498 35.1959L34.3333 37.6731L41.1502 30.8759C41.2509 30.7755 41.3704 30.6959 41.5019 30.6416C41.6334 30.5873 41.7743 30.5594 41.9167 30.5594C42.059 30.5594 42.2 30.5873 42.3315 30.6416C42.463 30.6959 42.5825 30.7755 42.6831 30.8759C42.7838 30.9762 42.8636 31.0953 42.9181 31.2264C42.9726 31.3576 43.0006 31.4981 43.0006 31.64C43.0006 31.7819 42.9726 31.9224 42.9181 32.0535C42.8636 32.1846 42.7838 32.3037 42.6831 32.4041L35.0998 39.9641C34.9992 40.0645 34.8797 40.1441 34.7482 40.1985C34.6167 40.2528 34.4757 40.2808 34.3333 40.2808C34.191 40.2808 34.05 40.2528 33.9185 40.1985C33.787 40.1441 33.6675 40.0645 33.5669 39.9641L30.3169 36.7241Z"/>',
+        ],
+    ];
+}
+
+/**
+ * Las mismas opciones, listas para el desplegable del campo.
+ *
+ * @return array<string, string>
+ */
+function ese_latam_iconos_hdpe_opciones(): array {
+    return array_map(static fn (array $i): string => $i['label'], ese_latam_iconos_hdpe());
+}
+
+/**
+ * El trazado de un ícono HDPE, o cadena vacía si la clave no existe.
+ */
+function ese_latam_icono_hdpe(string $clave): string {
+    $iconos = ese_latam_iconos_hdpe();
+
+    return isset($iconos[$clave]) ? $iconos[$clave]['path'] : '';
 }

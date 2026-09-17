@@ -22,32 +22,39 @@ if (! defined('ABSPATH')) {
 }
 
 $ese_mt = wp_parse_args($args ?? [], [
-    'id'           => 'metodo',
-    'kicker'       => __('Sobre nosotros', 'ese-latam'),
-    'title'        => __('Método', 'ese-latam') . "\n" . __('|Circulogic|', 'ese-latam'),
-    'desc'         => '',
-    'autoplay'     => 6000,
-    'tabs'         => [],
+    'id'       => 'metodo',
+    'kicker'   => '',
+    'title'    => '',
+    'desc'     => '',
+    'autoplay' => 6000,
+    'tabs'     => [],
 ]);
 
 if (empty($ese_mt['tabs'])) {
     return;
 }
 
-$ese_img = static fn (string $file): string => ESE_LATAM_URI . '/assets/imgs/' . $file;
+// Acepta tanto una URL de campo como una ruta relativa del theme.
+$ese_img = 'ese_latam_img_ruta';
 ?>
 
 <section id="<?php echo esc_attr($ese_mt['id']); ?>" class="nos-metodo<?php echo 4 === count($ese_mt['tabs']) ? ' nos-metodo--cols-4' : ''; ?>" data-nos-metodo data-nos-metodo-autoplay="<?php echo (int) $ese_mt['autoplay']; ?>">
     <header class="nos-metodo__header" data-reveal-header>
         <div>
-            <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_mt['kicker']); ?></p>
-            <h2 class="type-h2 uppercase">
-                <?php echo ese_latam_titulo($ese_mt['title'], 'span', 'hl'); ?>
-            </h2>
+            <?php if ('' !== $ese_mt['kicker']) : ?>
+                <p class="type-kicker text-secondary">/ <?php echo esc_html($ese_mt['kicker']); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_mt['title']) : ?>
+                <h2 class="type-h2 uppercase">
+                    <?php echo ese_latam_titulo($ese_mt['title'], 'span', 'hl'); ?>
+                </h2>
+            <?php endif; ?>
         </div>
-        <p class="nos-desc" data-reveal-desc>
-            <?php echo wp_kses($ese_mt['desc'], ['span' => ['class' => []], 'strong' => []]); ?>
-        </p>
+        <?php if ('' !== $ese_mt['desc']) : ?>
+            <p class="nos-desc" data-reveal-desc>
+                <?php echo wp_kses($ese_mt['desc'], ['span' => ['class' => []], 'strong' => [], 'em' => [], 'br' => []]); ?>
+            </p>
+        <?php endif; ?>
     </header>
 
     <div class="nos-metodo__tabs" role="tablist" data-reveal-stagger>

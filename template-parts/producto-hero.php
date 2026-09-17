@@ -52,17 +52,9 @@ foreach ($ese_litrajes as $ese_lit) {
     }
 }
 
-$ese_colores = get_field('colores');
-if (! is_array($ese_colores) || empty($ese_colores)) {
-    $ese_colores = [
-        ['nombre' => __('Negro', 'ese-latam'),   'color' => '#1c1c1c', 'imagen' => null],
-        ['nombre' => __('Verde', 'ese-latam'),   'color' => '#4b8b3b', 'imagen' => null],
-        ['nombre' => __('Azul', 'ese-latam'),    'color' => '#1e5bd6', 'imagen' => null],
-        ['nombre' => __('Amarillo', 'ese-latam'), 'color' => '#efc03f', 'imagen' => null],
-        ['nombre' => __('Rojo', 'ese-latam'),    'color' => '#e0453c', 'imagen' => null],
-        ['nombre' => __('Gris', 'ese-latam'),    'color' => '#a8adb5', 'imagen' => null],
-    ];
-}
+// Sin colores cargados el selector no se muestra: el theme no inventa una
+// carta de colores que el producto no tiene.
+$ese_colores = (array) ese_latam_campo('colores', $ese_producto_id, []);
 
 $ese_compra = ese_latam_enlace(
     ese_latam_campo('enlace_compra', $ese_producto_id, null),
@@ -71,8 +63,10 @@ $ese_compra = ese_latam_enlace(
 );
 $ese_ficha      = get_field('ficha_tecnica');
 
-$ese_img_default = get_the_post_thumbnail_url($ese_producto_id, 'large')
-    ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png');
+// Sin foto propia no se pone una ajena: antes caía a un contenedor de 3
+// ruedas del theme, así que la Papelera y el Soterrado se mostraban con una
+// pieza que no era la suya.
+$ese_img_default = (string) (get_the_post_thumbnail_url($ese_producto_id, 'large') ?: '');
 
 // Cada color con su foto (si no tiene una propia, la principal del producto)
 // y, cuando existen, las fotos por litraje: el panel deja elegir capacidad Y
@@ -81,17 +75,10 @@ $ese_img_default = get_the_post_thumbnail_url($ese_producto_id, 'large')
 // esté ahí cae a `img` (la "foto por defecto" del color). Este mismo array
 // viaja a product-config.ts por `data-colors`.
 // Fotos por color y capacidad (pestaña "3. Fotos" de la ficha): se agrupan
-// por nombre de color para que cada uno lleve su mapa capacidad => foto.
-$ese_fotos_por_color = [];
-foreach ((array) ese_latam_campo('fotos', $ese_producto_id, []) as $ese_foto) {
-    $ese_f_color   = trim((string) ($ese_foto['color'] ?? ''));
-    $ese_f_litraje = trim((string) ($ese_foto['litraje'] ?? ''));
-    $ese_f_img     = ese_latam_img_url($ese_foto['imagen'] ?? '');
-
-    if ('' !== $ese_f_color && '' !== $ese_f_litraje && '' !== $ese_f_img) {
-        $ese_fotos_por_color[$ese_f_color][$ese_f_litraje] = $ese_f_img;
-    }
-}
+// por nombre de color para que cada uno lleve su mapa capacidad => foto. El
+// agrupado vive en inc/template-tags.php porque las tarjetas del catálogo y
+// de los sliders resuelven su foto con el mismo criterio.
+$ese_fotos_por_color = ese_latam_producto_fotos($ese_producto_id);
 
 $ese_colores_data = array_map(
     static function (array $c) use ($ese_img_default, $ese_fotos_por_color): array {
@@ -309,12 +296,14 @@ if (count($ese_stats) < 4) {
                     alt="" loading="lazy" decoding="async">
             </div>
 
-            <div class="producto-hero__product" data-product>
-                <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
-                <img data-producto-img src="<?php echo esc_url($ese_img_inicial); ?>"
-                    alt="<?php echo esc_attr($ese_titulo); ?>" decoding="async" fetchpriority="high" data-float
-                    data-float-distance="12" data-float-duration="3.4">
-            </div>
+            <?php if ('' !== $ese_img_inicial) : ?>
+                <div class="producto-hero__product" data-product>
+                    <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                    <img data-producto-img src="<?php echo esc_url($ese_img_inicial); ?>"
+                        alt="<?php echo esc_attr($ese_titulo); ?>" decoding="async" fetchpriority="high" data-float
+                        data-float-distance="12" data-float-duration="3.4">
+                </div>
+            <?php endif; ?>
         </div>
 
 

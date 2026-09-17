@@ -5,7 +5,7 @@
  * flotante con tilt al mouse (animación en nosotros.ts, initAliados).
  * Antes vivía inline en page-nosotros.php; se extrajo para reutilizarla.
  *
- * @param array{kicker?: string, title?: string, desc?: string} $args
+ * @param array{kicker?: string, title?: string, desc?: string, isla?: string} $args
  *
  * @package EseLatam
  */
@@ -16,9 +16,10 @@ if (! defined('ABSPATH')) {
 }
 
 $ese_aliados = wp_parse_args($args ?? [], [
-    'kicker'       => __('Nuestros aliados', 'ese-latam'),
-    'title'        => __('Trabajamos con', 'ese-latam') . "\n" . __('|los mejores aliados|', 'ese-latam'),
-    'desc'         => '',
+    'kicker' => '',
+    'title'  => '',
+    'desc'   => '',
+    'isla'   => '',
 ]);
 
 $ese_lista = ese_latam_modulo_entradas('aliado');
@@ -37,10 +38,14 @@ if ([] === $ese_lista) {
         </div>
 
         <header class="nos-aliados__header" data-reveal-header>
-            <p class="type-kicker text-white">/ <?php echo esc_html($ese_aliados['kicker']); ?></p>
-            <h2 class="nos-aliados__title">
-                <?php echo ese_latam_titulo($ese_aliados['title']); ?>
-            </h2>
+            <?php if ('' !== $ese_aliados['kicker']) : ?>
+                <p class="type-kicker text-white">/ <?php echo esc_html($ese_aliados['kicker']); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_aliados['title']) : ?>
+                <h2 class="nos-aliados__title">
+                    <?php echo ese_latam_titulo($ese_aliados['title']); ?>
+                </h2>
+            <?php endif; ?>
             <?php if ('' !== $ese_aliados['desc']) : ?>
                 <p class="nos-aliados__desc" data-reveal-desc><?php echo esc_html($ese_aliados['desc']); ?></p>
             <?php endif; ?>
@@ -62,12 +67,14 @@ if ([] === $ese_lista) {
             <?php endforeach; ?>
         </ul>
 
-        <div class="nos-aliados__island" data-nos-aliados-island>
-            <div class="nos-aliados__island-tilt" data-nos-aliados-tilt>
-                <span class="nos-aliados__island-shadow" aria-hidden="true" data-float-shadow></span>
-                <img src="<?php echo esc_url($ese_img('nosotros/isla.webp')); ?>" alt="" width="1370" height="955"
-                     loading="lazy" decoding="async" data-float data-float-distance="16" data-float-duration="4">
+        <?php if ('' !== $ese_aliados['isla']) : ?>
+            <div class="nos-aliados__island" data-nos-aliados-island>
+                <div class="nos-aliados__island-tilt" data-nos-aliados-tilt>
+                    <span class="nos-aliados__island-shadow" aria-hidden="true" data-float-shadow></span>
+                    <img src="<?php echo esc_url($ese_aliados['isla']); ?>" alt="" width="1370" height="955"
+                         loading="lazy" decoding="async" data-float data-float-distance="16" data-float-duration="4">
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
     </section>
 

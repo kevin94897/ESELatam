@@ -105,6 +105,18 @@ add_action('acf/init', static function (): void {
                 'return_format' => 'url',
                 'preview_size'  => 'medium',
             ]),
+            $campo('image', 'hero_isla', __('Isla flotante', 'ese-latam'), [
+                'instructions'  => __('El PNG o WebP con fondo transparente que flota sobre el video. Conviene subirlo a 2400px de ancho: WordPress genera solo los tamaños chicos para móvil. Vacía: no se muestra la isla.', 'ese-latam'),
+                'return_format' => 'id',
+                'preview_size'  => 'medium',
+            ]),
+            $campo('number', 'hero_isla_ancho', __('Isla — ancho máximo', 'ese-latam'), [
+                'instructions' => __('En píxeles, para achicarla si la imagen se ve muy grande. Vacío: 1720. Su alto se limita solo, según la proporción de la imagen.', 'ese-latam'),
+                'min'          => 320,
+                'max'          => 3000,
+                'append'       => 'px',
+                'wrapper'      => ['width' => '40'],
+            ]),
             $campo('file', 'hero_video', __('Video de fondo', 'ese-latam'), [
                 'instructions'  => __('MP4 optimizado. Vacío: el video que trae el theme.', 'ese-latam'),
                 'return_format' => 'url',

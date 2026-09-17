@@ -34,27 +34,28 @@ if ($ese_catalogo_query->have_posts()) {
         $litrajes    = get_field('litrajes');
         $max_litraje = is_array($litrajes) && ! empty($litrajes) ? end($litrajes)['valor'] : '';
 
-        $ese_thumb_url = get_the_post_thumbnail_url(get_the_ID(), 'medium') ?: get_the_post_thumbnail_url(get_the_ID(), 'large');
+        // La foto del producto en su capacidad por defecto, igual que la
+        // ficha y las tarjetas (ver ese_latam_producto_foto). Antes caía a un
+        // contenedor de 3 ruedas del theme, así que un producto sin foto se
+        // anunciaba con una pieza ajena.
+        $ese_slide_img = ese_latam_producto_foto(get_the_ID());
+
         $ese_catalogo_slides[] = [
             'title'   => get_the_title(),
             'desc'    => get_field('descripcion_corta') ?: get_the_excerpt(),
             'eyebrow' => $max_litraje ? sprintf(__('Hasta %s', 'ese-latam'), $max_litraje) : __('Producto ESE Latam', 'ese-latam'),
-            'img'     => get_the_post_thumbnail_url(get_the_ID(), 'large') ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png'),
-            // 'medium' (≤ 300px) para las cards del slider — 10-20× más liviano que 'large'.
-            'thumb'   => $ese_thumb_url ?: (ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png'),
+            'img'     => $ese_slide_img,
+            'thumb'   => $ese_slide_img,
             'href'    => get_permalink(),
         ];
     }
     wp_reset_postdata();
-} else {
-    $ese_catalogo_slides[] = [
-        'title'   => __('Contenedor 3 ruedas', 'ese-latam'),
-        'desc'    => __('Diseño certificado en verde ecológico de alta intensidad. Excelente para acopio y selección de residuos compostables u orgánicos domésticos.', 'ese-latam'),
-        'eyebrow' => __('Hasta 150 litros', 'ese-latam'),
-        'img'     => ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png',
-        'thumb'   => ESE_LATAM_URI . '/assets/imgs/catalogo/contenedor-3-ruedas.png',
-        'href'    => '#',
-    ];
+}
+
+// Sin productos publicados no hay banner: el theme no anuncia un contenedor
+// de ejemplo (mismo criterio que el resto de los módulos).
+if ([] === $ese_catalogo_slides) {
+    return;
 }
 
 $ese_catalogo_total   = count($ese_catalogo_slides);
@@ -122,9 +123,11 @@ $ese_catalogo_current = $ese_catalogo_slides[0];
                                         <span class="catalogo-banner__shop-card-name"><?php echo esc_html($ese_slide['title']); ?></span>
                                         <!-- <span class="catalogo-banner__shop-card-meta"><?php echo esc_html($ese_slide['desc']); ?></span> -->
                                     </span>
-                                    <img class="catalogo-banner__shop-card-img"
-                                        src="<?php echo esc_url($ese_slide['thumb']); ?>" alt="" loading="lazy"
-                                        decoding="async">
+                                    <?php if ('' !== $ese_slide['thumb']) : ?>
+                                        <img class="catalogo-banner__shop-card-img"
+                                            src="<?php echo esc_url($ese_slide['thumb']); ?>" alt="" loading="lazy"
+                                            decoding="async">
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -158,12 +161,14 @@ $ese_catalogo_current = $ese_catalogo_slides[0];
         </div>
 
         <div class="catalogo-banner__products">
-            <div class="catalogo-banner__product catalogo-banner__product--main" data-product data-depth="1">
-                <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
-                <img data-product-main-img src="<?php echo esc_url($ese_catalogo_current['img']); ?>"
-                    alt="<?php echo esc_attr($ese_catalogo_current['title']); ?>" decoding="async" data-float
-                    data-float-distance="14" data-float-duration="3.2">
-            </div>
+            <?php if ('' !== $ese_catalogo_current['img']) : ?>
+                <div class="catalogo-banner__product catalogo-banner__product--main" data-product data-depth="1">
+                    <span class="product-card__shadow" aria-hidden="true" data-float-shadow></span>
+                    <img data-product-main-img src="<?php echo esc_url($ese_catalogo_current['img']); ?>"
+                        alt="<?php echo esc_attr($ese_catalogo_current['title']); ?>" decoding="async" data-float
+                        data-float-distance="14" data-float-duration="3.2">
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

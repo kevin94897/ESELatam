@@ -6,7 +6,10 @@
  * anima initHero de nosotros.ts) con la variante `.cx-hero` para el
  * centrado y la altura fija de 720px del Figma.
  *
- * Debe ir dentro del wrapper `.nosotros[data-nosotros]` (ver archive-caso.php).
+ * Debe ir dentro del wrapper `.nosotros[data-nosotros]` (ver archive-caso.php
+ * y home.php). Los valores por defecto son los del archivo de casos; quien
+ * tiene campos —el blog— pasa los suyos, y una cadena vacía apaga ese
+ * elemento. Sin foto de fondo el hero queda en el negro liso del Figma.
  *
  * @param array{kicker?: string, title?: string, desc?: string, current?: string, bg?: string} $args
  *
@@ -28,10 +31,12 @@ $ese_hero = wp_parse_args($args ?? [], [
 ?>
 
 <section class="nos-hero nos-hero--interna cx-hero" data-nos-hero>
-    <div class="nos-hero__bg" aria-hidden="true" data-nos-hero-bg>
-        <img src="<?php echo esc_url($ese_hero['bg']); ?>" alt="" decoding="async" fetchpriority="high">
-    </div>
-    <div class="nos-hero__shade" aria-hidden="true"></div>
+    <?php if ('' !== $ese_hero['bg']) : ?>
+        <div class="nos-hero__bg" aria-hidden="true" data-nos-hero-bg>
+            <img src="<?php echo esc_url($ese_hero['bg']); ?>" alt="" decoding="async" fetchpriority="high">
+        </div>
+        <div class="nos-hero__shade" aria-hidden="true"></div>
+    <?php endif; ?>
     <div class="nos-hero__glow" aria-hidden="true" data-nos-hero-glow></div>
 
     <div class="nos-hero__content cx-hero__content" data-nos-hero-content>
@@ -45,15 +50,23 @@ $ese_hero = wp_parse_args($args ?? [], [
             <span class="nos-crumb__sep" aria-hidden="true">
                 <svg width="4" height="7" viewBox="0 0 4 7" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.86395 3.8233L0.788805 6.86609C0.70215 6.95183 0.58462 7 0.462071 7C0.339522 7 0.221993 6.95183 0.135337 6.86609C0.0486823 6.78034 0 6.66405 0 6.54279C0 6.42153 0.0486823 6.30524 0.135337 6.21949L2.88413 3.50038L0.136106 0.780507C0.0931991 0.738051 0.059163 0.687648 0.0359418 0.632177C0.0127205 0.576706 0.000768656 0.517252 0.000768656 0.45721C0.000768656 0.397169 0.0127205 0.337715 0.0359418 0.282243C0.059163 0.226772 0.0931991 0.17637 0.136106 0.133914C0.179014 0.0914579 0.229952 0.0577801 0.286013 0.0348031C0.342074 0.0118261 0.40216 0 0.46284 0C0.52352 0 0.583606 0.0118261 0.639667 0.0348031C0.695728 0.0577801 0.746666 0.0914579 0.789574 0.133914L3.86471 3.1767C3.90767 3.21916 3.94173 3.26958 3.96494 3.32509C3.98816 3.38059 4.00007 3.44009 4 3.50016C3.99993 3.56023 3.98787 3.61969 3.96453 3.67515C3.94118 3.7306 3.907 3.78094 3.86395 3.8233Z" fill="currentColor"/></svg>
             </span>
-            <span aria-current="page"><?php echo esc_html($ese_hero['current']); ?></span>
+            <?php if ('' !== $ese_hero['current']) : ?>
+                <span aria-current="page"><?php echo esc_html($ese_hero['current']); ?></span>
+            <?php endif; ?>
         </nav>
 
         <div class="cx-hero__body">
-            <p class="nos-hero__kicker" data-nos-hero-kicker><?php echo esc_html($ese_hero['kicker']); ?></p>
-            <h1 class="nos-hero__title" data-nos-hero-title>
-                <?php echo ese_latam_titulo($ese_hero['title']); ?>
-            </h1>
-            <p class="nos-hero__desc" data-nos-hero-desc><?php echo esc_html($ese_hero['desc']); ?></p>
+            <?php if ('' !== $ese_hero['kicker']) : ?>
+                <p class="nos-hero__kicker" data-nos-hero-kicker><?php echo esc_html($ese_hero['kicker']); ?></p>
+            <?php endif; ?>
+            <?php if ('' !== $ese_hero['title']) : ?>
+                <h1 class="nos-hero__title" data-nos-hero-title>
+                    <?php echo ese_latam_titulo($ese_hero['title']); ?>
+                </h1>
+            <?php endif; ?>
+            <?php if ('' !== $ese_hero['desc']) : ?>
+                <p class="nos-hero__desc" data-nos-hero-desc><?php echo esc_html($ese_hero['desc']); ?></p>
+            <?php endif; ?>
         </div>
     </div>
 </section>
