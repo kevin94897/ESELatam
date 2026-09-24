@@ -131,22 +131,127 @@ function ese_latam_icon_svg(string $name): string {
  * @return array{cat: string, name: string, litraje: string, material: string, img: string, href: string}
  */
 /**
- * Litraje por defecto de un producto: el marcado "Por defecto" en la pestaña
- * "1. Litraje" y, si ninguno lo está, el primero de la lista.
+ * Modelos de un producto, cada uno con sus capacidades, colores y fotos ya
+ * resueltos.
+ *
+ * Un producto del catálogo representa a una FAMILIA —"Papeleras"— y agrupa a
+ * los modelos que la componen: Open Dinova, Campus Goool, Venta… Las filas de
+ * las pestañas de litraje, color y fotos declaran a qué modelo pertenecen;
+ * las que dejan ese campo vacío valen para todos, que es como sigue
+ * funcionando un producto de un solo modelo cargado antes de que existiera
+ * esta pestaña.
+ *
+ * Devuelve siempre al menos un modelo: si el producto no declara ninguno, se
+ * arma uno sin nombre con todo lo que tenga cargado, y la ficha no dibuja la
+ * lista de modelos.
+ *
+ * @return list<array{nombre: string, descripcion: string, litrajes: list<array{valor: string, predeterminado: bool}>, colores: list<array{nombre: string, color: string, img: string, imgs: array<string, string>}>}>
  */
-function ese_latam_producto_litraje(int $post_id): string {
-    $litrajes = ese_latam_campo('litrajes', $post_id, []);
-    if (! is_array($litrajes) || [] === $litrajes) {
-        return '';
-    }
+function ese_latam_producto_modelos(int $post_id): array {
+    $nombres   = [];
+    $descripcion = [];
 
-    foreach ($litrajes as $item) {
-        if (! empty($item['predeterminado'])) {
-            return trim((string) ($item['valor'] ?? ''));
+    foreach ((array) ese_latam_campo('modelos', $post_id, []) as $modelo) {
+        $nombre = trim((string) ($modelo['nombre'] ?? ''));
+        if ('' !== $nombre && ! in_array($nombre, $nombres, true)) {
+            $nombres[]              = $nombre;
+            $descripcion[$nombre]   = trim((string) ($modelo['descripcion'] ?? ''));
         }
     }
 
-    return trim((string) ($litrajes[0]['valor'] ?? ''));
+    if ([] === $nombres) {
+        $nombres           = [''];
+        $descripcion[''] = '';
+    }
+
+    $destacada = (string) (get_the_post_thumbnail_url($post_id, 'large') ?: '');
+
+    // Fotos agrupadas: modelo => color => litraje => URL.
+    $fotos = [];
+    foreach ((array) ese_latam_campo('fotos', $post_id, []) as $foto) {
+        $img     = ese_latam_img_url($foto['imagen'] ?? '');
+        $color   = trim((string) ($foto['color'] ?? ''));
+        $litraje = trim((string) ($foto['litraje'] ?? ''));
+
+        if ('' === $img || '' === $color || '' === $litraje) {
+            continue;
+        }
+
+        $fotos[trim((string) ($foto['modelo'] ?? ''))][$color][$litraje] = $img;
+    }
+
+    $salida = [];
+
+    foreach ($nombres as $nombre) {
+        $litrajes = [];
+        foreach ((array) ese_latam_campo('litrajes', $post_id, []) as $fila) {
+            $suyo = trim((string) ($fila['modelo'] ?? ''));
+            if ('' !== $suyo && $suyo !== $nombre) {
+                continue;
+            }
+            $valor = trim((string) ($fila['valor'] ?? ''));
+            if ('' !== $valor) {
+                $litrajes[] = [
+                    'valor'          => $valor,
+                    'predeterminado' => ! empty($fila['predeterminado']),
+                ];
+            }
+        }
+
+        $colores = [];
+        foreach ((array) ese_latam_campo('colores', $post_id, []) as $fila) {
+            $suyo = trim((string) ($fila['modelo'] ?? ''));
+            if ('' !== $suyo && $suyo !== $nombre) {
+                continue;
+            }
+            $color = trim((string) ($fila['nombre'] ?? ''));
+            if ('' === $color) {
+                continue;
+            }
+
+            // Las fotos propias del modelo pisan a las declaradas sin modelo:
+            // el "+" de arrays conserva las claves del operando izquierdo.
+            $imgs = ($fotos[$nombre][$color] ?? []) + ($fotos[''][$color] ?? []);
+
+            $colores[] = [
+                'nombre' => $color,
+                'color'  => (string) ($fila['color'] ?? '#ffffff'),
+                'img'    => ese_latam_img_url($fila['imagen'] ?? '') ?: $destacada,
+                'imgs'   => $imgs,
+            ];
+        }
+
+        if ([] === $litrajes && [] === $colores) {
+            continue;
+        }
+
+        $salida[] = [
+            'nombre'      => $nombre,
+            'descripcion' => $descripcion[$nombre] ?? '',
+            'litrajes'    => $litrajes,
+            'colores'     => $colores,
+        ];
+    }
+
+    return $salida;
+}
+
+/**
+ * Litraje por defecto de un producto: el marcado "Por defecto" en el primer
+ * modelo y, si ninguno lo está, el primero de su lista. Es el que sale en la
+ * tarjeta del catálogo y el que trae marcado la ficha al abrir.
+ */
+function ese_latam_producto_litraje(int $post_id): string {
+    $modelos  = ese_latam_producto_modelos($post_id);
+    $litrajes = $modelos[0]['litrajes'] ?? [];
+
+    foreach ($litrajes as $item) {
+        if ($item['predeterminado']) {
+            return $item['valor'];
+        }
+    }
+
+    return (string) ($litrajes[0]['valor'] ?? '');
 }
 
 /**
@@ -187,20 +292,19 @@ function ese_latam_producto_fotos(int $post_id): array {
  * theme no inventa una imagen que el producto no tiene.
  */
 function ese_latam_producto_foto(int $post_id, string $litraje = ''): string {
-    $litraje = '' !== $litraje ? $litraje : ese_latam_producto_litraje($post_id);
-    $colores = (array) ese_latam_campo('colores', $post_id, []);
+    $modelos = ese_latam_producto_modelos($post_id);
+    $primero = $modelos[0] ?? null;
 
-    if (isset($colores[0])) {
-        $nombre = trim((string) ($colores[0]['nombre'] ?? ''));
-        $fotos  = ese_latam_producto_fotos($post_id);
+    if (null !== $primero && isset($primero['colores'][0])) {
+        $color   = $primero['colores'][0];
+        $litraje = '' !== $litraje ? $litraje : ese_latam_producto_litraje($post_id);
 
-        if ('' !== $litraje && isset($fotos[$nombre][$litraje])) {
-            return $fotos[$nombre][$litraje];
+        if ('' !== $litraje && isset($color['imgs'][$litraje])) {
+            return $color['imgs'][$litraje];
         }
 
-        $propia = ese_latam_img_url($colores[0]['imagen'] ?? '');
-        if ('' !== $propia) {
-            return $propia;
+        if ('' !== $color['img']) {
+            return $color['img'];
         }
     }
 

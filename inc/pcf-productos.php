@@ -65,8 +65,37 @@ add_action('acf/init', static function (): void {
                 'wrapper'       => ['width' => '40'],
             ]),
 
-            /* ---------------- 1. Litraje ---------------- */
-            $tab('prod_litraje', __('1. Litraje', 'ese-latam')),
+            /* ---------------- 1. Modelos ---------------- */
+            $tab('prod_modelos', __('1. Modelos', 'ese-latam')),
+            $campo('message', '', __('Cómo se usan', 'ese-latam'), [
+                'key'      => 'field_prodmodelos_msg',
+                'message'  => __('Cada producto del catálogo agrupa a los <strong>modelos</strong> de su familia: “Papeleras” contiene Open Dinova, Campus Goool, Venta… En la ficha aparecen como una primera lista de opciones, y al elegir uno se muestran solo sus capacidades, sus colores y sus fotos. Con un único modelo la lista no se dibuja y la ficha se ve como antes.', 'ese-latam'),
+                'esc_html' => 0,
+            ]),
+            $campo('repeater', 'modelos', __('Modelos de la familia', 'ese-latam'), [
+                'instructions' => __('Un renglón por modelo. El orden es el de la lista en la ficha; el primero es el que se muestra al abrir.', 'ese-latam'),
+                'layout'       => 'table',
+                'min'          => 0,
+                'max'          => 24,
+                'button_label' => __('Añadir modelo', 'ese-latam'),
+                'sub_fields'   => [
+                    $campo('text', 'nombre', __('Nombre', 'ese-latam'), [
+                        'key'       => 'field_modelo_nombre',
+                        'required'  => 1,
+                        'maxlength' => 60,
+                        'wrapper'   => ['width' => '35'],
+                    ]),
+                    $campo('text', 'descripcion', __('Descripción corta', 'ese-latam'), [
+                        'key'          => 'field_modelo_desc',
+                        'instructions' => __('Opcional: una línea que reemplaza al texto del producto cuando se elige este modelo.', 'ese-latam'),
+                        'maxlength'    => 320,
+                        'wrapper'      => ['width' => '65'],
+                    ]),
+                ],
+            ]),
+
+            /* ---------------- 2. Litraje ---------------- */
+            $tab('prod_litraje', __('2. Litraje', 'ese-latam')),
             $campo('repeater', 'litrajes', __('Opciones de litraje', 'ese-latam'), [
                 'instructions' => __('Las pastillas de capacidad del hero. Marca una como predeterminada: es la que se muestra al abrir la ficha y la que sale en la tarjeta del catálogo.', 'ese-latam'),
                 'layout'       => 'table',
@@ -75,6 +104,13 @@ add_action('acf/init', static function (): void {
                 'required'     => 1,
                 'button_label' => __('Añadir litraje', 'ese-latam'),
                 'sub_fields'   => [
+                    $campo('select', 'modelo', __('Modelo', 'ese-latam'), [
+                        'key'          => 'field_litraje_modelo',
+                        'instructions' => __('A qué modelo pertenece. Vacío: vale para todos.', 'ese-latam'),
+                        'choices'      => [],
+                        'allow_null'   => 1,
+                        'wrapper'      => ['width' => '30'],
+                    ]),
                     $campo('text', 'valor', __('Litraje', 'ese-latam'), [
                         'key'         => 'field_litraje_valor',
                         'instructions' => __('Como se lee en la pastilla: 120L.', 'ese-latam'),
@@ -88,8 +124,8 @@ add_action('acf/init', static function (): void {
                 ],
             ]),
 
-            /* ---------------- 2. Colores ---------------- */
-            $tab('prod_colores', __('2. Selección de color', 'ese-latam')),
+            /* ---------------- 3. Colores ---------------- */
+            $tab('prod_colores', __('3. Selección de color', 'ese-latam')),
             $campo('repeater', 'colores', __('Selección de color', 'ese-latam'), [
                 'instructions' => __('Cada color es un círculo bajo las pastillas de litraje. La foto cambia al elegirlo.', 'ese-latam'),
                 'layout'       => 'block',
@@ -97,11 +133,19 @@ add_action('acf/init', static function (): void {
                 'max'          => 12,
                 'button_label' => __('Añadir color', 'ese-latam'),
                 'sub_fields'   => [
+                    $campo('select', 'modelo', __('Modelo', 'ese-latam'), [
+                        'key'          => 'field_color_modelo',
+                        'instructions' => __('A qué modelo pertenece. Vacío: vale para todos.', 'ese-latam'),
+                        'choices'      => [],
+                        'allow_null'   => 1,
+                        'wrapper'      => ['width' => '30'],
+                    ]),
                     $campo('text', 'nombre', __('Nombre', 'ese-latam'), [
-                        'key'       => 'field_color_nombre',
-                        'required'  => 1,
-                        'maxlength' => 40,
-                        'wrapper'   => ['width' => '50'],
+                        'key'          => 'field_color_nombre',
+                        'instructions' => __('Como se lee en la ficha al elegir el color: Verde, Gris antracita…', 'ese-latam'),
+                        'required'     => 1,
+                        'maxlength'    => 40,
+                        'wrapper'      => ['width' => '50'],
                     ]),
                     $campo('color_picker', 'color', __('Color', 'ese-latam'), [
                         'key'      => 'field_color_hex',
@@ -118,8 +162,8 @@ add_action('acf/init', static function (): void {
                 ],
             ]),
 
-            /* ---------------- 3. Fotos ---------------- */
-            $tab('prod_fotos', __('3. Fotos', 'ese-latam')),
+            /* ---------------- 4. Fotos ---------------- */
+            $tab('prod_fotos', __('4. Fotos', 'ese-latam')),
             $campo('message', '', __('Cómo se usan', 'ese-latam'), [
                 'key'      => 'field_prodfotos_msg',
                 'message'  => __('Una fila por foto. Al elegir un color y una capacidad en la ficha se busca aquí la combinación exacta; si no existe, se usa la <strong>foto por defecto</strong> de ese color. Los dos desplegables se llenan solos con lo que hayas cargado en las pestañas anteriores: <strong>guarda el producto</strong> después de añadir un color o un litraje para verlos aquí.', 'ese-latam'),
@@ -129,6 +173,13 @@ add_action('acf/init', static function (): void {
                 'layout'       => 'table',
                 'button_label' => __('Añadir foto', 'ese-latam'),
                 'sub_fields'   => [
+                    $campo('select', 'modelo', __('Modelo', 'ese-latam'), [
+                        'key'          => 'field_foto_modelo',
+                        'instructions' => __('A qué modelo pertenece. Vacío: vale para todos.', 'ese-latam'),
+                        'choices'      => [],
+                        'allow_null'   => 1,
+                        'wrapper'      => ['width' => '25'],
+                    ]),
                     $campo('select', 'color', __('Color', 'ese-latam'), [
                         'key'      => 'field_foto_color',
                         'required' => 1,
@@ -208,7 +259,10 @@ add_filter('pcf/prepare_field', static function ($field) {
     if (! is_array($field) || ! isset($field['key'])) {
         return $field;
     }
-    if ('field_foto_color' !== $field['key'] && 'field_foto_litraje' !== $field['key']) {
+    $modelos = ['field_litraje_modelo', 'field_color_modelo', 'field_foto_modelo'];
+    $otros   = ['field_foto_color', 'field_foto_litraje'];
+
+    if (! in_array($field['key'], $modelos, true) && ! in_array($field['key'], $otros, true)) {
         return $field;
     }
 
@@ -219,7 +273,14 @@ add_filter('pcf/prepare_field', static function ($field) {
 
     $opciones = [];
 
-    if ('field_foto_color' === $field['key']) {
+    if (in_array($field['key'], $modelos, true)) {
+        foreach ((array) ese_latam_campo('modelos', $post_id, []) as $modelo) {
+            $nombre = trim((string) ($modelo['nombre'] ?? ''));
+            if ('' !== $nombre) {
+                $opciones[$nombre] = $nombre;
+            }
+        }
+    } elseif ('field_foto_color' === $field['key']) {
         foreach ((array) ese_latam_campo('colores', $post_id, []) as $color) {
             $nombre = trim((string) ($color['nombre'] ?? ''));
             if ('' !== $nombre) {

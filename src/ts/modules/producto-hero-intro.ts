@@ -10,7 +10,6 @@
  *         aparece al tocar la isla
  *   0.25  breadcrumb → kicker → título por líneas (máscara) → bajada →
  *         grupos de configuración → acciones, en cascada
- *   1.00  barra de atributos: sube, y cada dato entra escalonado
  *   1.40  indicador de scroll
  *
  * La foto del producto lleva su propia flotación (data-float en el <img>):
@@ -36,11 +35,9 @@ export function initProductoHeroIntro(hero: HTMLElement): void {
   const pedestal = hero.querySelector<HTMLElement>('.producto-hero__pedestal');
   const product = hero.querySelector<HTMLElement>('.producto-hero__product');
   const shadow = hero.querySelector<HTMLElement>('.producto-hero__product .product-card__shadow');
-  const stats = hero.querySelector<HTMLElement>('.producto-hero__bottom');
-  const statItems = hero.querySelectorAll<HTMLElement>('.producto-hero__stat');
   const scrollHint = hero.querySelector<HTMLElement>('.producto-hero__scroll-hint');
 
-  const all = [crumb, kicker, title, desc, ...groups, actions, spot, ring, pedestal, product, stats, scrollHint]
+  const all = [crumb, kicker, title, desc, ...groups, actions, spot, ring, pedestal, product, scrollHint]
     .filter((el): el is HTMLElement => el !== null);
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -85,14 +82,6 @@ export function initProductoHeroIntro(hero: HTMLElement): void {
     tl.fromTo(groups, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.14 }, 0.95);
   }
   if (actions) tl.fromTo(actions, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.8 }, 1.25);
-
-  // ---------- Barra de atributos ----------
-  if (stats) {
-    tl.fromTo(stats, { autoAlpha: 0, y: 32 }, { autoAlpha: 1, y: 0, duration: 0.9 }, 1.0);
-    if (statItems.length) {
-      tl.from(statItems, { autoAlpha: 0, y: 12, duration: 0.6, stagger: 0.08 }, 1.15);
-    }
-  }
 
   // ---------- Indicador de scroll ----------
   if (scrollHint) tl.fromTo(scrollHint, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 }, 1.4);

@@ -25,6 +25,24 @@ $ese_catalogo_query = new WP_Query([
     'order'          => 'ASC',
 ]);
 
+/**
+ * Gancho del slide: la capacidad máxima cuando es numérica ("Hasta 360L"),
+ * y si no la categoría del producto, que siempre dice algo útil.
+ */
+function ese_latam_catalogo_eyebrow(string $max_litraje, int $post_id): string {
+    if ('' !== $max_litraje && preg_match('/^\d/', $max_litraje)) {
+        /* translators: %s: capacidad máxima del producto */
+        return sprintf(__('Hasta %s', 'ese-latam'), $max_litraje);
+    }
+
+    $terms = get_the_terms($post_id, 'producto_categoria');
+    if (is_array($terms) && ! empty($terms)) {
+        return $terms[0]->name;
+    }
+
+    return __('Producto ESE Latam', 'ese-latam');
+}
+
 $ese_catalogo_slides = [];
 
 if ($ese_catalogo_query->have_posts()) {
@@ -43,7 +61,12 @@ if ($ese_catalogo_query->have_posts()) {
         $ese_catalogo_slides[] = [
             'title'   => get_the_title(),
             'desc'    => get_field('descripcion_corta') ?: get_the_excerpt(),
-            'eyebrow' => $max_litraje ? sprintf(__('Hasta %s', 'ese-latam'), $max_litraje) : __('Producto ESE Latam', 'ese-latam'),
+            // "Hasta 360L" solo tiene sentido con una capacidad numérica. Hay
+            // productos cuya ficha técnica no declara litraje (una papelera
+            // sobre poste, por ejemplo) y ahí el litraje es una etiqueta como
+            // "Estándar": anunciarlos como "Hasta Estándar" no se lee. En ese
+            // caso el gancho pasa a ser la categoría del producto.
+            'eyebrow' => ese_latam_catalogo_eyebrow($max_litraje, get_the_ID()),
             'img'     => $ese_slide_img,
             'thumb'   => $ese_slide_img,
             'href'    => get_permalink(),

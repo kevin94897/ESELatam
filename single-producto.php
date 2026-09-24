@@ -17,6 +17,11 @@ while (have_posts()) :
     the_post();
 
     get_template_part('template-parts/producto-hero');
+    // Datos clave + sellos del producto (antes iban al pie del hero) y,
+    // a continuación, la franja de certificaciones (antes cerraba la
+    // página en su variante oscura).
+    get_template_part('template-parts/producto-atributos');
+    get_template_part('template-parts/certificaciones');
     // get_template_part('template-parts/producto-specs');
     get_template_part('template-parts/producto-pruebas');
     get_template_part('template-parts/producto-terreno');
@@ -31,7 +36,6 @@ while (have_posts()) :
 
 endwhile;
 
-get_template_part('template-parts/certificaciones', null, ['dark' => true]);
 get_template_part('template-parts/contacto');
 
 get_footer();

@@ -33,28 +33,8 @@ $ese_producto_id = get_the_ID();
 
 $ese_desc = get_field('descripcion_corta') ?: get_the_excerpt();
 
-$ese_litrajes = get_field('litrajes');
-if (! is_array($ese_litrajes) || empty($ese_litrajes)) {
-    $ese_litrajes = array_map(
-        static fn (string $v): array => ['valor' => $v, 'predeterminado' => '120L' === $v],
-        ['80L', '120L', '140L', '180L', '240L', '360L']
-    );
-}
-
-// Litraje activo al cargar: producto-specs.php recalcula el mismo valor de
-// forma independiente para que su card "Volumen" (solo en el fallback
-// estático) nunca pueda divergir de la píldora marcada acá.
-$ese_litraje_default = $ese_litrajes[0]['valor'] ?? '';
-foreach ($ese_litrajes as $ese_lit) {
-    if (! empty($ese_lit['predeterminado'])) {
-        $ese_litraje_default = $ese_lit['valor'];
-        break;
-    }
-}
-
-// Sin colores cargados el selector no se muestra: el theme no inventa una
-// carta de colores que el producto no tiene.
-$ese_colores = (array) ese_latam_campo('colores', $ese_producto_id, []);
+// Las capacidades y los colores salen de los modelos, no del producto: ver
+// más abajo, donde se arma $ese_modelos.
 
 $ese_compra = ese_latam_enlace(
     ese_latam_campo('enlace_compra', $ese_producto_id, null),
@@ -68,43 +48,75 @@ $ese_ficha      = get_field('ficha_tecnica');
 // pieza que no era la suya.
 $ese_img_default = (string) (get_the_post_thumbnail_url($ese_producto_id, 'large') ?: '');
 
-// Cada color con su foto (si no tiene una propia, la principal del producto)
-// y, cuando existen, las fotos por litraje: el panel deja elegir capacidad Y
-// color, así que la foto depende de los dos (un 80L y un 360L del mismo
-// color no son la misma pieza). `imgs` es un mapa litraje → URL; lo que no
-// esté ahí cae a `img` (la "foto por defecto" del color). Este mismo array
-// viaja a product-config.ts por `data-colors`.
-// Fotos por color y capacidad (pestaña "3. Fotos" de la ficha): se agrupan
-// por nombre de color para que cada uno lleve su mapa capacidad => foto. El
-// agrupado vive en inc/template-tags.php porque las tarjetas del catálogo y
-// de los sliders resuelven su foto con el mismo criterio.
-$ese_fotos_por_color = ese_latam_producto_fotos($ese_producto_id);
+// ---------- Modelos ----------
+//
+// Un producto del catálogo es una FAMILIA ("Papeleras") y agrupa a sus
+// modelos (Open Dinova, Campus Goool, Venta…). Cada modelo trae sus propias
+// capacidades, sus colores y su matriz de fotos; el agrupado vive en
+// inc/template-tags.php porque las tarjetas resuelven su foto igual.
+//
+// Con un solo modelo la lista no se dibuja y la ficha se ve como antes.
+$ese_modelos = ese_latam_producto_modelos($ese_producto_id);
 
-$ese_colores_data = array_map(
-    static function (array $c) use ($ese_img_default, $ese_fotos_por_color): array {
-        $img  = ese_latam_img_url($c['imagen'] ?? '');
-        $imgs = $ese_fotos_por_color[trim((string) ($c['nombre'] ?? ''))] ?? [];
-
-        return [
-            'nombre' => (string) ($c['nombre'] ?? ''),
-            'color'  => (string) ($c['color'] ?? '#ffffff'),
-            'img'    => $img ?: $ese_img_default,
-            'imgs'   => (object) $imgs,
-        ];
-    },
-    $ese_colores
-);
-
-// Foto inicial: la del primer color en el litraje por defecto — si no, la
-// del color, y recién al final la destacada del producto. Sin esto el hero
-// pintaba la destacada (un litraje cualquiera) y recién cambiaba al primer
-// clic, con un salto visible.
-$ese_img_inicial = $ese_img_default;
-if (isset($ese_colores_data[0])) {
-    $ese_primer_color = $ese_colores_data[0];
-    $ese_variantes    = (array) $ese_primer_color['imgs'];
-    $ese_img_inicial  = $ese_variantes[$ese_litraje_default] ?? $ese_primer_color['img'];
+// Sin nada cargado, el fallback estático del diseño: así la ficha se ve
+// entera desde el día uno y se va poblando a medida que cargan datos.
+if ([] === $ese_modelos) {
+    $ese_modelos = [[
+        'nombre'      => '',
+        'descripcion' => '',
+        'litrajes'    => array_map(
+            static fn (string $v): array => ['valor' => $v, 'predeterminado' => '120L' === $v],
+            ['80L', '120L', '180L', '240L', '360L']
+        ),
+        'colores'     => [],
+    ]];
 }
+
+/** Capacidad marcada por defecto dentro de un modelo. */
+$ese_litraje_de = static function (array $modelo): string {
+    foreach ($modelo['litrajes'] as $item) {
+        if ($item['predeterminado']) {
+            return $item['valor'];
+        }
+    }
+    return (string) ($modelo['litrajes'][0]['valor'] ?? '');
+};
+
+$ese_modelo_activo   = $ese_modelos[0];
+$ese_litraje_default = $ese_litraje_de($ese_modelo_activo);
+
+// Foto inicial: la del primer color del primer modelo en su capacidad por
+// defecto; si no, la foto de ese color, y recién al final la destacada. Sin
+// esto el hero pintaba la destacada y saltaba al primer clic.
+$ese_img_inicial = $ese_img_default;
+if (isset($ese_modelo_activo['colores'][0])) {
+    $ese_primer_color = $ese_modelo_activo['colores'][0];
+    $ese_img_inicial  = $ese_primer_color['imgs'][$ese_litraje_default]
+        ?? ($ese_primer_color['img'] ?: $ese_img_default);
+}
+
+// Lo que viaja a product-config.ts: la lista entera de modelos, para que el
+// panel pueda cambiar de modelo sin volver al servidor.
+$ese_modelos_data = array_map(
+    static fn (array $m): array => [
+        'nombre'      => $m['nombre'],
+        'descripcion' => $m['descripcion'],
+        'litrajes'    => array_values(array_map(
+            static fn (array $l): array => ['valor' => $l['valor'], 'default' => $l['predeterminado']],
+            $m['litrajes']
+        )),
+        'colores'     => array_values(array_map(
+            static fn (array $c): array => [
+                'nombre' => $c['nombre'],
+                'color'  => $c['color'],
+                'img'    => $c['img'],
+                'imgs'   => (object) $c['imgs'],
+            ],
+            $m['colores']
+        )),
+    ],
+    $ese_modelos
+);
 
 // Kicker: la categoría real del producto (taxonomía producto_categoria).
 $ese_terms  = get_the_terms($ese_producto_id, 'producto_categoria');
@@ -119,59 +131,10 @@ $ese_titulo_parts = explode(' ', $ese_titulo, 2);
 $ese_titulo_l1    = $ese_titulo_parts[0];
 $ese_titulo_l2    = $ese_titulo_parts[1] ?? '';
 
-// Barra de datos clave (pie del hero): capacidad activa (se sincroniza con
-// las píldoras vía data-producto-volumen), cantidad de colores y hasta dos
-// características ACF que no sean el volumen (ya está en "Capacidad").
-// Sellos del producto: se eligen con el campo de relación "Certificaciones"
-// de la ficha (inc/pcf-productos.php) y salen del módulo, así que el nombre y
-// el logo son los mismos que en la franja y en la página de Certificaciones.
-$ese_certs = [];
-
-foreach ((array) ese_latam_campo('certificaciones', $ese_producto_id, []) as $ese_cert_id) {
-    $ese_cert_id = (int) $ese_cert_id;
-    if ($ese_cert_id <= 0 || 'publish' !== get_post_status($ese_cert_id)) {
-        continue;
-    }
-
-    $ese_certs[] = [
-        'name' => get_the_title($ese_cert_id),
-        'img'  => (string) (get_the_post_thumbnail_url($ese_cert_id, 'medium') ?: ''),
-    ];
-}
-
-$ese_certs_url = ese_latam_pagina_url('certificaciones', home_url('/#certificaciones'));
-
-$ese_stats = [
-    ['label' => __('Capacidad', 'ese-latam'), 'value' => $ese_litraje_default, 'sync' => true],
-    ['label' => __('Colores', 'ese-latam'), 'value' => sprintf(
-        /* translators: %d: cantidad de colores disponibles */
-        _n('%d disponible', '%d disponibles', count($ese_colores_data), 'ese-latam'),
-        count($ese_colores_data)
-    ), 'sync' => false],
-];
-$ese_caracteristicas = get_field('caracteristicas');
-if (is_array($ese_caracteristicas)) {
-    foreach ($ese_caracteristicas as $ese_caract) {
-        $ese_etiqueta = (string) ($ese_caract['etiqueta'] ?? '');
-        if ('' === $ese_etiqueta || false !== mb_strpos(mb_strtolower($ese_etiqueta), 'volumen')) {
-            continue;
-        }
-        $ese_stats[] = ['label' => $ese_etiqueta, 'value' => (string) ($ese_caract['valor'] ?? ''), 'sync' => false];
-        if (count($ese_stats) >= 4) {
-            break;
-        }
-    }
-}
-if (count($ese_stats) < 4) {
-    $ese_stats[] = ['label' => __('Material', 'ese-latam'), 'value' => __('HDPE de alta densidad', 'ese-latam'), 'sync' => false];
-}
-if (count($ese_stats) < 4) {
-    $ese_stats[] = ['label' => __('Origen', 'ese-latam'), 'value' => __('Ingeniería europea', 'ese-latam'), 'sync' => false];
-}
 ?>
 
 <section class="producto-hero" data-product-config data-producto-hero
-    data-colors="<?php echo esc_attr(wp_json_encode($ese_colores_data)); ?>">
+    data-modelos="<?php echo esc_attr(wp_json_encode($ese_modelos_data)); ?>">
     <?php // Fondo propio de la ficha: degradado radial de marca, no la foto de
     // montaña del banner de catálogo. Al no cargar imagen, el hero pinta en
     // el primer frame y el LCP pasa a ser el título. ?>
@@ -213,46 +176,84 @@ if (count($ese_stats) < 4) {
                 <p class="producto-hero__desc"><?php echo esc_html($ese_desc); ?></p>
             <?php endif; ?>
 
-            <div class="producto-hero__group">
+            <?php
+            // Las píldoras y las muestras de TODOS los modelos se imprimen de
+            // una vez y las del modelo inactivo van con `hidden`: así la ficha
+            // es correcta sin JavaScript, y product-config.ts solo alterna ese
+            // atributo en vez de rearmar el panel a mano.
+            ?>
+            <?php if (count($ese_modelos) > 1) : ?>
+                <div class="producto-hero__group">
+                    <p class="producto-hero__group-label">
+                        <span class="producto-hero__group-num"></span>
+                        <span class="producto-hero__group-text"><?php esc_html_e('Elige el modelo', 'ese-latam'); ?></span>
+                        <span class="producto-hero__group-value" data-producto-modelo-nombre><?php echo esc_html($ese_modelo_activo['nombre']); ?></span>
+                    </p>
+                    <div class="producto-hero__models">
+                        <?php foreach ($ese_modelos as $ese_mi => $ese_modelo) : ?>
+                            <button type="button"
+                                class="producto-hero__model<?php echo 0 === $ese_mi ? ' is-active' : ''; ?>"
+                                data-producto-modelo="<?php echo (int) $ese_mi; ?>">
+                                <?php echo esc_html($ese_modelo['nombre']); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="producto-hero__group" data-producto-grupo="litraje">
                 <p class="producto-hero__group-label">
                     <span class="producto-hero__group-num"></span>
                     <span class="producto-hero__group-text"><?php esc_html_e('Elige la capacidad', 'ese-latam'); ?></span>
                 </p>
                 <div class="producto-hero__pills">
-                    <?php
-                    $ese_default_seen = false;
-                    foreach ($ese_litrajes as $ese_litraje) :
-                        $ese_is_default = ! $ese_default_seen && $ese_litraje['valor'] === $ese_litraje_default;
-                        if ($ese_is_default) {
-                            $ese_default_seen = true;
-                        }
-                        ?>
-                        <button type="button"
-                            class="producto-hero__pill<?php echo $ese_is_default ? ' is-active' : ''; ?>"
-                            data-producto-litraje="<?php echo esc_attr($ese_litraje['valor']); ?>">
-                            <?php echo esc_html($ese_litraje['valor']); ?>
-                        </button>
-                    <?php endforeach; ?>
+                    <?php foreach ($ese_modelos as $ese_mi => $ese_modelo) :
+                        $ese_def = $ese_litraje_de($ese_modelo);
+                        $ese_visto = false;
+                        foreach ($ese_modelo['litrajes'] as $ese_litraje) :
+                            $ese_activo = ! $ese_visto && $ese_litraje['valor'] === $ese_def;
+                            if ($ese_activo) {
+                                $ese_visto = true;
+                            }
+                            ?>
+                            <button type="button"
+                                class="producto-hero__pill<?php echo $ese_activo ? ' is-active' : ''; ?>"
+                                data-producto-modelo="<?php echo (int) $ese_mi; ?>"
+                                data-producto-litraje="<?php echo esc_attr($ese_litraje['valor']); ?>"
+                                <?php echo 0 === $ese_mi ? '' : 'hidden'; ?>>
+                                <?php echo esc_html($ese_litraje['valor']); ?>
+                            </button>
+                        <?php endforeach;
+                    endforeach; ?>
                 </div>
             </div>
 
-            <div class="producto-hero__group">
-                <p class="producto-hero__group-label">
-                    <span class="producto-hero__group-num"></span>
-                    <span class="producto-hero__group-text"><?php esc_html_e('Selecciona el color', 'ese-latam'); ?></span>
-                    <span class="producto-hero__group-value" data-producto-color-name><?php echo esc_html($ese_colores_data[0]['nombre'] ?? ''); ?></span>
-                </p>
-                <div class="producto-hero__swatches">
-                    <?php foreach ($ese_colores_data as $ese_i => $ese_color) : ?>
-                        <button type="button"
-                            class="producto-hero__swatch<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
-                            style="--swatch: <?php echo esc_attr($ese_color['color']); ?>;"
-                            data-producto-color="<?php echo (int) $ese_i; ?>"
-                            title="<?php echo esc_attr($ese_color['nombre']); ?>"
-                            aria-label="<?php echo esc_attr($ese_color['nombre']); ?>"></button>
-                    <?php endforeach; ?>
+            <?php
+            $ese_hay_colores = (bool) array_filter($ese_modelos, static fn (array $m): bool => [] !== $m['colores']);
+            ?>
+            <?php if ($ese_hay_colores) : ?>
+                <div class="producto-hero__group" data-producto-grupo="color">
+                    <p class="producto-hero__group-label">
+                        <span class="producto-hero__group-num"></span>
+                        <span class="producto-hero__group-text"><?php esc_html_e('Selecciona el color', 'ese-latam'); ?></span>
+                        <span class="producto-hero__group-value" data-producto-color-name><?php echo esc_html($ese_modelo_activo['colores'][0]['nombre'] ?? ''); ?></span>
+                    </p>
+                    <div class="producto-hero__swatches">
+                        <?php foreach ($ese_modelos as $ese_mi => $ese_modelo) : ?>
+                            <?php foreach ($ese_modelo['colores'] as $ese_i => $ese_color) : ?>
+                                <button type="button"
+                                    class="producto-hero__swatch<?php echo 0 === $ese_i ? ' is-active' : ''; ?>"
+                                    style="--swatch: <?php echo esc_attr($ese_color['color']); ?>;"
+                                    data-producto-modelo="<?php echo (int) $ese_mi; ?>"
+                                    data-producto-color="<?php echo (int) $ese_i; ?>"
+                                    title="<?php echo esc_attr($ese_color['nombre']); ?>"
+                                    aria-label="<?php echo esc_attr($ese_color['nombre']); ?>"
+                                    <?php echo 0 === $ese_mi ? '' : 'hidden'; ?>></button>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
 
             <div class="producto-hero__actions">
                 <?php
@@ -300,47 +301,11 @@ if (count($ese_stats) < 4) {
         </div>
 
 
-        <?php // Fila inferior: barra de atributos a la izquierda y sellos de
-        // certificación a la derecha (Figma 3682-5745). Sin data-reveal: en
-        // pantallas de 1080px queda por debajo del umbral (top 85%) de
-        // scroll-reveals.ts y no llegaría a mostrarse sin scrollear; la anima
-        // la intro (producto-hero-intro.ts) junto con el resto del hero. ?>
-        <div class="producto-hero__bottom">
-            <dl class="producto-hero__stats">
-                <?php foreach ($ese_stats as $ese_stat) : ?>
-                    <div class="producto-hero__stat">
-                        <dt class="producto-hero__stat-label"><?php echo esc_html($ese_stat['label']); ?></dt>
-                        <dd class="producto-hero__stat-value" <?php echo $ese_stat['sync'] ? 'data-producto-volumen' : ''; ?>><?php echo esc_html($ese_stat['value']); ?></dd>
-                    </div>
-                <?php endforeach; ?>
-            </dl>
-
-            <div class="producto-hero__certs">
-                <p class="producto-hero__certs-label"><?php esc_html_e('Certificaciones', 'ese-latam'); ?></p>
-                <ul class="producto-hero__certs-list">
-                    <?php foreach ($ese_certs as $ese_cert) : ?>
-                        <li>
-                            <a class="producto-hero__cert" href="<?php echo esc_url($ese_certs_url); ?>"
-                                title="<?php echo esc_attr(sprintf(__('Certificación %s', 'ese-latam'), $ese_cert['name'])); ?>">
-                                <span class="producto-hero__cert-tile" aria-hidden="true">
-                                    <?php if ('' !== $ese_cert['img']) : ?>
-                                        <img src="<?php echo esc_url($ese_cert['img']); ?>" alt="" loading="lazy" decoding="async">
-                                    <?php else : ?>
-                                        <span class="producto-hero__cert-initials"><?php echo esc_html(mb_strtoupper(mb_substr($ese_cert['name'], 0, 3))); ?></span>
-                                    <?php endif; ?>
-                                </span>
-                                <span class="producto-hero__cert-name"><?php echo esc_html($ese_cert['name']); ?></span>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        </div>
     </div>
 
     <?php // Mismo cue que el hero de Nosotros (.nos-hero__scroll): línea vertical
     // con degradado que "cae" en bucle + la palabra Scroll, abajo a la derecha. ?>
-    <a href="#especificaciones" class="producto-hero__scroll-hint" aria-label="<?php esc_attr_e('Ir a las especificaciones', 'ese-latam'); ?>">
+    <a href="#atributos" class="producto-hero__scroll-hint" aria-label="<?php esc_attr_e('Ir a los datos clave', 'ese-latam'); ?>">
         <span class="producto-hero__scroll-line" aria-hidden="true"></span>
         <span class="producto-hero__scroll-text"><?php esc_html_e('Scroll', 'ese-latam'); ?></span>
     </a>

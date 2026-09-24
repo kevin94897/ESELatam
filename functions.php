@@ -30,6 +30,7 @@ require_once ESE_LATAM_DIR . '/inc/pcf-home.php';
 require_once ESE_LATAM_DIR . '/inc/pcf-globales.php';
 require_once ESE_LATAM_DIR . '/inc/contenido.php';
 require_once ESE_LATAM_DIR . '/inc/template-tags.php';
+require_once ESE_LATAM_DIR . '/inc/imagenes-catalogo.php';
 require_once ESE_LATAM_DIR . '/inc/cpt-productos.php';
 require_once ESE_LATAM_DIR . '/inc/pcf-productos.php';
 require_once ESE_LATAM_DIR . '/inc/modulos.php';

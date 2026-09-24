@@ -1,0 +1,834 @@
+{
+  "_lee": "Manifiesto del catálogo. Un producto por CARPETA de la entrega del cliente: cada uno es una familia (Papeleras, Soterrados…) y sus modelos van dentro, en 'modelos'. Cada modelo declara sus propias capacidades, colores y matriz de fotos, porque no todos los modelos de una familia comparten gama. Lo consumen tools/preparar-imagenes.cjs (optimiza a WebP) y tools/seed-catalogo.php (sube a la biblioteca de medios y crea o completa los productos). El campo 'litros' de cada litraje solo se usa para escalar los renders entre sí; no se muestra. Un modelo puede declarar 'volumen_visual' cuando su tamaño físico no depende de su capacidad, como una papelera de 50 L sobre poste que mide más de un metro.",
+  "_origen": "C:/Users/Usuario/Desktop/Kevin DATA/ESE Latam Productos Imagenes 2026",
+  "productos": [
+    {
+      "slug": "papeleras",
+      "titulo": "Papeleras",
+      "categoria": "Papeleras",
+      "carpeta": "Papeleras",
+      "descripcion": "Papeleras urbanas para vereda, plaza y espacio interior. Cuerpo en HDPE resistente a rayos UV y vandalismo, sobre poste de acero galvanizado o base atornillable, con la gama de colores de segregación.",
+      "caracteristicas": [
+        {
+          "etiqueta": "Material",
+          "valor": "HDPE y acero galvanizado"
+        },
+        {
+          "etiqueta": "Montaje",
+          "valor": "Poste o base atornillable"
+        },
+        {
+          "etiqueta": "Uso",
+          "valor": "Espacio público e interior"
+        }
+      ],
+      "modelos": [
+        {
+          "nombre": "Open Dinova",
+          "descripcion": "Papelera urbana de cuerpo cerrado y boca superior abierta, montada sobre poste de acero galvanizado. La tapa se sirve en cinco colores de segregación para identificar la fracción de un vistazo.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Gris oscuro",
+              "hex": "#32313D",
+              "archivo": "Open dinova_FC030.png"
+            },
+            {
+              "nombre": "Verde",
+              "hex": "#45753C",
+              "archivo": "Open dinova_FC040.png"
+            },
+            {
+              "nombre": "Amarillo",
+              "hex": "#E4C100",
+              "archivo": "Open dinova_FC050.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#006CBF",
+              "archivo": "Open dinova_FC081.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "Open dinova_FC090.png"
+            }
+          ],
+          "volumen_visual": 700
+        },
+        {
+          "nombre": "Papelera con capota",
+          "descripcion": "Papelera troncocónica con capota superior que protege el residuo de la lluvia, sobre base plana atornillable. Cuerpo monocolor en toda la gama de segregación, resistente a rayos UV.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Gris oscuro",
+              "hex": "#32313D",
+              "archivo": "FC 030 GRIS OSCURO.png"
+            },
+            {
+              "nombre": "Verde",
+              "hex": "#45753C",
+              "archivo": "FC 040 VERDE.png"
+            },
+            {
+              "nombre": "Amarillo",
+              "hex": "#E4C100",
+              "archivo": "FC 050 AMARILLO.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#006CBF",
+              "archivo": "FC 081 AZUL.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "FC 090 MARRON.png"
+            }
+          ],
+          "volumen_visual": 700
+        },
+        {
+          "nombre": "Campus Goool",
+          "descripcion": "Estación de segregación compacta con cuatro bocas de color sobre un mismo cuerpo. Pensada para halls, campus y oficinas donde hace falta separar varias fracciones en poco espacio.",
+          "litrajes": [
+            {
+              "valor": "45L",
+              "litros": 45,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Negro",
+              "hex": "#1B1A23",
+              "archivo": "Campus Goool 45L.png"
+            }
+          ],
+          "volumen_visual": 300
+        },
+        {
+          "nombre": "HH2000",
+          "descripcion": "Papelera de calle con capota abovedada y boca lateral protegida, sobre poste de acero. El pictograma serigrafiado marca el punto de depósito sin necesidad de cartelería adicional.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Marrón",
+              "hex": "#A36E55",
+              "archivo": "HH2000_kunststoff_300dpi-(2).png"
+            }
+          ],
+          "volumen_visual": 650
+        },
+        {
+          "nombre": "V3000",
+          "descripcion": "Papelera de doble boca sobre poste, con capota que cubre ambas aberturas. Permite separar dos fracciones en un solo punto de recolección en veredas y paseos peatonales.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#4D9C7E",
+              "archivo": "V3000 sin fondo.png"
+            }
+          ],
+          "volumen_visual": 700
+        },
+        {
+          "nombre": "Venta",
+          "descripcion": "Papelera cilíndrica con capota y boca frontal amplia, montada sobre poste. Disponible con acabado metalizado o en color pleno, para integrarse tanto en cascos históricos como en obra nueva.",
+          "litrajes": [
+            {
+              "valor": "70L",
+              "litros": 70,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Aluminio",
+              "hex": "#CCCCCC",
+              "archivo": "Venta 70L.png"
+            },
+            {
+              "nombre": "Naranja",
+              "hex": "#FA8744",
+              "archivo": "venta sin fondo.png"
+            }
+          ],
+          "volumen_visual": 650
+        },
+        {
+          "nombre": "Kopenhagen",
+          "descripcion": "Papelera rectangular de líneas rectas con boca superior protegida y vaciado frontal. Su perfil plano permite montarla contra muro o sobre poste sin invadir la vereda.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Gris azulado",
+              "hex": "#89A2B3",
+              "archivo": "kopenhagen sin fondo.png"
+            }
+          ],
+          "volumen_visual": 600
+        }
+      ]
+    },
+    {
+      "slug": "soterrados",
+      "titulo": "Contenedores soterrados",
+      "categoria": "Soterrados",
+      "carpeta": "Soterrados",
+      "descripcion": "Sistemas semisoterrados para recolección municipal: el depósito queda bajo nivel de vereda y solo el buzón permanece a la vista. Menos olores, menos ocupación de espacio público y menos impacto visual.",
+      "caracteristicas": [
+        {
+          "etiqueta": "Material",
+          "valor": "HDPE y acero galvanizado"
+        },
+        {
+          "etiqueta": "Instalación",
+          "valor": "Semisoterrada"
+        },
+        {
+          "etiqueta": "Izaje",
+          "valor": "Gancho simple"
+        }
+      ],
+      "modelos": [
+        {
+          "nombre": "Bagio II",
+          "descripcion": "Contenedor semisoterrado de 0,9 m³: el depósito queda bajo nivel de vereda y solo el buzón con tapa de color permanece a la vista, reduciendo olores e impacto visual.",
+          "litrajes": [
+            {
+              "valor": "0,9 m³",
+              "litros": 900,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#45753C",
+              "archivo": "BAGIO-II-short-0,9 verde.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#006CBF",
+              "archivo": "BAGIO-II-short-0,9 azul.png"
+            },
+            {
+              "nombre": "Amarillo",
+              "hex": "#E4C100",
+              "archivo": "BAGIO-II-short-0,9 amarillo.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "BAGIO-II-short-0,9 marrón}.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Bagio Smart M",
+          "descripcion": "Contenedor semisoterrado de 1,8 m³ con buzón de apertura asistida. Duplica la capacidad del modelo chico manteniendo la misma huella en vereda y el mismo sistema de izaje.",
+          "litrajes": [
+            {
+              "valor": "1,8 m³",
+              "litros": 1800,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#45753C",
+              "archivo": "Bagio Smart M Short 1.8 m3 verde.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#006CBF",
+              "archivo": "Bagio Smart M Short 1.8 m3 azul.png"
+            },
+            {
+              "nombre": "Amarillo",
+              "hex": "#E4C100",
+              "archivo": "Bagio Smart M Short 1.8 m3 amarillo.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "Bagio Smart M Short 1.8 m3 marrón.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Bagio L",
+          "descripcion": "Contenedor semisoterrado de 3,0 m³ para puntos de alta generación. Absorbe el volumen de varias manzanas en un solo punto y espacia la frecuencia de recolección.",
+          "litrajes": [
+            {
+              "valor": "3,0 m³",
+              "litros": 3000,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#45753C",
+              "archivo": "BAGIO-L-short-3,0 verde.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#006CBF",
+              "archivo": "BAGIO-L-short-3,0 azul.png"
+            },
+            {
+              "nombre": "Amarillo",
+              "hex": "#E4C100",
+              "archivo": "BAGIO-L-short-3,0 amarillo.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "BAGIO-L-short-3,0 marrón.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "contenedores-biologicos",
+      "titulo": "Contenedores biológicos",
+      "categoria": "Contenedores biológicos",
+      "carpeta": "Contenedores biologicos",
+      "descripcion": "Línea para fracción orgánica con cuerpo y tapa ventilados. La circulación de aire seca el residuo, baja el peso de la carga y reduce lixiviados y olores entre recolecciones.",
+      "caracteristicas": [
+        {
+          "etiqueta": "Material",
+          "valor": "HDPE virgen de alta densidad"
+        },
+        {
+          "etiqueta": "Ventilación",
+          "valor": "Cuerpo y tapa calados"
+        },
+        {
+          "etiqueta": "Fracción",
+          "valor": "Orgánicos y compostables"
+        }
+      ],
+      "modelos": [
+        {
+          "nombre": "Contenedor biológico 2 ruedas",
+          "descripcion": "Contenedor de dos ruedas para fracción orgánica, con cuerpo y tapa perforados. La ventilación cruzada seca el residuo, baja el peso de la carga y reduce lixiviados y olores.",
+          "litrajes": [
+            {
+              "valor": "120L",
+              "litros": 120,
+              "default": true
+            },
+            {
+              "valor": "240L",
+              "litros": 240,
+              "default": false
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "240L_Bio (1).png"
+            }
+          ],
+          "fotos": [
+            {
+              "color": "Marrón",
+              "litraje": "120L",
+              "archivo": "120L_Bio (1).png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "240L",
+              "archivo": "240L_Bio (1).png"
+            }
+          ]
+        },
+        {
+          "nombre": "Biobagio",
+          "descripcion": "Unidad de compostaje aeróbico con cuerpo ventilado y tapa abatible. El aire circula por todo el perfil para acelerar la descomposición sin necesidad de volteo manual.",
+          "litrajes": [
+            {
+              "valor": "600L",
+              "litros": 600,
+              "default": true
+            },
+            {
+              "valor": "800L",
+              "litros": 800,
+              "default": false
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "BIOBAGIO 600 (1).png"
+            }
+          ],
+          "fotos": [
+            {
+              "color": "Marrón",
+              "litraje": "600L",
+              "archivo": "BIOBAGIO 600 (1).png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "800L",
+              "archivo": "BIOBAGIO 800 (1).png"
+            }
+          ]
+        },
+        {
+          "nombre": "Contenedor biológico 4 ruedas",
+          "descripcion": "Contenedor de cuatro ruedas para fracción orgánica de gran volumen, con paredes caladas en todo el perímetro. Mantiene la carga aireada durante el acopio y el traslado.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 770,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Marrón",
+              "hex": "#5B3A23",
+              "archivo": "FC 090 - MARRON 4 (1).png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "contenedores-domesticos",
+      "titulo": "Contenedores domésticos",
+      "categoria": "Contenedores domésticos",
+      "carpeta": "Contenedores domesticos",
+      "descripcion": "Recipientes para el hogar y la entrega puerta a puerta: baldes de cocina, contenedores apilables, composteras y envases para fracciones especiales como aceite usado o pilas.",
+      "caracteristicas": [
+        {
+          "etiqueta": "Material",
+          "valor": "HDPE de alta densidad"
+        },
+        {
+          "etiqueta": "Uso",
+          "valor": "Hogar y puerta a puerta"
+        },
+        {
+          "etiqueta": "Entrega",
+          "valor": "Apilable y con asa"
+        }
+      ],
+      "modelos": [
+        {
+          "nombre": "Batterymax",
+          "descripcion": "Recipiente transparente para la recolección selectiva de pilas y baterías. El cuerpo translúcido deja ver el nivel de llenado y la tapa roscada evita el derrame durante el traslado.",
+          "litrajes": [
+            {
+              "valor": "3L",
+              "litros": 3,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Transparente",
+              "hex": "#D8DEE4",
+              "archivo": "Batterymax 3L.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Comby",
+          "descripcion": "Contenedor domiciliario apilable con tapa abatible y asa integrada. Pensado para la entrega puerta a puerta: se apila vacío para ahorrar espacio y se identifica por el color de la tapa.",
+          "litrajes": [
+            {
+              "valor": "40L",
+              "litros": 40,
+              "default": false
+            },
+            {
+              "valor": "50L",
+              "litros": 50,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Azul",
+              "hex": "#1F4E79",
+              "archivo": "COMBY_50L_PLASTICA_azul.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#6B4A2F",
+              "archivo": "COMBY_50L_PLASTICA_marrón.png"
+            },
+            {
+              "nombre": "Verde",
+              "hex": "#5C8A3A",
+              "archivo": "COMBY_50L_PLASTICA_verde.png"
+            },
+            {
+              "nombre": "Gris",
+              "hex": "#3B424C",
+              "archivo": "COMBY_40L_PLASTICA_ESE.png"
+            }
+          ],
+          "fotos": [
+            {
+              "color": "Azul",
+              "litraje": "40L",
+              "archivo": "COMBY_40L_PLASTICA_azul.png"
+            },
+            {
+              "color": "Azul",
+              "litraje": "50L",
+              "archivo": "COMBY_50L_PLASTICA_azul.png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "40L",
+              "archivo": "COMBY_40L_PLASTICA_marrón.png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "50L",
+              "archivo": "COMBY_50L_PLASTICA_marrón.png"
+            },
+            {
+              "color": "Verde",
+              "litraje": "50L",
+              "archivo": "COMBY_50L_PLASTICA_verde.png"
+            },
+            {
+              "color": "Gris",
+              "litraje": "40L",
+              "archivo": "COMBY_40L_PLASTICA_ESE.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Composter",
+          "descripcion": "Compostera domiciliaria de paredes nervadas y tapa superior abatible. El perfil ventilado mantiene el oxígeno circulando y la compuerta inferior permite retirar el compost maduro.",
+          "litrajes": [
+            {
+              "valor": "300L",
+              "litros": 300,
+              "default": false
+            },
+            {
+              "valor": "310L",
+              "litros": 310,
+              "default": true
+            },
+            {
+              "valor": "660L",
+              "litros": 660,
+              "default": false
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#3E7A52",
+              "archivo": "composter310_00.png"
+            }
+          ],
+          "fotos": [
+            {
+              "color": "Verde",
+              "litraje": "300L",
+              "archivo": "Compostor 300L cerrada.png"
+            },
+            {
+              "color": "Verde",
+              "litraje": "310L",
+              "archivo": "composter310_00.png"
+            },
+            {
+              "color": "Verde",
+              "litraje": "660L",
+              "archivo": "Composter_660L_ESE_Logo.png",
+              "recorte": "650x1000+350+0",
+              "_nota": "El original trae dos recuadros de detalle abajo a la izquierda; se conserva solo el tercio derecho, donde está el cuerpo."
+            }
+          ]
+        },
+        {
+          "nombre": "Easymax",
+          "descripcion": "Balde domiciliario con asa abatible y tapa a presión. El asa traba la tapa al levantarlo, así el contenido no se vuelca camino al punto de entrega.",
+          "litrajes": [
+            {
+              "valor": "35L",
+              "litros": 35,
+              "default": false
+            },
+            {
+              "valor": "45L",
+              "litros": 45,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Azul",
+              "hex": "#1F4E79",
+              "archivo": "Easymax 45L azul.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#6B4A2F",
+              "archivo": "Easymax 45L marrón.png"
+            },
+            {
+              "nombre": "Verde",
+              "hex": "#5C8A3A",
+              "archivo": "Easymax verde.png"
+            }
+          ],
+          "fotos": [
+            {
+              "color": "Azul",
+              "litraje": "45L",
+              "archivo": "Easymax 45L azul.png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "35L",
+              "archivo": "Easymax 35L marrón.png"
+            },
+            {
+              "color": "Marrón",
+              "litraje": "45L",
+              "archivo": "Easymax 45L marrón.png"
+            },
+            {
+              "color": "Verde",
+              "litraje": "45L",
+              "archivo": "Easymax verde.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Easy Trolley",
+          "descripcion": "Balde domiciliario con manija larga para arrastrar sin agacharse. Mantiene la tapa trabada durante el traslado y se identifica por el color de la fracción.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 40,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Azul",
+              "hex": "#1F4E79",
+              "archivo": "easy-trolley_05_azul.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#6B4A2F",
+              "archivo": "easy-trolley_05_marrón.png"
+            },
+            {
+              "nombre": "Verde",
+              "hex": "#5C8A3A",
+              "archivo": "easy-trolley_05_verde.png"
+            }
+          ],
+          "volumen_visual": 90
+        },
+        {
+          "nombre": "Easy Trolley con ruedas",
+          "descripcion": "Carro domiciliario con dos ruedas y manija larga, para trasladar la fracción sin cargar peso. La tapa queda trabada durante el recorrido y el color identifica el residuo.",
+          "litrajes": [
+            {
+              "valor": "Estándar",
+              "litros": 60,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde",
+              "hex": "#8CC63F",
+              "archivo": "easy-trolley-06.png"
+            },
+            {
+              "nombre": "Azul",
+              "hex": "#1F4E79",
+              "archivo": "easy-trolley-06_azul.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#B5651D",
+              "archivo": "easy-trolley-06_marrón.png"
+            }
+          ],
+          "volumen_visual": 120
+        },
+        {
+          "nombre": "Minimax Filter",
+          "descripcion": "Balde de cocina para fracción orgánica con tapa de filtro. La rejilla superior ventila el residuo y seca la humedad, de modo que el olor no se acumula entre recolecciones.",
+          "litrajes": [
+            {
+              "valor": "10L",
+              "litros": 10,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Marrón",
+              "hex": "#6B4A2F",
+              "archivo": "Minimax Filter 10L cerrado.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Minimax Door to Door",
+          "descripcion": "Contenedor domiciliario de 25 litros para entrega puerta a puerta, con tapa abatible y asa lateral. Tamaño pensado para vivienda unifamiliar y recolección diferenciada.",
+          "litrajes": [
+            {
+              "valor": "25L",
+              "litros": 25,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Verde oscuro",
+              "hex": "#1D363A",
+              "archivo": "Minimax_door_to_door_25L.png"
+            },
+            {
+              "nombre": "Gris",
+              "hex": "#7A7D82",
+              "archivo": "Minimax_door_to_door_25L_gris.png"
+            },
+            {
+              "nombre": "Marrón",
+              "hex": "#6B4A2F",
+              "archivo": "Minimax_door_to_door_25L_marrón.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Olimax",
+          "descripcion": "Recipiente para la recolección de aceite vegetal usado, con boca roscada y cierre hermético. El color amarillo lo distingue del resto de las fracciones en el hogar.",
+          "litrajes": [
+            {
+              "valor": "3L",
+              "litros": 3,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Amarillo",
+              "hex": "#D8DE2A",
+              "archivo": "Olimax 3L.png"
+            }
+          ]
+        },
+        {
+          "nombre": "Umimax+",
+          "descripcion": "Canasto ventilado para fracción orgánica de cocina, con paredes caladas en todo el perímetro. Se usa con bolsa compostable: el aire circula y el residuo pierde humedad.",
+          "litrajes": [
+            {
+              "valor": "10L",
+              "litros": 10,
+              "default": true
+            }
+          ],
+          "colores": [
+            {
+              "nombre": "Gris",
+              "hex": "#6F6B72",
+              "archivo": "umimax sin fondo.png"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "_sueltas": {
+    "_lee": "Se suben a la biblioteca de medios pero no se asignan a ningún campo: son fotos de ambiente, detalles de tapa, cartas de color o piezas sin identificar. Quedan disponibles para usarlas a mano desde el admin.",
+    "Contenedores biologicos": [
+      "240L en uso (1).JPG",
+      "240L en uso_1 (1).jpg"
+    ],
+    "Contenedores domesticos": [
+      "Batterymax 3L en uso.jpg",
+      "Composter 300L en uso.jpg",
+      "Composter 310 en uso.jpg",
+      "Composter 660 en uso.jpg",
+      "Composter 660L clip.jpg",
+      "ESE-LATAM-Calados-17.png",
+      "ESE-LATAM-Calados-25.png",
+      "Easymax 45L verde.png",
+      "Easymax tapa azul 1.jpg",
+      "Minimax Colores.jpg",
+      "Minimax Filter 10L abierto.jpg",
+      "Minimax Filter 10L en uso.jpg",
+      "Olimax 3L abierto.png",
+      "Olimax 3L en uso.png",
+      "Umimax+ 10L abierto.jpg",
+      "aeratore.png",
+      "comby50L_2_azul.png",
+      "comby50L_2_marrón.png",
+      "comby50L_2_verde.png",
+      "comby_tapa_1.jpg",
+      "comby_tapa_azul.png",
+      "comby_tapa_marrón.png",
+      "composter sin fondo.png",
+      "composter310_01.png",
+      "composter660_01.jpg",
+      "composter660_03.png"
+    ]
+  },
+  "_ignorar": {
+    "_lee": "Duplicados exactos de otro archivo de la misma carpeta: no se suben.",
+    "Contenedores domesticos": [
+      "aeratore (1).png"
+    ]
+  }
+}

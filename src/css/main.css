@@ -4977,8 +4977,52 @@
     background-image: linear-gradient(to bottom, #8ac2ea, #f0f5ff);
   }
 
+  /* Toda la tarjeta es el enlace (catalogo-grid.php): hereda color y
+     tipografía, y el foco de teclado se dibuja alrededor de la card. */
+  .product-card__link {
+    display: block;
+    border-radius: 16px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .product-card__link:focus-visible {
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 6px;
+  }
+
   .product-card--grid .product-card__img {
     transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease;
+  }
+
+  /* Specs en lista, una por fila (etiqueta a la izquierda, valor a la
+     derecha) en TODOS los anchos. En tres columnas (el layout del slider
+     de la home) los valores largos —"HDPE y acero galvanizado", "0,9 m³"—
+     se partían en dos y tres renglones y se pegaban a la etiqueta vecina
+     en cuanto la card bajaba de ~420px. */
+  .product-card--grid .product-card__specs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 1.25rem;
+  }
+
+  .product-card--grid .product-card__specs > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .product-card--grid .product-card__specs dt {
+    flex: none;
+  }
+
+  .product-card--grid .product-card__specs dd {
+    min-width: 0;
+    line-height: 1.4;
+    text-align: right;
   }
 
   .product-card--grid .product-card__chip {
@@ -5061,10 +5105,6 @@
     color: var(--color-white);
   }
 
-  .catalogo-pagination__side svg:first-child {
-    transform: rotate(180deg);
-  }
-
   .catalogo-pagination__pages {
     display: flex;
     align-items: center;
@@ -5097,7 +5137,11 @@
     .catalogo-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: 1.25rem;
-      row-gap: 2.5rem;
+      /* Entre 48 y 64rem la foto sigue sobresaliendo ~130px por encima de
+         su card (mismo <img> absoluto que en desktop), así que la separación
+         entre filas tiene que absorberla; bajo 48rem la card cambia a media
+         cuadrada sin desborde y la grilla vuelve a 1.25rem. */
+      row-gap: 8.5rem;
     }
   }
 
@@ -5223,11 +5267,9 @@
     }
 
     .product-card--grid .product-card__specs {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2px;
+      gap: 4px;
       margin-top: 6px;
-      padding-top: 6px;
+      padding-top: 8px;
       border-top: 1px solid #f0f0f0;
     }
 
@@ -5242,9 +5284,6 @@
       font-size: 12px;
       font-weight: 700;
       color: var(--color-text-dark);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .catalogo-pagination {
@@ -5356,9 +5395,9 @@
     background-size: 26px 26px;
   }
 
-  /* Dos columnas: panel de configuración | escena. La barra de atributos
-     ocupa la fila de abajo a todo el ancho. La fila del medio es la que
-     crece (1fr) y centra panel y escena sobre la misma caja. */
+  /* Dos columnas: panel de configuración | escena. La fila de abajo
+     crece (1fr) y centra panel y escena sobre la misma caja. Los datos
+     clave y los sellos viven en la sección siguiente (.producto-atributos). */
   .producto-hero__inner {
     position: relative;
     z-index: 2;
@@ -5366,11 +5405,10 @@
     /* 31rem: las seis píldoras de litraje entran en una fila y el par
        "Comprar" / "Ficha técnica" no se parte con el hover del CTA. */
     grid-template-columns: minmax(300px, 31rem) minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       "crumb crumb"
-      "panel scene"
-      "stats stats";
+      "panel scene";
     align-items: center;
     column-gap: clamp(2rem, 5vw, 6rem);
     row-gap: clamp(1.25rem, 3vh, 2.25rem);
@@ -5397,7 +5435,6 @@
   .producto-hero.is-js .producto-hero__ring,
   .producto-hero.is-js .producto-hero__pedestal,
   .producto-hero.is-js .producto-hero__product,
-  .producto-hero.is-js .producto-hero__bottom,
   .producto-hero.is-js .producto-hero__scroll-hint {
     visibility: hidden;
   }
@@ -5423,7 +5460,7 @@
     backdrop-filter: blur(8px);
     font-size: 12px;
     font-weight: 800;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: #54b5e0;
   }
@@ -5541,6 +5578,44 @@
   }
 
   .producto-hero__pill.is-active {
+    border-color: var(--color-secondary);
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    box-shadow: 0 0 0 4px rgb(0 145 209 / 0.2);
+  }
+
+  /* Lista de modelos de la familia: misma píldora que la capacidad pero
+     con el nombre completo, así que se deja envolver y no se recorta. Va
+     antes que las otras dos listas porque elegir modelo cambia qué
+     capacidades y qué colores existen. */
+  .producto-hero__models {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .producto-hero__model {
+    padding: 0.5rem 1.125rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 9999px;
+    background-color: rgb(255 255 255 / 0.06);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: left;
+    color: rgb(255 255 255 / 0.75);
+    cursor: pointer;
+    transition: border-color .25s ease, background-color .25s ease, color .25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-hero__model:not(.is-active):hover {
+      border-color: rgb(255 255 255 / 0.4);
+      color: var(--color-white);
+    }
+  }
+
+  .producto-hero__model.is-active {
     border-color: var(--color-secondary);
     background-color: var(--color-secondary);
     color: var(--color-white);
@@ -5720,158 +5795,6 @@
     background: radial-gradient(ellipse at center, rgb(0 0 0 / 0.55), transparent 65%);
   }
 
-  /* ---------- Barra de atributos ---------- */
-
-  /* Glass sobre el degradado (mismo doble gradiente plano + blur que
-     .contacto__card). Ancho al contenido, alineada bajo el panel. */
-  /* Fila inferior del hero: atributos (izq.) + certificaciones (der.).
-     Con flex-wrap, en anchos donde no entran juntos (1024–1400) los sellos
-     bajan a una segunda línea alineados a la izquierda. */
-  .producto-hero__bottom {
-    grid-area: stats;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem 1.5rem;
-    width: 100%;
-  }
-
-  /* Sellos de certificación: misma superficie de vidrio que la barra de
-     atributos; cada sello es una ficha blanca con el logo y su nombre. */
-  .producto-hero__certs {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.625rem;
-    padding: 0.875rem 1.25rem 1rem;
-    border: 1px solid rgb(255 255 255 / 0.12);
-    border-radius: 16px;
-    background-image:
-      linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.28)),
-      linear-gradient(rgb(143 143 143 / 0.18), rgb(143 143 143 / 0.18));
-    backdrop-filter: blur(16px);
-  }
-
-  .producto-hero__certs-label {
-    flex: none;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgb(255 255 255 / 0.5);
-  }
-
-  .producto-hero__certs-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .producto-hero__cert {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    min-width: 72px;
-    text-decoration: none;
-    color: var(--color-white);
-  }
-
-  .producto-hero__cert-tile {
-    display: grid;
-    place-items: center;
-    width: 48px;
-    height: 48px;
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: var(--color-white);
-    box-shadow: 0 6px 16px rgb(0 0 0 / 0.25);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-
-  .producto-hero__cert-tile img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 5px;
-  }
-
-  .producto-hero__cert-initials {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    color: var(--color-primary);
-  }
-
-  .producto-hero__cert-name {
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.2;
-    white-space: nowrap;
-    text-align: center;
-    color: rgb(255 255 255 / 0.85);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .producto-hero__cert:hover .producto-hero__cert-tile {
-      transform: translateY(-2px);
-      box-shadow: 0 0 0 2px var(--color-secondary), 0 10px 22px rgb(0 0 0 / 0.3);
-    }
-  }
-
-  .producto-hero__stats {
-    grid-area: stats;
-    justify-self: start;
-    display: flex;
-    flex-wrap: wrap;
-    width: fit-content;
-    max-width: 100%;
-    margin: 0;
-    border: 1px solid rgb(255 255 255 / 0.12);
-    border-radius: 16px;
-    background-image:
-      linear-gradient(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.28)),
-      linear-gradient(rgb(143 143 143 / 0.18), rgb(143 143 143 / 0.18));
-    backdrop-filter: blur(16px);
-    overflow: hidden;
-  }
-
-  .producto-hero__stat {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    flex: 1 1 auto;
-    min-width: 160px;
-    padding: 1rem 2rem;
-    border-left: 1px solid rgb(255 255 255 / 0.1);
-  }
-
-  .producto-hero__stat:first-child {
-    border-left: 0;
-  }
-
-  .producto-hero__stat-label {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgb(255 255 255 / 0.5);
-  }
-
-  .producto-hero__stat-value {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--color-white);
-  }
-
   /* ---------- Indicador de scroll ---------- */
 
   /* Mismo cue que .nos-hero__scroll (página Nosotros): línea vertical con
@@ -5979,35 +5902,6 @@
 
     .producto-hero__product img {
       height: min(clamp(230px, 58vw, 340px), calc(var(--scene-h) * 0.7));
-    }
-
-    .producto-hero__stats {
-      width: 100%;
-    }
-
-    .producto-hero__certs {
-      gap: 0.75rem;
-      width: 100%;
-      padding: 1rem 1.25rem 1.25rem;
-    }
-
-    .producto-hero__cert {
-      min-width: 64px;
-    }
-
-    .producto-hero__stat {
-      flex-basis: 50%;
-      min-width: 0;
-      padding: 0.875rem 1.25rem;
-    }
-
-    /* Con dos por fila, la segunda fila también necesita línea arriba */
-    .producto-hero__stat:nth-child(odd) {
-      border-left: 0;
-    }
-
-    .producto-hero__stat:nth-child(n + 3) {
-      border-top: 1px solid rgb(255 255 255 / 0.1);
     }
   }
 
@@ -7425,8 +7319,8 @@
     align-items: center;
     gap: 10px;
     font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.2em;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--color-neutral-500);
   }
@@ -12351,27 +12245,27 @@
     /* Specs en lista (una por fila, etiqueta a la izquierda y valor a la
        derecha): en tres columnas dentro de una card de ~170px las etiquetas
        "MATERIAL" y "NORMA" se pisaban entre sí. */
+    /* En una card de ~170px el valor no cabe al lado de la etiqueta
+       ("HDPE virgen de alta densidad" se partía en tres renglones): la
+       etiqueta va arriba y el valor debajo, a todo el ancho. */
     .product-card--grid .product-card__specs {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 4px;
+      gap: 8px;
     }
 
     .product-card--grid .product-card__specs>div {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 8px;
-      min-width: 0;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
     }
 
     .product-card--grid .product-card__specs dt {
-      flex: none;
-      font-size: 12px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
     }
 
     .product-card--grid .product-card__specs dd {
-      min-width: 0;
-      text-align: right;
+      text-align: left;
+      line-height: 1.3;
     }
 
     .catalogo-filters__label {
@@ -13177,5 +13071,280 @@
   body.catalogo-blanco .catalogo-filters,
   body.catalogo-blanco .catalogo-pagination__side--prev {
     background-color: var(--color-white);
+  }
+}
+
+/* =========================================================
+   FICHA DE PRODUCTO: DATOS CLAVE + SELLOS (template-parts/producto-atributos.php)
+   Antes era la fila inferior del hero (.producto-hero__bottom); ahora es una
+   sección clara propia bajo el banner. Dos tarjetas blancas: la barra de
+   atributos (Capacidad / Colores / …, sincronizadas por product-config.ts
+   vía data-producto-volumen / data-producto-colores) y los sellos del
+   producto. Entran con los reveals genéricos (data-reveal).
+   ========================================================= */
+@layer components {
+  /* Divisor con el hero: la sección entra como una "hoja" clara que se
+     monta sobre el navy del banner (esquinas superiores redondeadas,
+     sombra hacia arriba y un asa centrada, como un bottom-sheet). El
+     solape lo da --sheet; el hero corre su cue de scroll esa misma
+     distancia para que no quede tapado. */
+  .producto-atributos {
+    --sheet: 40px;
+    position: relative;
+    z-index: 3;
+    margin-top: calc(-1 * var(--sheet));
+    padding: clamp(2.75rem, 6vh, 4rem) clamp(1.5rem, 6.25vw, 7.5rem) clamp(2rem, 5vh, 3.5rem);
+    border-radius: var(--sheet) var(--sheet) 0 0;
+    background-color: var(--color-bg);
+    border-bottom: 1px solid var(--color-neutral-100);
+    box-shadow: 0 -18px 50px rgb(0 21 69 / 0.28);
+  }
+
+  .producto-atributos::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 56px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+    translate: -50% 0;
+  }
+
+  .producto-hero__scroll-hint {
+    bottom: calc(clamp(1.5rem, 4vh, 2.5rem) + 40px);
+  }
+
+  .producto-atributos__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 24px;
+    max-width: 1920px;
+    margin-inline: auto;
+  }
+
+  .producto-atributos__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+    border: 1px solid var(--color-neutral-100);
+    border-radius: 16px;
+    background-color: var(--color-white);
+    box-shadow: 0 10px 30px rgb(0 30 97 / 0.04);
+  }
+
+  .producto-atributos__card--stats {
+    flex: 1 1 560px;
+    min-width: 0;
+  }
+
+  .producto-atributos__card--certs {
+    flex: 0 1 auto;
+  }
+
+  .producto-atributos__label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-secondary);
+  }
+
+  .producto-atributos__list {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .producto-atributos__stat {
+    display: flex;
+    flex: 1 1 150px;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    padding: 0.5rem 1.75rem 0.25rem 0;
+    border-left: 1px solid var(--color-neutral-100);
+  }
+
+  .producto-atributos__stat + .producto-atributos__stat {
+    padding-left: 1.75rem;
+  }
+
+  .producto-atributos__stat:first-child {
+    border-left: 0;
+  }
+
+  .producto-atributos__stat-label {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+  }
+
+  .producto-atributos__stat-value {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-text-dark);
+  }
+
+  .producto-atributos__certs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .producto-atributos__cert {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 72px;
+    text-decoration: none;
+    color: var(--color-neutral-700);
+  }
+
+  .producto-atributos__cert-tile {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border: 1px solid var(--color-neutral-100);
+    border-radius: 12px;
+    background-color: var(--color-white);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .producto-atributos__cert-tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 6px;
+    object-fit: contain;
+  }
+
+  .producto-atributos__cert-initials {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--color-primary);
+  }
+
+  .producto-atributos__cert-name {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .producto-atributos__cert:hover .producto-atributos__cert-tile {
+      transform: translateY(-2px);
+      border-color: var(--color-secondary);
+      box-shadow: 0 10px 22px rgb(0 145 209 / 0.18);
+    }
+  }
+
+  @media (width < 64rem) {
+    .producto-atributos {
+      --sheet: 28px;
+      padding-inline: 1.25rem;
+    }
+
+    .producto-atributos__card--certs {
+      flex-basis: 100%;
+    }
+
+    .producto-atributos__stat {
+      flex-basis: 50%;
+      padding: 0.75rem 1rem 0.75rem 0;
+    }
+
+    .producto-atributos__stat + .producto-atributos__stat {
+      padding-left: 1rem;
+    }
+
+    /* Con dos por fila, la segunda fila también necesita línea arriba */
+    .producto-atributos__stat:nth-child(odd) {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .producto-atributos__stat:nth-child(n + 3) {
+      border-top: 1px solid var(--color-neutral-100);
+    }
+
+    .producto-atributos__cert {
+      min-width: 64px;
+    }
+  }
+}
+
+/* =========================================================
+   CATÁLOGO: DIVISOR ENTRE EL BANNER Y LA GRILLA
+   Misma "hoja" que .producto-atributos en la ficha: la sección de
+   productos se monta sobre el navy del banner con esquinas redondeadas,
+   sombra hacia arriba y un asa centrada. El banner suma ese solape a su
+   padding inferior para que el contador y las flechas no queden tapados.
+   ========================================================= */
+@layer components {
+  .catalogo-banner {
+    --sheet: 40px;
+  }
+
+  /* En desktop el contador y las flechas van absolutos al pie del banner
+     (.catalogo-banner__bottom-bar); en móvil vuelven al flujo dentro de
+     __content, así que ahí basta con el padding. */
+  .catalogo-banner__content {
+    padding-bottom: calc(clamp(2.5rem, 6vh, 4.5rem) + var(--sheet));
+  }
+
+  @media (width >= 64rem) {
+    .catalogo-banner__bottom-bar {
+      bottom: calc(clamp(2rem, 5vh, 3.5rem) + var(--sheet));
+    }
+  }
+
+  .catalogo-productos {
+    --sheet: 40px;
+    position: relative;
+    z-index: 3;
+    margin-top: calc(-1 * var(--sheet));
+    padding-top: clamp(3rem, 7vh, 5rem);
+    border-radius: var(--sheet) var(--sheet) 0 0;
+    box-shadow: 0 -18px 50px rgb(0 21 69 / 0.28);
+  }
+
+  .catalogo-productos::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    width: 56px;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--color-secondary), var(--color-accent));
+    translate: -50% 0;
+  }
+
+  @media (width < 64rem) {
+    .catalogo-banner,
+    .catalogo-productos {
+      --sheet: 28px;
+    }
+
+    .catalogo-productos {
+      padding-top: 2.5rem;
+    }
   }
 }

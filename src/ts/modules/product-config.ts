@@ -1,22 +1,26 @@
 /**
  * Panel de configuración de la ficha de producto (single-producto.php).
  *
- * Dos controles sobre datos reales del CPT, y una sola foto que depende de
- * LOS DOS a la vez:
+ * Un producto del catálogo es una FAMILIA —"Papeleras"— y agrupa a los
+ * modelos que la componen: Open Dinova, Campus Goool, Venta… De ahí que el
+ * panel tenga tres listas encadenadas, no dos:
  *
- *  1. Color — los swatches del panel izquierdo y las miniaturas de la
- *     derecha son DOS vistas del mismo estado: comparten el atributo
- *     `data-producto-color` (índice dentro de `data-colors`), así que tocar
+ *  1. Modelo — cambia qué capacidades y qué colores existen. Solo aparece
+ *     cuando la familia tiene más de uno.
+ *  2. Capacidad — las del modelo elegido.
+ *  3. Color — los del modelo elegido. Los swatches del panel y las
+ *     miniaturas comparten el atributo `data-producto-color`, así que tocar
  *     cualquiera de los dos actualiza el otro.
- *  2. Litraje — marca la píldora activa y sincroniza el valor de la card
- *     "Volumen" de la sección de especificaciones.
  *
- * La foto sale de `colors[i].imgs[litraje]` y cae a `colors[i].img` cuando
- * ese producto no tiene una foto propia por capacidad (ver el repeater
- * "Fotos por litraje" en inc/acf-productos.php). Por eso el swap vive en una
- * sola función `render()` en vez de estar duplicado en cada control: un
- * contenedor de 80L y uno de 360L del mismo color son piezas distintas, así
- * que cambiar la capacidad también cambia la imagen.
+ * El PHP imprime las píldoras y las muestras de TODOS los modelos y esconde
+ * con `hidden` las de los inactivos. Este módulo solo alterna ese atributo:
+ * no arma markup, así la ficha sigue siendo correcta sin JavaScript y no hay
+ * dos fuentes de verdad para el mismo panel.
+ *
+ * La foto sale de `colores[i].imgs[capacidad]` y cae a `colores[i].img`
+ * cuando esa combinación no tiene foto propia. Por eso el cambio de imagen
+ * vive en una sola función `render()`: las tres listas alteran el mismo
+ * estado y cualquiera de ellas puede cambiar la pieza que se ve.
  *
  * La flotación continua de la foto la sigue resolviendo initFloat()
  * (`[data-float]`), igual que en el banner de catálogo — acá solo se cambia
@@ -29,57 +33,78 @@ interface ProductoColor {
   nombre: string;
   color: string;
   img: string;
-  /** Fotos por litraje ("120L" → URL). Vacío si el producto no las tiene. */
+  /** Fotos por capacidad ("120L" → URL). Vacío si el modelo no las tiene. */
   imgs?: Record<string, string>;
 }
 
+interface ProductoLitraje {
+  valor: string;
+  default?: boolean;
+}
+
+interface ProductoModelo {
+  nombre: string;
+  descripcion?: string;
+  litrajes: ProductoLitraje[];
+  colores: ProductoColor[];
+}
+
 export function initProductConfig(root: HTMLElement): void {
-  let colors: ProductoColor[] = [];
+  let modelos: ProductoModelo[] = [];
   try {
-    colors = JSON.parse(root.dataset.colors ?? '[]');
+    modelos = JSON.parse(root.dataset.modelos ?? '[]');
   } catch {
-    colors = [];
+    modelos = [];
   }
+  if (modelos.length === 0) return;
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const mainImg = root.querySelector<HTMLImageElement>('[data-producto-img]');
-  const colorEls = Array.from(root.querySelectorAll<HTMLElement>('[data-producto-color]'));
+  const modeloEls = Array.from(
+    root.querySelectorAll<HTMLElement>('.producto-hero__model[data-producto-modelo]')
+  );
   const litrajeEls = Array.from(root.querySelectorAll<HTMLElement>('[data-producto-litraje]'));
+  const colorEls = Array.from(root.querySelectorAll<HTMLElement>('[data-producto-color]'));
   // "Capacidad" en la barra de atributos del hero y la card "Volumen" de la
   // sección de especificaciones (fuera de `root`): todos los que haya.
   const volumenEls = Array.from(document.querySelectorAll<HTMLElement>('[data-producto-volumen]'));
   const colorNameEl = root.querySelector<HTMLElement>('[data-producto-color-name]');
+  const modeloNameEl = root.querySelector<HTMLElement>('[data-producto-modelo-nombre]');
+  const coloresEl = document.querySelector<HTMLElement>('[data-producto-colores]');
+  const descEl = root.querySelector<HTMLElement>('.producto-hero__desc');
+  const descOriginal = descEl?.textContent ?? '';
 
-  // Estado inicial: lo que el PHP ya dejó marcado con .is-active, para que
-  // el módulo no pueda arrancar desincronizado del HTML servido.
-  let activeColor = Math.max(
-    0,
-    colorEls.findIndex((el) => el.classList.contains('is-active'))
-  );
-  let activeLitraje =
-    litrajeEls.find((el) => el.classList.contains('is-active'))?.dataset.productoLitraje ?? '';
+  const idx = (el: HTMLElement, attr: string): number => Number(el.dataset[attr] ?? -1);
 
-  const imageFor = (colorIndex: number, litraje: string): string => {
-    const color = colors[colorIndex];
-    if (!color) return '';
-    return color.imgs?.[litraje] || color.img || '';
-  };
+  // Estado inicial: lo que el PHP ya dejó marcado, para que el módulo no
+  // pueda arrancar desincronizado del HTML servido.
+  let activeModel = Math.max(0, modeloEls.findIndex((el) => el.classList.contains('is-active')));
+  let activeColor = 0;
+
+  const modeloActual = (): ProductoModelo => modelos[activeModel] ?? modelos[0];
+
+  const litrajePorDefecto = (m: ProductoModelo): string =>
+    m.litrajes.find((l) => l.default)?.valor ?? m.litrajes[0]?.valor ?? '';
+
+  let activeLitraje = litrajePorDefecto(modeloActual());
 
   // Las fotos de las otras variantes son archivos aparte: sin precargar, el
-  // fade-in arranca con el <img> todavía vacío y se ve un parpadeo. Se
-  // piden en idle, después del LCP (misma técnica que product-island.ts).
+  // fade-in arranca con el <img> todavía vacío y se ve un parpadeo. Se piden
+  // en idle, después del LCP (misma técnica que product-island.ts).
   const preload = (): void => {
-    const seen = new Set<string>();
-    colors.forEach((color) => {
-      [color.img, ...Object.values(color.imgs ?? {})].forEach((url) => {
-        if (!url || seen.has(url)) return;
-        seen.add(url);
-        const img = new Image();
-        img.decoding = 'async';
-        img.src = url;
-      });
-    });
+    const vistas = new Set<string>();
+    modelos.forEach((m) =>
+      m.colores.forEach((c) => {
+        [c.img, ...Object.values(c.imgs ?? {})].forEach((url) => {
+          if (!url || vistas.has(url)) return;
+          vistas.add(url);
+          const img = new Image();
+          img.decoding = 'async';
+          img.src = url;
+        });
+      })
+    );
   };
   if (typeof window.requestIdleCallback === 'function') {
     window.requestIdleCallback(preload, { timeout: 3000 });
@@ -90,18 +115,22 @@ export function initProductConfig(root: HTMLElement): void {
   let swapping = false;
   let pending: string | null = null;
 
-  /** Cambia la foto principal al par (color, litraje) activo. */
+  /** Cambia la foto principal a la combinación (modelo, color, capacidad) activa. */
   const render = (): void => {
     if (!mainImg) return;
 
-    const src = imageFor(activeColor, activeLitraje);
-    const alt = colors[activeColor]?.nombre ?? mainImg.alt;
+    const color = modeloActual().colores[activeColor];
+    if (!color) return;
+
+    const src = color.imgs?.[activeLitraje] || color.img || '';
     if (!src) return;
 
     // Comparar contra el src YA RESUELTO por el navegador (absoluto): las
-    // URLs del JSON también lo son, así que un cambio de litraje que no
-    // cambia de archivo no dispara una animación en vano.
+    // URLs del JSON también lo son, así que un cambio que no cambia de
+    // archivo no dispara una animación en vano.
     if (new URL(src, location.href).href === mainImg.src) return;
+
+    const alt = color.nombre;
 
     if (prefersReducedMotion) {
       mainImg.src = src;
@@ -110,7 +139,7 @@ export function initProductConfig(root: HTMLElement): void {
     }
 
     // Un cambio durante el crossfade no se descarta: queda pendiente y se
-    // aplica al terminar (clics rápidos entre colores no se pierden).
+    // aplica al terminar (clics rápidos no se pierden).
     if (swapping) {
       pending = src;
       return;
@@ -133,50 +162,105 @@ export function initProductConfig(root: HTMLElement): void {
           ease: 'back.out(1.5)',
           onComplete: () => {
             swapping = false;
-            // Mientras se reponía pudo elegirse otra variante.
-            render();
+            render(); // por si se eligió otra variante mientras reponía
           },
         });
       },
     });
   };
 
-  // ---------- Color ----------
-
-  const selectColor = (index: number): void => {
-    if (!colors[index] || index === activeColor) return;
-    activeColor = index;
-
-    // Swatches y miniaturas comparten el atributo: un solo recorrido deja
-    // los dos grupos en el mismo estado.
-    colorEls.forEach((el) => {
-      el.classList.toggle('is-active', Number(el.dataset.productoColor) === index);
+  /** Deja visibles solo las píldoras y las muestras del modelo activo. */
+  const sincronizarVisibles = (): void => {
+    litrajeEls.forEach((el) => {
+      el.hidden = idx(el, 'productoModelo') !== activeModel;
     });
-    if (colorNameEl) colorNameEl.textContent = colors[index].nombre;
+    colorEls.forEach((el) => {
+      const suyo = idx(el, 'productoModelo');
+      // Las miniaturas de la escena no declaran modelo: siempre visibles.
+      el.hidden = suyo >= 0 && suyo !== activeModel;
+    });
+  };
 
+  const marcarLitraje = (): void => {
+    litrajeEls.forEach((el) => {
+      el.classList.toggle(
+        'is-active',
+        idx(el, 'productoModelo') === activeModel && el.dataset.productoLitraje === activeLitraje
+      );
+    });
+    volumenEls.forEach((el) => {
+      el.textContent = activeLitraje;
+    });
+  };
+
+  const marcarColor = (): void => {
+    colorEls.forEach((el) => {
+      const suyo = idx(el, 'productoModelo');
+      const mismoModelo = suyo < 0 || suyo === activeModel;
+      el.classList.toggle('is-active', mismoModelo && idx(el, 'productoColor') === activeColor);
+    });
+    if (colorNameEl) {
+      colorNameEl.textContent = modeloActual().colores[activeColor]?.nombre ?? '';
+    }
+  };
+
+  // ---------- Modelo ----------
+
+  const seleccionarModelo = (i: number): void => {
+    if (!modelos[i] || i === activeModel) return;
+    activeModel = i;
+
+    const m = modeloActual();
+    activeColor = 0;
+    activeLitraje = litrajePorDefecto(m);
+
+    modeloEls.forEach((el) => {
+      el.classList.toggle('is-active', idx(el, 'productoModelo') === activeModel);
+    });
+    if (modeloNameEl) modeloNameEl.textContent = m.nombre;
+    if (coloresEl) {
+      const n = m.colores.length;
+      coloresEl.textContent = `${n} ${n === 1 ? 'disponible' : 'disponibles'}`;
+    }
+    // La descripción del modelo, cuando la tiene, reemplaza a la del producto.
+    if (descEl) descEl.textContent = m.descripcion || descOriginal;
+
+    sincronizarVisibles();
+    marcarLitraje();
+    marcarColor();
     render();
   };
 
-  colorEls.forEach((el) => {
-    el.addEventListener('click', () => selectColor(Number(el.dataset.productoColor)));
+  modeloEls.forEach((el) => {
+    el.addEventListener('click', () => seleccionarModelo(idx(el, 'productoModelo')));
   });
 
-  // ---------- Litraje ----------
-
-  const selectLitraje = (el: HTMLElement): void => {
-    const litraje = el.dataset.productoLitraje;
-    if (!litraje || litraje === activeLitraje) return;
-    activeLitraje = litraje;
-
-    litrajeEls.forEach((other) => other.classList.toggle('is-active', other === el));
-    volumenEls.forEach((target) => {
-      target.textContent = litraje;
-    });
-
-    render();
-  };
+  // ---------- Capacidad ----------
 
   litrajeEls.forEach((el) => {
-    el.addEventListener('click', () => selectLitraje(el));
+    el.addEventListener('click', () => {
+      const valor = el.dataset.productoLitraje;
+      if (!valor || valor === activeLitraje) return;
+      activeLitraje = valor;
+      marcarLitraje();
+      render();
+    });
   });
+
+  // ---------- Color ----------
+
+  colorEls.forEach((el) => {
+    el.addEventListener('click', () => {
+      const i = idx(el, 'productoColor');
+      if (i < 0 || i === activeColor || !modeloActual().colores[i]) return;
+      activeColor = i;
+      marcarColor();
+      render();
+    });
+  });
+
+  // Estado coherente desde el primer frame.
+  sincronizarVisibles();
+  marcarLitraje();
+  marcarColor();
 }
