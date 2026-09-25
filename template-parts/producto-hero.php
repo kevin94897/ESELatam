@@ -42,6 +42,8 @@ $ese_compra = ese_latam_enlace(
     ese_latam_contacto_url()
 );
 $ese_ficha      = get_field('ficha_tecnica');
+// El campo devuelve la URL; se acepta también el array por si cambia el return_format.
+$ese_ficha_url  = is_array($ese_ficha) ? (string) ($ese_ficha['url'] ?? '') : (string) $ese_ficha;
 
 // Sin foto propia no se pone una ajena: antes caía a un contenedor de 3
 // ruedas del theme, así que la Papelera y el Soterrado se mostraban con una
@@ -266,8 +268,8 @@ $ese_titulo_l2    = $ese_titulo_parts[1] ?? '';
                 ?>
 
                 <a class="producto-hero__ficha"
-                    href="<?php echo esc_url(is_array($ese_ficha) ? ($ese_ficha['url'] ?? '#') : '#'); ?>"
-                    <?php echo is_array($ese_ficha) ? 'download' : 'aria-disabled="true"'; ?>>
+                    href="<?php echo esc_url($ese_ficha_url ?: '#'); ?>"
+                    <?php echo $ese_ficha_url ? 'download' : 'aria-disabled="true"'; ?>>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <?php echo ese_latam_icon_svg('download'); // phpcs:ignore WordPress.Security.EscapeOutput ?>

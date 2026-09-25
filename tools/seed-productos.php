@@ -37,20 +37,6 @@ require_once ABSPATH . 'wp-admin/includes/image.php';
 require_once ABSPATH . 'wp-admin/includes/file.php';
 require_once ABSPATH . 'wp-admin/includes/media.php';
 
-/*
- * Los renders ya no viven dentro del theme (el repositorio no carga los ~90 MB
- * de PNG originales): salieron a la carpeta de imágenes del cliente. Las rutas
- * relativas que usa este script cuelgan de acá, y se puede pisar con
- * --base <directorio>.
- */
-$ese_base_i = array_search('--base', $argv, true);
-define(
-    'ESE_SEED_BASE',
-    false !== $ese_base_i && isset($argv[$ese_base_i + 1])
-        ? rtrim(strtr($argv[$ese_base_i + 1], '\\', '/'), '/')
-        : 'C:/Users/Usuario/Desktop/Kevin DATA/ESE Latam Productos Imagenes 2026/Contenedores con ruedas (renders originales)'
-);
-
 /**
  * Copia un archivo del theme a la biblioteca de medios, una sola vez.
  *
@@ -70,7 +56,7 @@ function ese_seed_attachment(string $rel_path, string $seed_key, string $title, 
         return (int) $existing[0];
     }
 
-    $src = ESE_SEED_BASE . '/' . $rel_path;
+    $src = get_template_directory() . '/' . $rel_path;
     if (! file_exists($src)) {
         fwrite(STDERR, "  !! no existe: $rel_path\n");
         return 0;
@@ -270,7 +256,7 @@ foreach (['DIN EN 840', 'PKN', 'TÜV SÜD', 'Blue Angel'] as $ese_cert) {
 echo "Contenedor 2 ruedas\n";
 [$ese_col_2r, $ese_thumb_2r] = ese_seed_colores(
     ['80L', '120L', '180L', '240L', '360L'],
-    'contenedores-2-ruedas/web',
+    'assets/imgs/productos/contenedores-2-ruedas/web',
     '',
     'c2r',
     'Contenedor 2 ruedas',
@@ -305,7 +291,7 @@ ese_seed_producto('contenedor-2-ruedas', [
 echo "\nContenedor 3 ruedas\n";
 [$ese_col_3r, $ese_thumb_3r] = ese_seed_colores(
     ['240L', '370L'],
-    'contenedores-3-ruedas/web',
+    'assets/imgs/productos/contenedores-3-ruedas/web',
     '-3pl',
     'c3r',
     'Contenedor 3 ruedas',
@@ -342,7 +328,7 @@ Contenedor 4 ruedas
 ";
 [$ese_col_4r, $ese_thumb_4r] = ese_seed_colores(
     ['400L', '500L', '660L', '770L', '1100L'],
-    'contenedores-4-ruedas/web',
+    'assets/imgs/productos/contenedores-4-ruedas/web',
     '-4r',
     'c4r',
     'Contenedor 4 ruedas',

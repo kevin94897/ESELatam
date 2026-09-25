@@ -459,7 +459,8 @@ function ese_latam_args_casos(int $post_id, string $prefijo): array {
     return [
         'kicker'     => (string) ese_latam_campo($prefijo . '_kicker', $post_id, ''),
         'title'      => (string) ese_latam_campo($prefijo . '_titulo', $post_id, ''),
-        'desc'       => (string) ese_latam_campo($prefijo . '_desc', $post_id, ''),
+        // La plantilla escapa la bajada: se le quita el HTML que trae el wysiwyg de Certificaciones.
+        'desc'       => trim(wp_strip_all_tags((string) ese_latam_campo($prefijo . '_desc', $post_id, ''))),
         'link_label' => $enlace['label'],
         'link_href'  => $enlace['href'],
     ];

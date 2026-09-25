@@ -33,11 +33,6 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# Los renders originales ya NO viven en el theme: se movieron junto al resto
-# de las imágenes que entrega el cliente, para que el repositorio no cargue
-# ~90 MB de PNG. BASE se puede pisar por variable de entorno.
-BASE="${BASE:-/c/Users/Usuario/Desktop/Kevin DATA/ESE Latam Productos Imagenes 2026/Contenedores con ruedas (renders originales)}"
-
 CANVAS=1200      # lado del lienzo cuadrado de salida
 ALTO_MAX=1100    # alto que ocupa el modelo más alto de cada familia
 ANCHO_MAX=1140   # tope de ancho: los de 4 ruedas son más anchos que altos
@@ -52,9 +47,9 @@ CALIDAD=86       # calidad WebP
 # 4 ruedas el 400L es justamente eso: solo el negro trae el litraje en el
 # nombre y los otros cinco colores vienen como fichas "FC xxx COLOR.png".
 FAMILIAS=(
-  "2 ruedas|$BASE/contenedores-2-ruedas|{L}L_FC{C}.png|80:930,120:940,180:1000,240:1075,360:1100|"
-  "3 ruedas|$BASE/contenedores-3-ruedas|{L}L 3PL_FC{C}.png|240:1080,370:1100|"
-  "4 ruedas|$BASE/contenedores-4-ruedas|{L}L_FC{C}.png|400:1070,500:1100,660:1210,770:1360,1100:1470|400:020=Contenedor 400 L FC020.png;400:030=FC 030 GRIS OSCURO.png;400:040=FC 040 VERDE.png;400:050=FC 050 AMARILLO.png;400:081=FC 081 AZUL.png;400:090=FC 090 MARRON.png;1100:020=1100 L FL_FC020.png;1100:030=1100 L FL_FC030.png;1100:040=1100 L FL_FC040.png;1100:050=1100 L FL_FC050.png;1100:081=1100 L FL_FC081.png;1100:090=1100 L FL_FC090.png"
+  "2 ruedas|assets/imgs/productos/contenedores-2-ruedas|{L}L_FC{C}.png|80:930,120:940,180:1000,240:1075,360:1100|"
+  "3 ruedas|assets/imgs/productos/contenedores-3-ruedas|{L}L 3PL_FC{C}.png|240:1080,370:1100|"
+  "4 ruedas|assets/imgs/productos/contenedores-4-ruedas|{L}L_FC{C}.png|400:1070,500:1100,660:1210,770:1360,1100:1470|400:020=Contenedor 400 L FC020.png;400:030=FC 030 GRIS OSCURO.png;400:040=FC 040 VERDE.png;400:050=FC 050 AMARILLO.png;400:081=FC 081 AZUL.png;400:090=FC 090 MARRON.png;1100:020=1100 L FL_FC020.png;1100:030=1100 L FL_FC030.png;1100:040=1100 L FL_FC040.png;1100:050=1100 L FL_FC050.png;1100:081=1100 L FL_FC081.png;1100:090=1100 L FL_FC090.png"
 )
 
 COLORES=(020 030 040 050 081 090)

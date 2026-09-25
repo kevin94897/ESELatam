@@ -29,7 +29,7 @@ if (! defined('ABSPATH')) {
  * `img` es una URL absoluta, o cadena vacía si el sello no tiene logo: en ese
  * caso la plantilla imprime solo el nombre.
  *
- * @return list<array{id: int, name: string, desc: string, img: string, sub: string, detalle: string, criterios: list<string>, organismo: string, norma: string, documento: string}>
+ * @return list<array{id: int, name: string, desc: string, img: string, sub: string, detalle: string, criterios: list<string>, destacado: bool}>
  */
 function ese_latam_certificaciones(): array {
     static $cache = null;
@@ -51,9 +51,6 @@ function ese_latam_certificaciones(): array {
                 static fn (array $f): string => trim((string) ($f['texto'] ?? '')),
                 (array) ese_latam_campo('criterios', $sello->ID, [])
             ), static fn (string $x): bool => '' !== $x)),
-            'organismo'  => trim((string) ese_latam_campo('organismo', $sello->ID, '')),
-            'norma'      => trim((string) ese_latam_campo('norma', $sello->ID, '')),
-            'documento'  => ese_latam_img_url(ese_latam_campo('documento', $sello->ID, '')),
             'destacado'  => true === get_field('destacado', $sello->ID),
         ];
     }
